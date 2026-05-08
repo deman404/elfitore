@@ -1,0 +1,78 @@
+{
+  "brand": {
+    "name": "El Fitore",
+    "tagline": "Huile d'olive et olives marocaines premium",
+    "description": "Huiles d'olive marocaines authentiques et olives premium, élaborées avec tradition et soin"
+  },
+  "nav": {
+    "home": "Accueil",
+    "shop": "Boutique",
+    "about": "À propos",
+    "contact": "Contact",
+    "cart": "Panier"
+  },
+  "hero": {
+    "title": "Goûtez l'essence du Maroc",
+    "subtitle": "Huile d'olive et olives de qualité premium directement du Maroc",
+    "cta": "Acheter Maintenant"
+  },
+  "products": {
+    "title": "Notre Collection",
+    "description": "Huiles d'olive et olives premium soigneusement sélectionnées des plus beaux vergers marocains",
+    "addToCart": "Ajouter au Panier",
+    "viewDetails": "Voir les détails",
+    "price": "Prix",
+    "quantity": "Quantité"
+  },
+  "cart": {
+    "title": "Votre Panier",
+    "item": "article",
+    "items": "articles",
+    "empty": "Votre panier est vide",
+    "continueShopping": "Continuer vos achats",
+    "subtotal": "Sous-total",
+    "shipping": "Livraison",
+    "total": "Total",
+    "free": "Gratuit",
+    "checkout": "Procéder au paiement"
+  },
+  "checkout": {
+    "title": "Paiement",
+    "paymentMethod": "Mode de paiement",
+    "cod": "Paiement à la livraison",
+    "whatsapp": "WhatsApp",
+    "personalInfo": "Informations personnelles",
+    "fullName": "Nom complet",
+    "email": "E-mail",
+    "phone": "Numéro de téléphone",
+    "address": "Adresse de livraison",
+    "city": "Ville",
+    "postalCode": "Code postal",
+    "country": "Pays",
+    "orderSummary": "Résumé de la commande",
+    "placeOrder": "Passer la commande",
+    "sendViaWhatsApp": "Envoyer la commande via WhatsApp",
+    "contactViaWhatsApp": "Contacter via WhatsApp",
+    "required": "Ce champ est obligatoire"
+  },
+  "footer": {
+    "about": "À propos d'El Fitore",
+    "aboutText": "Nous vous apportons les meilleures huiles d'olive et olives marocaines, en préservant la tradition et la qualité.",
+    "links": "Liens rapides",
+    "legal": "Légal",
+    "contact": "Nous contacter",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation",
+    "rights": "Tous droits réservés"
+  },
+  "common": {
+    "language": "Langue",
+    "select": "Sélectionner",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "success": "Succès"
+  }
+}

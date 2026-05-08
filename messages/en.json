@@ -1,0 +1,78 @@
+{
+  "brand": {
+    "name": "El Fitore",
+    "tagline": "Premium Moroccan Olive & Olive Oil",
+    "description": "Authentic Moroccan olive oils and premium olives, crafted with tradition and care"
+  },
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "about": "About",
+    "contact": "Contact",
+    "cart": "Cart"
+  },
+  "hero": {
+    "title": "Taste the Essence of Morocco",
+    "subtitle": "Premium quality olive and olive oil direct from Morocco",
+    "cta": "Shop Now"
+  },
+  "products": {
+    "title": "Our Collection",
+    "description": "Handpicked olive oils and premium olives from the finest Moroccan groves",
+    "addToCart": "Add to Cart",
+    "viewDetails": "View Details",
+    "price": "Price",
+    "quantity": "Quantity"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "item": "item",
+    "items": "items",
+    "empty": "Your cart is empty",
+    "continueShopping": "Continue Shopping",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "total": "Total",
+    "free": "Free",
+    "checkout": "Proceed to Checkout"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "paymentMethod": "Payment Method",
+    "cod": "Cash on Delivery (COD)",
+    "whatsapp": "WhatsApp",
+    "personalInfo": "Personal Information",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "address": "Delivery Address",
+    "city": "City",
+    "postalCode": "Postal Code",
+    "country": "Country",
+    "orderSummary": "Order Summary",
+    "placeOrder": "Place Order",
+    "sendViaWhatsApp": "Send Order via WhatsApp",
+    "contactViaWhatsApp": "Contact via WhatsApp",
+    "required": "This field is required"
+  },
+  "footer": {
+    "about": "About El Fitore",
+    "aboutText": "We bring the finest Moroccan olive oils and olives to your table, preserving tradition and quality.",
+    "links": "Quick Links",
+    "legal": "Legal",
+    "contact": "Contact Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "rights": "All rights reserved"
+  },
+  "common": {
+    "language": "Language",
+    "select": "Select",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "success": "Success"
+  }
+}
