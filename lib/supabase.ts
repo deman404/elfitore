@@ -11,20 +11,43 @@ function getSupabaseConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
-  if (!supabaseUrl) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL")
-  }
-
-  if (!supabaseAnonKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return null
   }
 
   return { supabaseUrl, supabaseAnonKey }
 }
 
+function createUnavailableSupabaseClient() {
+  const error = new Error(
+    "Supabase browser client is unavailable during prerender or because NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is missing."
+  )
+
+  return new Proxy(
+    {},
+    {
+      get() {
+        return () => {
+          throw error
+        }
+      },
+    }
+  ) as SupabaseClient
+}
+
 export function getSupabaseBrowserClient() {
+  if (typeof window === "undefined") {
+    return createUnavailableSupabaseClient()
+  }
+
   if (!globalThis.__supabaseClient) {
-    const { supabaseUrl, supabaseAnonKey } = getSupabaseConfig()
+    const config = getSupabaseConfig()
+
+    if (!config) {
+      return createUnavailableSupabaseClient()
+    }
+
+    const { supabaseUrl, supabaseAnonKey } = config
     globalThis.__supabaseClient = createBrowserClient(supabaseUrl, supabaseAnonKey)
   }
 
