@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, Check, ShoppingBag } from "lucide-react"
 import { useCart } from "@/components/boty/cart-context"
@@ -335,13 +336,22 @@ export default function CheckoutPage() {
                 <h2 className="font-serif text-2xl text-foreground mb-6">{t.orderSummary}</h2>
                 <div className="space-y-4">
                   {items.map(item => (
-                    <div key={item.id} className="flex items-start justify-between gap-4 text-sm">
-                      <div>
-                        <p className="font-medium text-foreground">{item.name}</p>
-                        <p className="text-muted-foreground">{item.description}</p>
-                        <p className="text-muted-foreground">{item.quantity} {item.quantity === 1 ? t.item : t.totalItems}</p>
+                    <div key={item.id} className={`flex items-start gap-4 text-sm ${isRTL ? "flex-row-reverse" : ""}`}>
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-muted">
+                        <Image
+                          src={item.image || "/placeholder.svg"}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
-                      <span className="font-medium text-foreground">DH {(item.price * item.quantity).toFixed(2)}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground line-clamp-1">{item.name}</p>
+                        <p className="text-muted-foreground">
+                          {item.quantity} {item.quantity === 1 ? t.item : t.totalItems}
+                        </p>
+                      </div>
+                      <span className="shrink-0 font-medium text-foreground">DH {(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                   ))}
                 </div>

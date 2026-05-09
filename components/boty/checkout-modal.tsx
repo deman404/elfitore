@@ -250,8 +250,18 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               <h3 className="font-semibold mb-4">{t.orderSummary}</h3>
               <div className="bg-muted p-4 rounded-lg space-y-2">
                 {items.map(item => (
-                  <div key={item.id} className={`flex justify-between text-sm ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-                    <span>{item.name} x {item.quantity}</span>
+                  <div key={item.id} className={`flex justify-between gap-3 text-sm ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                    <span
+                      className="min-w-0 flex-1"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 2,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {item.name} x {item.quantity}
+                    </span>
                     <span>DH {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}

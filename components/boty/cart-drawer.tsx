@@ -123,7 +123,17 @@ export function CartDrawer() {
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-serif text-base text-foreground mb-1 font-semibold">{item.name}</h3>
-                      <p className="text-muted-foreground mb-3 text-sm">{item.description}</p>
+                      <p
+                        className="mb-3 text-sm text-muted-foreground"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitBoxOrient: "vertical",
+                          WebkitLineClamp: 2,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {item.description}
+                      </p>
                       
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-3">

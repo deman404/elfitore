@@ -332,7 +332,17 @@ function ProductCard({
 
         <div className="p-6">
           <h3 className="mb-1 font-serif text-xl text-foreground">{product.name[locale]}</h3>
-          <p className="mb-4 text-sm text-muted-foreground">{product.description[locale]}</p>
+          <p
+            className="mb-4 text-sm text-muted-foreground"
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+              overflow: "hidden",
+            }}
+          >
+            {product.description[locale]}
+          </p>
           <div className="flex items-center gap-2">
             <span className="text-lg font-medium text-foreground">DH {product.price}</span>
             {product.sizes.length > 0 ? (

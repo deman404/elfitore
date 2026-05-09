@@ -270,7 +270,17 @@ export function ProductGrid() {
 
                   <div className={`p-5 ${isRTL ? "text-right" : "text-left"}`}>
                     <h3 className="mb-1 font-serif text-lg text-foreground">{product.name[locale as Locale]}</h3>
-                    <p className="mb-3 text-sm text-muted-foreground">{product.description[locale as Locale]}</p>
+                    <p
+                      className="mb-3 text-sm text-muted-foreground"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitBoxOrient: "vertical",
+                        WebkitLineClamp: 2,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {product.description[locale as Locale]}
+                    </p>
                     <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
                       <span className="font-medium text-foreground">DH {product.price}</span>
                       {product.sizes.length > 0 ? (

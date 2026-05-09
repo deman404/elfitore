@@ -177,19 +177,28 @@ export default function CategoriesPage() {
       description="Create product categories for the add product form."
     >
       <div className="space-y-6">
-        <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-black/5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-3xl font-semibold text-slate-900">Categories table</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                These categories will appear in the product creation form.
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#1877F2]">Catalog structure</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Categories</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Keep the product taxonomy tidy so the product form stays fast and the storefront stays understandable.
               </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white">
+                  {loading ? "..." : `${rows.filter((row) => row.active).length} active`}
+                </span>
+                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
+                  Sort order respected
+                </span>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={openAddSheet}
-              className="inline-flex items-center gap-2 rounded-2xl bg-[#1877F2] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1669d4]"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               <Plus className="h-4 w-4" />
               Add category
@@ -203,7 +212,7 @@ export default function CategoriesPage() {
           ) : null}
         </section>
 
-        <section className="rounded-lg bg-white shadow-sm ring-1 ring-black/5">
+        <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/92 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <div className="space-y-4 lg:hidden">
             {loading ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
@@ -211,7 +220,7 @@ export default function CategoriesPage() {
               </div>
             ) : rows.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-                No categories yet. Add your first category to begin.
+                No categories yet. Add the first category to define the catalog.
               </div>
             ) : (
               rows.map((row) => (
