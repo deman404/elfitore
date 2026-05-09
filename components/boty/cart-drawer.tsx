@@ -116,6 +116,7 @@ export function CartDrawer() {
                         src={item.image || "/placeholder.svg"}
                         alt={item.name}
                         fill
+                        sizes="96px"
                         className="object-cover"
                       />
                     </div>

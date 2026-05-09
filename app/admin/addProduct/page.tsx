@@ -616,12 +616,7 @@ export default function AddProductPage() {
                 <span className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white">
                   {loading ? "..." : `${rows.length} items`}
                 </span>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
-                  Up to 5 images
-                </span>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
-                  Multilingual fields
-                </span>
+                
               </div>
             </div>
 
@@ -633,7 +628,7 @@ export default function AddProductPage() {
               <Plus className="h-4 w-4" />
               Add product
             </button>
-            <button
+            {/* <button
               type="button"
               onClick={importElfitorProducts}
               disabled={importing || saving}
@@ -641,7 +636,7 @@ export default function AddProductPage() {
             >
               {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {importing ? "Importing..." : "Import from elfitor.ma"}
-            </button>
+            </button> */}
           </div>
 
           {status ? (

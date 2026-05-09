@@ -244,6 +244,7 @@ export function ProductGrid() {
                       src={product.image || "/placeholder.svg"}
                       alt={product.name[locale as Locale]}
                       fill
+                      sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                       className="object-cover boty-transition group-hover:scale-105"
                     />
                     <button

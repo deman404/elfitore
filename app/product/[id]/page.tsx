@@ -211,6 +211,7 @@ export default function ProductPage() {
                   alt={product.name[locale as Locale]}
                   fill
                   priority
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
                 />
               </div>
@@ -226,7 +227,7 @@ export default function ProductPage() {
                         selectedImage === image ? "border-primary ring-2 ring-primary/20" : "border-border"
                       }`}
                     >
-                      <Image src={image} alt={product.name[locale as Locale]} fill className="object-cover" />
+                      <Image src={image} alt={product.name[locale as Locale]} fill sizes="25vw" className="object-cover" />
                     </button>
                   ))}
                 </div>
