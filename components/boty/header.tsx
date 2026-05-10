@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { Menu, X, ShoppingBag } from "lucide-react"
 import { CartDrawer } from "./cart-drawer"
@@ -53,7 +54,7 @@ export function Header() {
               {t.about}
             </Link>
             <Link
-              href="/"
+              href="/contact"
               className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
             >
               {t.contact}
@@ -62,7 +63,16 @@ export function Header() {
 
           {/* Logo */}
           <Link href="/" className="justify-self-center lg:absolute lg:left-1/2 lg:-translate-x-1/2">
-            <h1 className="font-serif text-2xl tracking-wider text-foreground sm:text-3xl">El Fitore</h1>
+            <span className="relative block h-10 w-32 sm:h-12 sm:w-40">
+              <Image
+                src="/logo.png"
+                alt="El Fitore"
+                fill
+                priority
+                sizes="(max-width: 640px) 128px, 160px"
+                className="object-contain"
+              />
+            </span>
           </Link>
 
           {/* Right Actions */}
@@ -106,7 +116,7 @@ export function Header() {
               {t.about}
             </Link>
             <Link
-              href="/"
+              href="/contact"
               className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
             >
               {t.contact}

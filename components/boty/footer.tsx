@@ -21,10 +21,10 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; a
       { name: "Press", href: "/" }
     ],
     support: [
-      { name: "Contact Us", href: "/" },
-      { name: "FAQ", href: "/" },
-      { name: "Shipping", href: "/" },
-      { name: "Returns", href: "/" }
+      { name: "Contact Us", href: "/contact" },
+      { name: "FAQ", href: "/faq" },
+      { name: "Shipping", href: "/shipping" },
+      { name: "Returns", href: "/returns" }
     ]
   },
   fr: {
@@ -42,10 +42,10 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; a
       { name: "Presse", href: "/" }
     ],
     support: [
-      { name: "Nous contacter", href: "/" },
-      { name: "FAQ", href: "/" },
-      { name: "Livraison", href: "/" },
-      { name: "Retours", href: "/" }
+      { name: "Nous contacter", href: "/contact" },
+      { name: "FAQ", href: "/faq" },
+      { name: "Livraison", href: "/shipping" },
+      { name: "Retours", href: "/returns" }
     ]
   },
   ar: {
@@ -63,10 +63,10 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; a
       { name: "صحافة", href: "/" }
     ],
     support: [
-      { name: "اتصل بنا", href: "/" },
-      { name: "الأسئلة الشائعة", href: "/" },
-      { name: "التوصيل", href: "/" },
-      { name: "العودة", href: "/" }
+      { name: "اتصل بنا", href: "/contact" },
+      { name: "الأسئلة الشائعة", href: "/faq" },
+      { name: "التوصيل", href: "/shipping" },
+      { name: "المرتجعات", href: "/returns" }
     ]
   }
 }
@@ -212,10 +212,10 @@ export function Footer() {
             © {new Date().getFullYear()} El Fitore. {texts.copyright}.
           </p>
           <div className={`flex gap-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground boty-transition">
+            <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground boty-transition">
               {texts.privacy}
             </Link>
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground boty-transition">
+            <Link href="/terms-of-service" className="text-sm text-muted-foreground hover:text-foreground boty-transition">
               {texts.terms}
             </Link>
           </div>
