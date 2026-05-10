@@ -10,6 +10,7 @@ import { Footer } from "@/components/boty/footer"
 import { useCart } from "@/components/boty/cart-context"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
+import { fetchSiteSettings } from "@/lib/site-settings"
 import { generateWhatsAppMessage, getWhatsAppChatUrl, getWhatsAppMessageUrl } from "@/lib/whatsapp"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
@@ -66,6 +67,7 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState("")
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState("")
+  const [whatsappNumber, setWhatsappNumber] = useState("")
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -89,7 +91,7 @@ export default function ProductPage() {
       setProductState({ normalized })
       setSelectedSize(normalized.sizes[0]?.label ?? "")
       setSelectedImage(normalized.images[0] ?? normalized.image)
-      setQuantity(1)
+      setQuantity(normalized.stock > 0 ? 1 : 0)
       setLoading(false)
     }
 
@@ -100,11 +102,21 @@ export default function ProductPage() {
     window.scrollTo(0, 0)
   }, [productId])
 
+  useEffect(() => {
+    const loadSettings = async () => {
+      const settings = await fetchSiteSettings()
+      setWhatsappNumber(settings.whatsappNumber ?? "")
+    }
+
+    void loadSettings()
+  }, [])
+
   const product = productState.normalized
 
   const activeSize = product?.sizes.find((size) => size.label === selectedSize) ?? product?.sizes[0]
   const unitPrice = activeSize?.price ?? product?.price ?? 0
   const totalPrice = unitPrice * quantity
+  const availableStock = product?.stock ?? 0
 
   const handleAddToCart = () => {
     if (!product) return
@@ -116,12 +128,13 @@ export default function ProductPage() {
         description: `${product.description[locale as Locale]}${selectedSize ? ` • ${selectedSize}` : ""}`,
         price: unitPrice,
         image: selectedImage || product.image,
+        stock: availableStock,
       })
     })
   }
 
   const handleOrderViaWhatsApp = () => {
-    if (!product) return
+    if (!product || !whatsappNumber) return
 
     const message = generateWhatsAppMessage(
       {
@@ -143,11 +156,15 @@ export default function ProductPage() {
       locale as Locale
     )
 
-    window.open(getWhatsAppMessageUrl(message), "_blank")
+    window.open(getWhatsAppMessageUrl(message, whatsappNumber), "_blank")
   }
 
   const handleContactViaWhatsApp = () => {
-    window.open(getWhatsAppChatUrl(), "_blank")
+    if (!whatsappNumber) {
+      return
+    }
+
+    window.open(getWhatsAppChatUrl(whatsappNumber), "_blank")
   }
 
   if (loading) {
@@ -275,14 +292,27 @@ export default function ProductPage() {
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">{t.quantity}</p>
                     <div className="mt-3 inline-flex items-center gap-3 rounded-full bg-background px-4 py-2 boty-shadow">
-                      <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="text-lg">
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                        className="text-lg"
+                        disabled={availableStock <= 0}
+                      >
                         -
                       </button>
                       <span className="min-w-6 text-center text-sm font-medium">{quantity}</span>
-                      <button type="button" onClick={() => setQuantity((value) => value + 1)} className="text-lg">
+                      <button
+                        type="button"
+                        onClick={() => setQuantity((value) => Math.min(availableStock, value + 1))}
+                        className="text-lg"
+                        disabled={availableStock <= 0 || quantity >= availableStock}
+                      >
                         +
                       </button>
                     </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {availableStock <= 0 ? "Out of stock" : `${availableStock} available`}
+                    </p>
                   </div>
                 </div>
 
@@ -296,7 +326,8 @@ export default function ProductPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+                  disabled={availableStock <= 0}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ShoppingBag className="h-4 w-4" />
                   {t.addToCart}
@@ -304,17 +335,22 @@ export default function ProductPage() {
                 <button
                   type="button"
                   onClick={handleOrderViaWhatsApp}
-                  className="inline-flex items-center justify-center rounded-full border border-border px-8 py-4 text-sm font-medium text-foreground transition hover:bg-muted"
+                  disabled={!whatsappNumber || availableStock <= 0}
+                  className="inline-flex items-center justify-center rounded-full border border-border px-8 py-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {t.orderViaWhatsApp}
                 </button>
                 <button
                   type="button"
                   onClick={handleContactViaWhatsApp}
-                  className="inline-flex items-center justify-center rounded-full border border-border px-8 py-4 text-sm font-medium text-foreground transition hover:bg-muted"
+                  disabled={!whatsappNumber || availableStock <= 0}
+                  className="inline-flex items-center justify-center rounded-full border border-border px-8 py-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {t.contactViaWhatsApp}
                 </button>
+              </div>
+              <div className={`rounded-2xl px-4 py-3 text-sm ${availableStock <= 0 ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+                {availableStock <= 0 ? "This product is currently out of stock." : `${availableStock} units available.`}
               </div>
             </div>
           </div>

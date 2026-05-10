@@ -12,6 +12,7 @@ export type CatalogProductRow = {
   image: string
   images: string[] | string | null
   category: string
+  stock?: number | null
   sizes: unknown
 }
 
@@ -31,6 +32,7 @@ export type NormalizedProduct = {
   price: number
   image: string
   images: string[]
+  stock: number
   sizes: Array<{ label: string; price: number }>
 }
 
@@ -112,6 +114,7 @@ export function normalizeProductRow(row: CatalogProductRow): NormalizedProduct {
     price: row.price,
     image: row.image,
     images: parseStringArray(row.images).filter(Boolean),
+    stock: Number.isFinite(Number(row.stock)) ? Math.max(0, Number(row.stock)) : 100,
     sizes: parseProductSizes(row.sizes, row.price),
   }
 }

@@ -1,4 +1,4 @@
-export const WHATSAPP_NUMBER = '+212XXXXXXXXX' // Placeholder - user to update
+export const DEFAULT_WHATSAPP_NUMBER = ""
 
 export interface OrderDetails {
   fullName: string
@@ -27,11 +27,15 @@ export function generateWhatsAppMessage(order: OrderDetails, locale: 'en' | 'fr'
   return messages[locale]
 }
 
-export function getWhatsAppChatUrl(): string {
-  return `https://wa.me/${WHATSAPP_NUMBER.replace(/[^\d]/g, '')}`
+export function formatWhatsAppNumberForLink(number: string): string {
+  return number.replace(/[^\d]/g, "")
 }
 
-export function getWhatsAppMessageUrl(message: string): string {
+export function getWhatsAppChatUrl(number = DEFAULT_WHATSAPP_NUMBER): string {
+  return `https://wa.me/${formatWhatsAppNumberForLink(number)}`
+}
+
+export function getWhatsAppMessageUrl(message: string, number = DEFAULT_WHATSAPP_NUMBER): string {
   const encodedMessage = encodeURIComponent(message)
-  return `https://wa.me/${WHATSAPP_NUMBER.replace(/[^\d]/g, '')}?text=${encodedMessage}`
+  return `https://wa.me/${formatWhatsAppNumberForLink(number)}?text=${encodedMessage}`
 }

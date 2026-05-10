@@ -151,7 +151,8 @@ export function CartDrawer() {
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-1.5 hover:bg-muted boty-transition rounded-r-full"
+                            className="p-1.5 hover:bg-muted boty-transition rounded-r-full disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={item.quantity >= item.stock}
                             aria-label={labels.increase}
                           >
                             <Plus className="w-3 h-3" />
@@ -167,6 +168,9 @@ export function CartDrawer() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {item.stock <= 0 ? "Out of stock" : `${item.stock} available`}
+                      </p>
                     </div>
 
                     {/* Price */}

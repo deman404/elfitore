@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
 import { useCart } from './cart-context'
 import { useLanguage } from '@/components/language-context'
+import { fetchSiteSettings } from '@/lib/site-settings'
 import { generateWhatsAppMessage, getWhatsAppMessageUrl } from '@/lib/whatsapp'
 import type { Locale } from '@/i18n.config'
 
@@ -89,6 +90,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { items, subtotal, clearCart } = useCart()
   const [paymentMethod, setPaymentMethod] = useState<'cod' | 'whatsapp'>('cod')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [whatsappNumber, setWhatsappNumber] = useState('')
   const t = translations[locale as Locale]
 
   const [formData, setFormData] = useState({
@@ -102,6 +104,15 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      const settings = await fetchSiteSettings()
+      setWhatsappNumber(settings.whatsappNumber ?? '')
+    }
+
+    void loadSettings()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -146,6 +157,12 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       }, 1000)
     } else {
       // For WhatsApp
+      if (!whatsappNumber) {
+        setIsSubmitting(false)
+        alert('WhatsApp is not configured yet.')
+        return
+      }
+
       const orderDetails = {
         fullName: formData.fullName,
         email: formData.email,
@@ -158,7 +175,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       }
 
       const message = generateWhatsAppMessage(orderDetails, locale as Locale)
-      const whatsappUrl = getWhatsAppMessageUrl(message)
+      const whatsappUrl = getWhatsAppMessageUrl(message, whatsappNumber)
       window.open(whatsappUrl, '_blank')
       clearCart()
       onClose()

@@ -8,6 +8,7 @@ import { useCart } from "@/components/boty/cart-context"
 import { Header } from "@/components/boty/header"
 import { Footer } from "@/components/boty/footer"
 import { useLanguage } from "@/components/language-context"
+import { fetchSiteSettings } from "@/lib/site-settings"
 import { generateWhatsAppMessage, getWhatsAppMessageUrl } from "@/lib/whatsapp"
 import type { Locale } from "@/i18n.config"
 
@@ -117,6 +118,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [whatsappNumber, setWhatsappNumber] = useState("")
   const shipping = 0
   const total = subtotal + shipping
 
@@ -132,6 +134,15 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      const settings = await fetchSiteSettings()
+      setWhatsappNumber(settings.whatsappNumber ?? "")
+    }
+
+    void loadSettings()
   }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,6 +178,12 @@ export default function CheckoutPage() {
     }))
 
     if (paymentMethod === "whatsapp") {
+      if (!whatsappNumber) {
+        setErrors((current) => ({ ...current, paymentMethod: "WhatsApp is not configured yet." }))
+        setIsSubmitting(false)
+        return
+      }
+
       const message = generateWhatsAppMessage({
         fullName: formData.fullName,
         email: formData.email,
@@ -178,7 +195,7 @@ export default function CheckoutPage() {
         total,
       }, locale as Locale)
 
-      window.open(getWhatsAppMessageUrl(message), "_blank")
+      window.open(getWhatsAppMessageUrl(message, whatsappNumber), "_blank")
       clearCart()
       setIsSuccess(true)
       setIsSubmitting(false)
@@ -295,6 +312,9 @@ export default function CheckoutPage() {
                       <span className="font-medium">{t.whatsapp}</span>
                     </label>
                   </div>
+                  {errors.paymentMethod ? (
+                    <p className="mt-3 text-sm text-red-600">{errors.paymentMethod}</p>
+                  ) : null}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">

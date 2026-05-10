@@ -249,16 +249,19 @@ export function ProductGrid() {
                     />
                     <button
                       type="button"
-                      className={`absolute bottom-4 ${isRTL ? "left-4" : "right-4"} flex h-10 w-10 items-center justify-center rounded-full bg-background/90 opacity-0 translate-y-2 backdrop-blur-sm boty-shadow boty-transition group-hover:opacity-100 group-hover:translate-y-0`}
+                      disabled={product.stock <= 0}
+                      className={`absolute bottom-4 ${isRTL ? "left-4" : "right-4"} flex h-10 w-10 items-center justify-center rounded-full bg-background/90 opacity-0 translate-y-2 backdrop-blur-sm boty-shadow boty-transition group-hover:opacity-100 group-hover:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60`}
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
+                        if (product.stock <= 0) return
                         addItem({
                           id: product.id,
                           name: product.name[locale as Locale],
                           description: product.description[locale as Locale],
                           price: product.price,
                           image: product.image,
+                          stock: product.stock,
                         })
                       }}
                       aria-label={
@@ -290,6 +293,9 @@ export function ProductGrid() {
                           {product.sizes.length > 1 ? ` +${product.sizes.length - 1}` : ""}
                         </span>
                       ) : null}
+                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${product.stock <= 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {product.stock <= 0 ? "Out of stock" : `${product.stock} in stock`}
+                      </span>
                     </div>
                   </div>
                 </div>

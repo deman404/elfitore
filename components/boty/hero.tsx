@@ -1,40 +1,28 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import type { Locale } from "@/i18n.config"
-
-const heroText: Record<Locale, { subtitle: string; title1: string; title2: string; description: string; cta: string; scroll: string }> = {
-  en: {
-    subtitle: 'Premium Moroccan Olive',
-    title1: 'Taste the',
-    title2: 'Essence of Morocco',
-    description: 'Authentic Moroccan olive oils and premium olives, crafted with tradition and care.',
-    cta: 'Shop Now',
-    scroll: 'Scroll'
-  },
-  fr: {
-    subtitle: 'Huile d\'Olive Marocaine Premium',
-    title1: 'Goûtez l\'',
-    title2: 'Essence du Maroc',
-    description: 'Huiles d\'olive marocaines authentiques et olives premium, élaborées avec tradition et soin.',
-    cta: 'Acheter Maintenant',
-    scroll: 'Défiler'
-  },
-  ar: {
-    subtitle: 'زيت الزيتون المغربي الممتاز',
-    title1: 'ذوقوا',
-    title2: 'جوهر المغرب',
-    description: 'زيوت زيتون مغربية أصلية وزيتون فاخر، يتم إعدادها بالتقليد والعناية.',
-    cta: 'تسوق الآن',
-    scroll: 'مرر'
-  }
-}
+import { fetchThemeHero, getThemeHeroText, DEFAULT_THEME_HERO, type ThemeHeroData } from "@/lib/theme-hero"
 
 export function Hero() {
   const { locale, isRTL } = useLanguage()
-  const text = heroText[locale as Locale]
+  const [theme, setTheme] = useState<ThemeHeroData>(DEFAULT_THEME_HERO)
+
+  useEffect(() => {
+    const loadTheme = async () => {
+      const data = await fetchThemeHero()
+      setTheme(data)
+    }
+
+    void loadTheme()
+  }, [])
+
+  const text = getThemeHeroText(locale as Locale, theme)
+  const mediaUrl = theme.mediaUrl || DEFAULT_THEME_HERO.mediaUrl
+  const isImage = theme.mediaType === "image"
 
   return (
     <section className="relative min-h-[92svh] overflow-hidden pb-16 pt-24 sm:min-h-screen sm:pb-0 sm:pt-20" style={{ backgroundColor: '#e3e1e2' }}>
@@ -43,25 +31,34 @@ export function Hero() {
         className="absolute inset-0 overflow-hidden"
         style={{ backgroundColor: '#e3e1e2' }}
       >
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            minWidth: '100%',
-            minHeight: '100%',
-            width: 'auto',
-            height: 'auto',
-            objectFit: 'cover'
-          }}
-          >
-          <source src="/video/olive.mp4" type="video/mp4" />
-        </video>
+        {isImage ? (
+          <img
+            src={mediaUrl}
+            alt={text.title2}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster={theme.mediaType === "video" ? undefined : mediaUrl}
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              minWidth: '100%',
+              minHeight: '100%',
+              width: 'auto',
+              height: 'auto',
+              objectFit: 'cover'
+            }}
+            >
+            <source src={mediaUrl} type="video/mp4" />
+          </video>
+        )}
         {/* Bottom fade gradient */}
         <div className="absolute bottom-0 left-0 right-0 h-[60%] bg-gradient-to-t from-background via-background/50 to-transparent" />
       </div>

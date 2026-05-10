@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowUpRight, BadgeCheck, CircleDollarSign, Database, Lock, Package2, Shapes, ShieldCheck, Sparkles } from "lucide-react"
+import { ArrowUpRight, BadgeCheck, BadgeDollarSign, CircleDollarSign, Database, Lock, Package2, Shapes, ShieldCheck, Sparkles, Users } from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
+import { canAccessAdminSection, type AdminAccessSnapshot } from "@/lib/admin-access"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
 
@@ -12,6 +13,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<NormalizedProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [access, setAccess] = useState<AdminAccessSnapshot | null>(null)
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -33,10 +35,25 @@ export default function AdminPage() {
     void loadDashboard()
   }, [supabase])
 
+  useEffect(() => {
+    const loadAccess = async () => {
+      const response = await fetch("/api/admin/me")
+      const data = (await response.json().catch(() => ({}))) as AdminAccessSnapshot & { error?: string }
+
+      if (response.ok) {
+        setAccess(data)
+      }
+    }
+
+    void loadAccess()
+  }, [])
+
   const totalProducts = products.length
   const oilCount = products.filter((product) => product.category === "oil").length
   const olivesCount = products.filter((product) => product.category === "olives").length
   const catalogValue = products.reduce((sum, product) => sum + product.price, 0)
+  const totalStock = products.reduce((sum, product) => sum + product.stock, 0)
+  const outOfStockCount = products.filter((product) => product.stock <= 0).length
   const categoryBreakdown = useMemo(() => {
     const counts = new Map<string, number>()
 
@@ -94,13 +111,42 @@ export default function AdminPage() {
                   Manage categories
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
-                <Link
-                  href="/admin/parameters"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Store settings
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
+                {canAccessAdminSection(access, "theme") ? (
+                  <Link
+                    href="/admin/theme"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Theme
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                ) : null}
+                {canAccessAdminSection(access, "sell-point") ? (
+                  <Link
+                    href="/admin/sell-point"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Sell Point
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                ) : null}
+                {canAccessAdminSection(access, "settings") ? (
+                  <Link
+                    href="/admin/settings"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Store settings
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                ) : null}
+                {canAccessAdminSection(access, "users") ? (
+                  <Link
+                    href="/admin/users"
+                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Users
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                ) : null}
               </div>
             </div>
 
@@ -108,7 +154,7 @@ export default function AdminPage() {
               <MiniPill label="Products" value={loading ? "..." : `${totalProducts}`} />
               <MiniPill label="Catalog value" value={loading ? "..." : `DH ${catalogValue}`} />
               <MiniPill label="Active categories" value={loading ? "..." : `${categoryBreakdown.length}`} />
-              <MiniPill label="Stock view" value={loading ? "..." : `${oilCount + olivesCount} visible`} />
+              <MiniPill label="Stock units" value={loading ? "..." : `${totalStock}`} />
             </div>
           </div>
         </section>
@@ -128,6 +174,27 @@ export default function AdminPage() {
             label="Catalog value"
             value={loading ? "..." : `DH ${catalogValue}`}
             note="Combined list price"
+            tone="slate"
+          />
+          <StateCard
+            icon={Package2}
+            label="Out of stock"
+            value={loading ? "..." : `${outOfStockCount}`}
+            note="Products with zero inventory"
+            tone="amber"
+          />
+          <StateCard
+            icon={BadgeDollarSign}
+            label="Sell point"
+            value="Open"
+            note="Fast in-store checkout"
+            tone="blue"
+          />
+          <StateCard
+            icon={Users}
+            label="Users"
+            value="Manage"
+            note="Roles and permissions"
             tone="slate"
           />
         </section>
@@ -183,24 +250,52 @@ export default function AdminPage() {
               <p className="mt-1 text-sm text-slate-500">The most common places to move after reviewing the dashboard.</p>
 
               <div className="mt-5 grid gap-3">
+                {canAccessAdminSection(access, "theme") ? (
+                  <ActionCard
+                    title="Theme"
+                    description="Change hero media and homepage copy."
+                    href="/admin/theme"
+                    icon={Sparkles}
+                  />
+                ) : null}
+                {canAccessAdminSection(access, "sell-point") ? (
+                  <ActionCard
+                    title="Sell Point"
+                    description="Open the in-store checkout portal."
+                    href="/admin/sell-point"
+                    icon={BadgeDollarSign}
+                  />
+                ) : null}
                 <ActionCard
                   title="Authentication"
                   description="Check the Supabase sign-in flow and protected admin access."
                   href="/admin/auth"
                   icon={Lock}
                 />
-                <ActionCard
-                  title="Products"
-                  description="Create, edit, and remove products from the catalog."
-                  href="/admin/addProduct"
-                  icon={Database}
-                />
-                <ActionCard
-                  title="Categories"
-                  description="Keep the product structure clean and consistent."
-                  href="/admin/categories"
-                  icon={Shapes}
-                />
+                {canAccessAdminSection(access, "products") ? (
+                  <ActionCard
+                    title="Products"
+                    description="Create, edit, and remove products from the catalog."
+                    href="/admin/addProduct"
+                    icon={Database}
+                  />
+                ) : null}
+                {canAccessAdminSection(access, "categories") ? (
+                  <ActionCard
+                    title="Categories"
+                    description="Keep the product structure clean and consistent."
+                    href="/admin/categories"
+                    icon={Shapes}
+                  />
+                ) : null}
+                {canAccessAdminSection(access, "users") ? (
+                  <ActionCard
+                    title="Users"
+                    description="Manage admins and permissions."
+                    href="/admin/users"
+                    icon={Users}
+                  />
+                ) : null}
               </div>
             </section>
 

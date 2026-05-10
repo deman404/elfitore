@@ -9,6 +9,7 @@ export interface CartItem {
   price: number
   quantity: number
   image: string
+  stock: number
 }
 
 interface CartContextType {
@@ -30,12 +31,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
 
   const addItem = (newItem: Omit<CartItem, "quantity">) => {
+    if (newItem.stock <= 0) {
+      return
+    }
+
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === newItem.id)
       if (existingItem) {
+        if (existingItem.quantity >= existingItem.stock) {
+          return currentItems
+        }
+
         return currentItems.map(item =>
           item.id === newItem.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: Math.min(item.quantity + 1, item.stock) }
             : item
         )
       }
@@ -55,7 +64,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
     setItems(currentItems =>
       currentItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
+        item.id === id ? { ...item, quantity: Math.min(quantity, item.stock) } : item
       )
     )
   }

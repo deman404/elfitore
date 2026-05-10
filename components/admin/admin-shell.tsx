@@ -2,23 +2,26 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   ArrowLeft,
-  ArrowUpRight,
-  BadgeCheck,
-  CircleDollarSign,
+  BadgeDollarSign,
   LayoutDashboard,
   Lock,
+  ReceiptText,
+  Palette,
   Package,
-  Search,
+  PanelLeftOpen,
   Shapes,
   SlidersHorizontal,
+  Store,
+  Users,
 } from "lucide-react"
 import type { ReactNode } from "react"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { canAccessAdminSection, type AdminAccessSnapshot, type AdminSection } from "@/lib/admin-access"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import { normalizeProductRow, type CatalogProductRow } from "@/lib/catalog"
-
-type AdminSection = "dashboard" | "auth" | "products" | "categories" | "parameters"
 
 const navItems: Array<{
   href: string
@@ -27,9 +30,13 @@ const navItems: Array<{
   section: AdminSection
 }> = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, section: "dashboard" },
+  { href: "/admin/sell-point", label: "Sell Point", icon: BadgeDollarSign, section: "sell-point" },
+  { href: "/admin/sell-point/last-receipt", label: "Last Sell", icon: ReceiptText, section: "last-sell" },
+  { href: "/admin/users", label: "Users", icon: Users, section: "users" },
   { href: "/admin/addProduct", label: "Products", icon: Package, section: "products" },
   { href: "/admin/categories", label: "Categories", icon: Shapes, section: "categories" },
-  { href: "/admin/parameters", label: "Parameters", icon: SlidersHorizontal, section: "parameters" },
+  { href: "/admin/theme", label: "Theme", icon: Palette, section: "theme" },
+  { href: "/admin/settings", label: "Settings", icon: SlidersHorizontal, section: "settings" },
   { href: "/admin/auth", label: "Auth", icon: Lock, section: "auth" },
 ]
 
@@ -44,220 +51,241 @@ export function AdminShell({
   description: string
   title: string
 }) {
-  const supabase = useMemo(() => getSupabaseBrowserClient(), [])
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    oilCount: 0,
-    olivesCount: 0,
-    totalCategories: 0,
-    activeCategories: 0,
-    catalogValue: 0,
-    loading: true,
-  })
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [access, setAccess] = useState<AdminAccessSnapshot | null>(null)
+  const [accessLoading, setAccessLoading] = useState(true)
+  const router = useRouter()
+  const supabase = getSupabaseBrowserClient()
 
   useEffect(() => {
-    const loadStats = async () => {
-      const [{ data: productData }, { data: categoryData }] = await Promise.all([
-        supabase.from("products").select("*"),
-        supabase.from("product_categories").select("id, active"),
-      ])
+    let active = true
 
-      const products = ((productData ?? []) as CatalogProductRow[]).map(normalizeProductRow)
-      const categories = (categoryData ?? []) as Array<{ id: number; active?: boolean }>
+    const loadAccess = async () => {
+      setAccessLoading(true)
 
-      setStats({
-        totalProducts: products.length,
-        oilCount: products.filter((product) => product.category === "oil").length,
-        olivesCount: products.filter((product) => product.category === "olives").length,
-        totalCategories: categories.length,
-        activeCategories: categories.filter((category) => category.active !== false).length,
-        catalogValue: products.reduce((sum, product) => sum + product.price, 0),
-        loading: false,
-      })
+      const response = await fetch("/api/admin/me")
+      const data = (await response.json().catch(() => ({}))) as AdminAccessSnapshot & { error?: string }
+
+      if (!active) {
+        return
+      }
+
+      if (!response.ok) {
+        setAccess(null)
+      } else {
+        setAccess(data)
+      }
+
+      setAccessLoading(false)
     }
 
-    void loadStats()
-  }, [supabase])
+    void loadAccess()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const visibleNavItems = useMemo(
+    () => navItems.filter((item) => canAccessAdminSection(access, item.section)),
+    [access]
+  )
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/admin/auth")
+    router.refresh()
+  }
+
+  if (accessLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-blue-50 px-4 text-slate-700">
+        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm shadow-sm">
+          Loading admin access...
+        </div>
+      </main>
+    )
+  }
+
+  const canViewCurrentSection = canAccessAdminSection(access, current)
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(24,119,242,0.12),_transparent_35%),linear-gradient(180deg,#f8fafc_0%,#eef3f8_100%)] text-foreground">
-      <header className="sticky top-0 z-30 border-b border-slate-800/90 bg-slate-950/96 text-white shadow-[0_20px_50px_rgba(15,23,42,0.24)] backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
-          <Link href="/admin" className="flex items-center gap-3 font-semibold tracking-tight">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-slate-950 shadow-sm">
-              <span className="text-lg font-black">E</span>
+    <main className="min-h-screen bg-blue-50 text-foreground">
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="w-[84vw] max-w-[18rem] border-slate-950 bg-slate-950 p-0 text-white sm:max-w-[19rem]">
+          <SheetHeader className="border-b border-white/10 px-5 py-5 text-left">
+            <SheetTitle className="flex items-center gap-2 text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-slate-950">
+                <Store className="h-4 w-4" />
+              </div>
+              <span className="text-sm font-semibold">El Fitore Admin</span>
+            </SheetTitle>
+            <SheetDescription className="text-xs text-white/60">
+              {title}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex h-[calc(100vh-6rem)] flex-col gap-3 overflow-y-auto px-3 py-3">
+            <SidebarNav current={current} items={visibleNavItems} onNavigate={() => setMobileMenuOpen(false)} />
+            <div className="mt-auto border-t border-white/10 pt-3">
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                className="flex w-full items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
+              >
+                <Lock className="h-4 w-4" />
+                Logout
+              </button>
             </div>
-            <div className="hidden sm:block">
-              <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Admin console</div>
-              <div className="text-base font-medium">{title}</div>
-            </div>
-          </Link>
+          </div>
+        </SheetContent>
+      </Sheet>
 
-          <div className="hidden flex-1 lg:block">
-            <label className="flex h-11 items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 text-white/90">
-              <Search className="h-4 w-4 shrink-0" />
-              <span className="text-sm">{description}</span>
-            </label>
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-950 bg-slate-950 lg:flex">
+        <div className="flex h-full w-full flex-col overflow-y-auto p-3">
+          <Link href="/admin" className="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-slate-950">
+              <Store className="h-4 w-4" />
+            </div>
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">Admin</div>
+            <div className="truncate text-sm font-semibold text-white">El Fitore</div>
+          </div>
+        </Link>
+
+          <div className="mt-3">
+            <SidebarNav current={current} items={visibleNavItems} />
           </div>
 
-          <Link
-            href="/"
-            className="ml-auto inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Site
-          </Link>
+          <div className="mt-auto border-t border-white/10 pt-3">
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="flex w-full items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
+            >
+              <Lock className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
         </div>
-      </header>
+      </aside>
 
-      <div className="mx-auto grid w-full gap-5 px-4 py-5 sm:px-6 xl:grid-cols-[260px_minmax(0,1fr)_320px] xl:px-8">
-        <aside className="hidden h-fit space-y-4 xl:sticky xl:top-[76px] xl:block">
-          <section className="rounded-[1.75rem] border border-slate-200/80 bg-white/92 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] backdrop-blur">
-            <div className="mb-4">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#1877F2]">Workspace</div>
-              <p className="mt-1 text-sm text-slate-500">Manage catalog, structure, and access from one place.</p>
+      <div className="min-h-screen lg:pl-64">
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+          <div className="flex w-full items-center gap-2 px-3 py-2 sm:px-4 lg:px-6">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon-sm"
+              className="shrink-0 border-slate-200 bg-white text-slate-700 lg:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open admin menu"
+            >
+              <PanelLeftOpen className="h-3.5 w-3.5" />
+            </Button>
+
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold text-slate-950 sm:text-lg">{title}</h1>
+              <p className="hidden max-w-2xl text-xs text-slate-500 sm:block">{description}</p>
             </div>
 
-            <nav className="space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon
-                const active = item.section === current
+            <div className="ml-auto flex items-center gap-2">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Site
+              </Link>
+            </div>
+          </div>
+        </header>
 
-                return (
+        <div className="w-full px-3 py-4 sm:px-4 lg:px-6">
+          <section className="min-w-0 rounded-md border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+            {canViewCurrentSection ? (
+              children
+            ) : (
+              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-6 text-amber-900">
+                <h2 className="text-lg font-semibold">You do not have access to this page</h2>
+                <p className="mt-2 text-sm leading-6">
+                  Your current role does not allow this section. Use the pages your admin account can access, or contact an owner to update your permissions.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-3">
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                      active
-                        ? "bg-slate-950 text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]"
-                        : "text-slate-700 hover:bg-slate-100"
-                    }`}
+                    href="/admin"
+                    className="inline-flex items-center rounded-md bg-amber-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800"
                   >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
+                    Go to dashboard
                   </Link>
-                )
-              })}
-            </nav>
-          </section>
-
-          <section className="rounded-[1.75rem] border border-slate-200/80 bg-white/92 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Quick actions</div>
-                <p className="mt-1 text-xs text-slate-500">Useful shortcuts for daily admin work.</p>
+                  <button
+                    type="button"
+                    onClick={() => void handleLogout()}
+                    className="inline-flex items-center rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
-              <BadgeCheck className="h-5 w-5 text-emerald-600" />
-            </div>
-
-            <div className="mt-3 space-y-2">
-              <Link
-                href="/admin/addProduct"
-                className="group flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100"
-              >
-                <span>Create a product</span>
-                <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-slate-700" />
-              </Link>
-              <Link
-                href="/admin/categories"
-                className="group flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100"
-              >
-                <span>Manage categories</span>
-                <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-slate-700" />
-              </Link>
-              <Link
-                href="/admin/parameters"
-                className="group flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 transition hover:bg-slate-100"
-              >
-                <span>Update settings</span>
-                <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-slate-700" />
-              </Link>
-            </div>
-          </section>
-        </aside>
-
-        <section className="min-w-0">
-          <div className="mb-4 grid gap-4 xl:hidden">
-            <section className="rounded-[1.75rem] border border-slate-200/80 bg-white/92 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] backdrop-blur">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#1877F2]">Menu</div>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {navItems.map((item) => {
-                  const Icon = item.icon
-                  const active = item.section === current
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-medium transition ${
-                        active
-                          ? "bg-slate-950 text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]"
-                          : "bg-slate-50 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </Link>
-                  )
-                })}
-              </div>
-            </section>
-
-            <section className="grid grid-cols-2 gap-3">
-              <InfoRow label="Products" value={stats.loading ? "..." : `${stats.totalProducts}`} compact />
-              <InfoRow label="Categories" value={stats.loading ? "..." : `${stats.activeCategories}/${stats.totalCategories}`} compact />
-            </section>
-          </div>
-
-          <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/92 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-6">
-            {children}
-          </div>
-        </section>
-
-        <aside className="hidden space-y-4 xl:sticky xl:top-[76px] xl:block xl:h-fit">
-          <section className="rounded-[1.75rem] border border-slate-200/80 bg-white/92 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)] backdrop-blur">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold text-slate-900">Catalog pulse</div>
-                <p className="mt-1 text-xs text-slate-500">A quick read on how the store is structured today.</p>
-              </div>
-              <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600">
-                Live
-              </span>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <InfoRow label="Products" value={stats.loading ? "..." : `${stats.totalProducts}`} />
-              <InfoRow label="Categories" value={stats.loading ? "..." : `${stats.activeCategories}/${stats.totalCategories}`} />
-              <InfoRow label="Catalog value" value={stats.loading ? "..." : `DH ${stats.catalogValue}`} />
-            </div>
+            )}
           </section>
 
-          <section className="rounded-[1.75rem] border border-slate-200/80 bg-slate-950 p-4 text-white shadow-[0_14px_40px_rgba(15,23,42,0.18)]">
-            <div className="text-sm font-semibold">Operational note</div>
-            <p className="mt-2 text-sm leading-6 text-white/70">
-              This workspace is built for fast catalog updates. Product and category changes sync with Supabase, while this shell keeps the UI focused on the work.
-            </p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/80">
-              <CircleDollarSign className="h-4 w-4 text-emerald-400" />
-              Store value: {stats.loading ? "..." : `DH ${stats.catalogValue}`}
-            </div>
-          </section>
-        </aside>
+        </div>
       </div>
     </main>
   )
 }
 
-function InfoRow({ label, value, compact = false }: { label: string; value: string; compact?: boolean }) {
+function SidebarNav({
+  current,
+  items,
+  onNavigate,
+}: {
+  current: AdminSection
+  items: Array<{
+    href: string
+    label: string
+    icon: typeof LayoutDashboard
+    section: AdminSection
+  }>
+  onNavigate?: () => void
+}) {
   return (
-    <div
-      className={`flex items-center justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50 px-4 ${
-        compact ? "py-2.5" : "py-3"
-      }`}
-    >
-      <span className="text-sm text-slate-500">{label}</span>
-      <span className="text-sm font-semibold text-slate-900">{value}</span>
-    </div>
+    <nav className="space-y-1">
+      {items.map((item) => {
+        const Icon = item.icon
+        const active = item.section === current
+        const isSalesEntry = item.section === "sell-point"
+        const isHistoryEntry = item.section === "last-sell"
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition ${
+              active
+                ? "bg-white/10 text-white"
+                : isSalesEntry
+                  ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/30 hover:bg-emerald-500/25 hover:text-white"
+                  : isHistoryEntry
+                    ? "bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/30 hover:bg-sky-500/25 hover:text-white"
+                  : "text-white/70 hover:bg-white/10 hover:text-white"
+            }`}
+          >
+            <Icon className="h-4 w-4 shrink-0" />
+            <span>{item.label}</span>
+            {isSalesEntry ? (
+              <span className="ml-auto rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-100">
+                POS
+              </span>
+            ) : isHistoryEntry ? (
+              <span className="ml-auto rounded-full bg-sky-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-100">
+                History
+              </span>
+            ) : null}
+          </Link>
+        )
+      })}
+    </nav>
   )
 }

@@ -35,6 +35,7 @@ type ProductForm = {
   descriptionFr: string
   descriptionAr: string
   price: string
+  stock: string
   category: string
   sizes: ProductSizeForm[]
 }
@@ -51,6 +52,7 @@ type ProductRow = {
   image: string
   images: string[]
   category: string
+  stock: number
   sizes: unknown
 }
 
@@ -108,6 +110,7 @@ const emptyForm: ProductForm = {
   descriptionFr: "",
   descriptionAr: "",
   price: "",
+  stock: "100",
   category: "",
   sizes: [createSizeRow()],
 }
@@ -179,6 +182,7 @@ export default function AddProductPage() {
               images: string[]
               name: string
               price: number
+              stock?: number
               sourceUrl: string
               sizes: Array<{ label: string; price: number }>
             }>
@@ -244,6 +248,7 @@ export default function AddProductPage() {
           description_fr: product.description,
           description_ar: product.description,
           price: product.price,
+          stock: product.stock ?? 100,
           image: product.image || product.images[0] || "",
           images: product.images,
           category: product.category.slug,
@@ -308,6 +313,7 @@ export default function AddProductPage() {
       descriptionFr: row.description_fr,
       descriptionAr: row.description_ar,
       price: String(row.price),
+      stock: String(row.stock ?? 100),
       category: row.category,
       sizes: normalizeSizes(row.sizes, row.price),
     })
@@ -500,6 +506,14 @@ export default function AddProductPage() {
       return
     }
 
+    const stockValue = Number(form.stock)
+
+    if (Number.isNaN(stockValue) || stockValue < 0) {
+      setStatus("Please enter a valid stock quantity.")
+      setSaving(false)
+      return
+    }
+
     try {
       const uploadedImages = newImages.length ? await uploadNewImages(newImages.map((image) => ({ key: image.key, file: image.file }))) : []
       const previewImagesForSave: PreviewImage[] = [
@@ -527,6 +541,7 @@ export default function AddProductPage() {
         description_fr: form.descriptionFr,
         description_ar: form.descriptionAr,
         price: basePrice,
+        stock: stockValue,
         image: images[0],
         images,
         category: form.category,
@@ -701,6 +716,13 @@ export default function AddProductPage() {
                       </div>
                     </div>
 
+                    <div className="mt-2 rounded-2xl bg-slate-50 px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Stock</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-950">
+                        {row.stock <= 0 ? "Out of stock" : `${row.stock} units`}
+                      </p>
+                    </div>
+
                     <div className="mt-4 flex flex-wrap gap-2">
                       {rowSizes.slice(0, 2).map((size) => (
                         <span
@@ -747,6 +769,7 @@ export default function AddProductPage() {
                   <TableHead>Category</TableHead>
                   <TableHead>Sizes</TableHead>
                   <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -754,13 +777,13 @@ export default function AddProductPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-10 text-center text-slate-500">
+                    <TableCell colSpan={9} className="py-10 text-center text-slate-500">
                       Loading products...
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="py-10 text-center text-slate-500">
+                    <TableCell colSpan={9} className="py-10 text-center text-slate-500">
                       No products yet. Add the first product to open the catalog.
                     </TableCell>
                   </TableRow>
@@ -808,6 +831,15 @@ export default function AddProductPage() {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium text-slate-900">DH {row.price}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              row.stock <= 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
+                            }`}
+                          >
+                            {row.stock <= 0 ? "Out of stock" : `${row.stock} units`}
+                          </span>
+                        </TableCell>
                         <TableCell className="max-w-[280px] truncate text-slate-500">{row.description_en}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
@@ -871,6 +903,16 @@ export default function AddProductPage() {
                 type="number"
                 min="0"
                 step="0.01"
+              />
+            </Field>
+            <Field label="Stock quantity">
+              <input
+                value={form.stock}
+                onChange={handleChange("stock")}
+                className="admin-input"
+                type="number"
+                min="0"
+                step="1"
               />
             </Field>
             <Field label="Category">
