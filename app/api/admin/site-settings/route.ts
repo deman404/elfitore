@@ -2,9 +2,12 @@ import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseAdminClient } from "@/lib/supabase-admin"
 import {
+  DEFAULT_DELIVERY_METHODS,
   formatWhatsAppNumberForLink,
   isValidWhatsAppNumber,
+  normalizeDeliveryMethods,
   normalizeWhatsAppNumber,
+  SITE_SETTING_DELIVERY_METHODS_KEY,
   SITE_SETTING_WHATSAPP_NUMBER_KEY,
 } from "@/lib/site-settings"
 
@@ -19,35 +22,58 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "You must sign in before updating settings." }, { status: 401 })
     }
 
-    const body = (await request.json()) as { whatsappNumber?: unknown }
-    const whatsappNumber = normalizeWhatsAppNumber(String(body.whatsappNumber ?? ""))
-
-    if (!isValidWhatsAppNumber(whatsappNumber)) {
-      return NextResponse.json(
-        { error: "Enter a valid WhatsApp number with 8 to 15 digits, including the country code." },
-        { status: 400 }
-      )
-    }
+    const body = (await request.json()) as { whatsappNumber?: unknown; deliveryMethods?: unknown }
+    const hasWhatsappUpdate = typeof body.whatsappNumber === "string" && body.whatsappNumber.trim().length > 0
+    const whatsappNumber = hasWhatsappUpdate ? normalizeWhatsAppNumber(String(body.whatsappNumber ?? "")) : ""
+    const deliveryMethods = body.deliveryMethods === undefined ? null : normalizeDeliveryMethods(body.deliveryMethods ?? DEFAULT_DELIVERY_METHODS)
 
     const admin = getSupabaseAdminClient()
-    const { error } = (await (admin.from("site_settings") as any).upsert(
-      {
-        key: SITE_SETTING_WHATSAPP_NUMBER_KEY,
-        value: formatWhatsAppNumberForLink(whatsappNumber),
-      },
-      {
-        onConflict: "key",
+    if (hasWhatsappUpdate) {
+      if (!isValidWhatsAppNumber(whatsappNumber)) {
+        return NextResponse.json(
+          { error: "Enter a valid WhatsApp number with 8 to 15 digits, including the country code." },
+          { status: 400 }
+        )
       }
-    )) as {
-      error: { message: string } | null
+
+      const { error: whatsappError } = (await (admin.from("site_settings") as any).upsert(
+        {
+          key: SITE_SETTING_WHATSAPP_NUMBER_KEY,
+          value: formatWhatsAppNumberForLink(whatsappNumber),
+        },
+        {
+          onConflict: "key",
+        }
+      )) as {
+        error: { message: string } | null
+      }
+
+      if (whatsappError) {
+        return NextResponse.json({ error: whatsappError.message }, { status: 500 })
+      }
     }
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (deliveryMethods !== null) {
+      const { error: deliveryError } = (await (admin.from("site_settings") as any).upsert(
+        {
+          key: SITE_SETTING_DELIVERY_METHODS_KEY,
+          value: JSON.stringify(deliveryMethods),
+        },
+        {
+          onConflict: "key",
+        }
+      )) as {
+        error: { message: string } | null
+      }
+
+      if (deliveryError) {
+        return NextResponse.json({ error: deliveryError.message }, { status: 500 })
+      }
     }
 
     return NextResponse.json({
-      whatsappNumber: formatWhatsAppNumberForLink(whatsappNumber),
+      whatsappNumber: hasWhatsappUpdate ? formatWhatsAppNumberForLink(whatsappNumber) : undefined,
+      deliveryMethods: deliveryMethods ?? undefined,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not update settings."

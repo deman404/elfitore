@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowLeft, Check, ShoppingBag } from "lucide-react"
@@ -10,6 +10,8 @@ import { Footer } from "@/components/boty/footer"
 import { useLanguage } from "@/components/language-context"
 import { fetchSiteSettings } from "@/lib/site-settings"
 import { generateWhatsAppMessage, getWhatsAppMessageUrl } from "@/lib/whatsapp"
+import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
+import type { DeliveryMethod } from "@/lib/site-settings"
 import type { Locale } from "@/i18n.config"
 
 const translations = {
@@ -21,8 +23,12 @@ const translations = {
     continueShopping: "Continue Shopping",
     backToShop: "Back to Shop",
     shipping: "Shipping",
-    free: "Free",
+    free: "Calculated at checkout",
     total: "Total",
+    deliveryMethod: "Delivery method",
+    deliveryCity: "Delivery city",
+    selectDeliveryMethod: "Select delivery method",
+    selectDeliveryCity: "Select city",
     paymentMethod: "Payment Method",
     cod: "Cash on Delivery (COD)",
     whatsapp: "WhatsApp",
@@ -52,8 +58,12 @@ const translations = {
     continueShopping: "Continuer vos achats",
     backToShop: "Retour à la boutique",
     shipping: "Livraison",
-    free: "Gratuit",
+    free: "Calculé au paiement",
     total: "Total",
+    deliveryMethod: "Mode de livraison",
+    deliveryCity: "Ville de livraison",
+    selectDeliveryMethod: "Choisir le mode de livraison",
+    selectDeliveryCity: "Choisir une ville",
     paymentMethod: "Mode de paiement",
     cod: "Paiement à la livraison",
     whatsapp: "WhatsApp",
@@ -84,8 +94,12 @@ const translations = {
     continueShopping: "متابعة التسوق",
     backToShop: "العودة إلى المتجر",
     shipping: "التوصيل",
-    free: "مجاني",
+    free: "يُحسب عند الدفع",
     total: "الإجمالي",
+    deliveryMethod: "طريقة التوصيل",
+    deliveryCity: "مدينة التوصيل",
+    selectDeliveryMethod: "اختر طريقة التوصيل",
+    selectDeliveryCity: "اختر مدينة",
     paymentMethod: "طريقة الدفع",
     cod: "الدفع عند الاستلام",
     whatsapp: "واتس آب",
@@ -114,13 +128,27 @@ export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
   const { locale, isRTL } = useLanguage()
   const t = translations[locale as Locale]
+  const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([])
+  const [deliveryMethodId, setDeliveryMethodId] = useState("")
+  const [deliveryCity, setDeliveryCity] = useState("")
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "whatsapp">("cod")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [whatsappNumber, setWhatsappNumber] = useState("")
-  const shipping = 0
-  const total = subtotal + shipping
+  const [lastOrderReference, setLastOrderReference] = useState("")
+  const activeDeliveryMethods = useMemo(
+    () => deliveryMethods.filter((method) => method.active),
+    [deliveryMethods]
+  )
+  const selectedDeliveryMethod = useMemo(
+    () => activeDeliveryMethods.find((method) => method.id === deliveryMethodId) ?? activeDeliveryMethods[0] ?? null,
+    [activeDeliveryMethods, deliveryMethodId]
+  )
+  const deliveryCities = selectedDeliveryMethod?.rates ?? []
+  const selectedDeliveryRate = deliveryCities.find((rate) => rate.city === deliveryCity) ?? deliveryCities[0] ?? null
+  const shipping = selectedDeliveryRate ? selectedDeliveryRate.price : null
+  const total = subtotal + (shipping ?? 0)
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -140,10 +168,36 @@ export default function CheckoutPage() {
     const loadSettings = async () => {
       const settings = await fetchSiteSettings()
       setWhatsappNumber(settings.whatsappNumber ?? "")
+      setDeliveryMethods(settings.deliveryMethods ?? [])
     }
 
     void loadSettings()
   }, [])
+
+  useEffect(() => {
+    if (!activeDeliveryMethods.length) return
+
+    const nextMethod = activeDeliveryMethods.find((method) => method.id === deliveryMethodId) ?? activeDeliveryMethods[0]
+    if (nextMethod.id !== deliveryMethodId) {
+      setDeliveryMethodId(nextMethod.id)
+    }
+  }, [activeDeliveryMethods, deliveryMethodId])
+
+  useEffect(() => {
+    if (!selectedDeliveryMethod) return
+
+    const nextCity = selectedDeliveryMethod.rates[0]?.city ?? ""
+    if (nextCity && nextCity !== deliveryCity) {
+      setDeliveryCity(nextCity)
+      setFormData((current) => ({ ...current, city: nextCity }))
+      return
+    }
+
+    if (!nextCity && deliveryCity) {
+      setDeliveryCity("")
+      setFormData((current) => ({ ...current, city: "" }))
+    }
+  }, [deliveryCity, selectedDeliveryMethod])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -161,6 +215,8 @@ export default function CheckoutPage() {
     if (!formData.address) nextErrors.address = t.required
     if (!formData.city) nextErrors.city = t.required
     if (!formData.country) nextErrors.country = t.required
+    if (!selectedDeliveryMethod) nextErrors.deliveryMethod = t.required
+    if (!selectedDeliveryRate) nextErrors.deliveryCity = t.required
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -170,43 +226,132 @@ export default function CheckoutPage() {
     if (!validateForm()) return
 
     setIsSubmitting(true)
+    setLastOrderReference("")
 
-    const orderItems = items.map(item => ({
-      name: item.name,
+    const orderItems = items.map((item) => ({
+      productId: item.productId ?? (() => {
+        const parsed = Number.parseInt(item.id.split("-")[0] ?? "", 10)
+        return Number.isFinite(parsed) ? parsed : undefined
+      })(),
+      productName: item.name,
       quantity: item.quantity,
-      price: item.price,
+      unitPrice: item.price,
+      image: item.image,
     }))
 
-    if (paymentMethod === "whatsapp") {
-      if (!whatsappNumber) {
-        setErrors((current) => ({ ...current, paymentMethod: "WhatsApp is not configured yet." }))
-        setIsSubmitting(false)
-        return
-      }
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        channel: "checkout",
+        paymentMethod,
+        customer: {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          postalCode: formData.postalCode,
+          country: formData.country,
+        },
+        deliveryMethod: selectedDeliveryMethod?.name ?? "",
+        deliveryCity: selectedDeliveryRate?.city ?? "",
+        shipping: shipping ?? 0,
+        items: orderItems,
+      }),
+    })
 
-      const message = generateWhatsAppMessage({
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string
+      orderId?: number
+      reference?: string
+      subtotal?: number
+      total?: number
+      createdAt?: string
+      status?: string
+      channel?: "checkout" | "product-page"
+      paymentMethod?: "cod" | "whatsapp"
+      deliveryMethod?: string
+      deliveryCity?: string
+      shipping?: number
+    }
+
+    if (!response.ok) {
+      setErrors((current) => ({ ...current, paymentMethod: data.error ?? "Could not save the order." }))
+      setIsSubmitting(false)
+      return
+    }
+
+    const savedOrder: StorefrontOrderRecord = {
+      id: data.orderId ?? Date.now(),
+      reference: data.reference ?? `WEB-${Date.now()}`,
+      channel: data.channel ?? "checkout",
+      paymentMethod: data.paymentMethod ?? paymentMethod,
+      deliveryMethod: data.deliveryMethod ?? selectedDeliveryMethod?.name ?? "",
+      deliveryCity: data.deliveryCity ?? selectedDeliveryRate?.city ?? "",
+      shipping: data.shipping ?? shipping ?? 0,
+      status: data.status ?? "pending",
+      subtotal: data.subtotal ?? subtotal,
+      total: data.total ?? total,
+      createdAt: data.createdAt ?? new Date().toISOString(),
+      customer: {
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
+        postalCode: formData.postalCode,
         country: formData.country,
-        items: orderItems,
-        total,
-      }, locale as Locale)
-
-      window.open(getWhatsAppMessageUrl(message, whatsappNumber), "_blank")
-      clearCart()
-      setIsSuccess(true)
-      setIsSubmitting(false)
-      return
+      },
+      items: orderItems.map((item) => ({
+        productId: item.productId,
+        name: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice ?? 0,
+        image: item.image,
+      })),
     }
 
-    window.setTimeout(() => {
-      clearCart()
-      setIsSuccess(true)
-      setIsSubmitting(false)
-    }, 900)
+    saveBrowserStorefrontOrder(savedOrder)
+    setLastOrderReference(savedOrder.reference)
+
+    if (paymentMethod === "whatsapp") {
+      if (!whatsappNumber) {
+        clearCart()
+        setIsSuccess(true)
+        setIsSubmitting(false)
+        return
+      }
+
+      const message = generateWhatsAppMessage(
+        {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          country: formData.country,
+          deliveryMethod: selectedDeliveryMethod?.name,
+          deliveryCity: selectedDeliveryRate?.city,
+          shipping: shipping ?? undefined,
+          items: orderItems.map((item) => ({
+            name: item.productName,
+            quantity: item.quantity,
+            price: item.unitPrice ?? 0,
+          })),
+          total,
+        },
+        locale as Locale
+      )
+
+      window.open(getWhatsAppMessageUrl(message, whatsappNumber), "_blank")
+    }
+
+    clearCart()
+    setIsSuccess(true)
+    setIsSubmitting(false)
   }
 
   if (items.length === 0) {
@@ -254,6 +399,11 @@ export default function CheckoutPage() {
               </div>
               <h1 className="font-serif text-4xl text-foreground mb-4">{t.success}</h1>
               <p className="text-muted-foreground mb-8">{t.removeNotice}</p>
+              {lastOrderReference ? (
+                <p className="mb-8 text-sm font-medium text-foreground">
+                  Order reference: {lastOrderReference}
+                </p>
+              ) : null}
               <Link
                 href="/shop"
                 className="inline-flex items-center justify-center rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
@@ -286,6 +436,54 @@ export default function CheckoutPage() {
             <section className="rounded-3xl border bg-card p-6 md:p-8 shadow-sm">
               <h2 className="font-serif text-2xl text-foreground mb-6">{t.personalInfo}</h2>
               <form onSubmit={handleSubmit} className="space-y-8">
+                <div>
+                  <h3 className="font-semibold mb-4">{t.deliveryMethod}</h3>
+                  <div className="space-y-3">
+                    <select
+                      value={deliveryMethodId}
+                      onChange={(event) => setDeliveryMethodId(event.target.value)}
+                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      {activeDeliveryMethods.length === 0 ? (
+                        <option value="">{t.selectDeliveryMethod}</option>
+                      ) : null}
+                      {activeDeliveryMethods.map((method) => (
+                        <option key={method.id} value={method.id}>
+                          {method.name}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedDeliveryMethod?.description ? (
+                      <p className="text-sm text-muted-foreground">{selectedDeliveryMethod.description}</p>
+                    ) : null}
+                  </div>
+                  {errors.deliveryMethod ? <p className="mt-3 text-sm text-red-600">{errors.deliveryMethod}</p> : null}
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-4">{t.deliveryCity}</h3>
+                  <select
+                    value={deliveryCity}
+                    onChange={(event) => {
+                      const nextCity = event.target.value
+                      setDeliveryCity(nextCity)
+                      setFormData((current) => ({ ...current, city: nextCity }))
+                    }}
+                    disabled={deliveryCities.length === 0}
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {deliveryCities.length === 0 ? (
+                      <option value="">{t.selectDeliveryCity}</option>
+                    ) : null}
+                    {deliveryCities.map((rate) => (
+                      <option key={rate.city} value={rate.city}>
+                        {rate.city} - DH {rate.price.toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.deliveryCity ? <p className="mt-3 text-sm text-red-600">{errors.deliveryCity}</p> : null}
+                </div>
+
                 <div>
                   <h3 className="font-semibold mb-4">{t.paymentMethod}</h3>
                   <div className="space-y-3">
@@ -323,7 +521,6 @@ export default function CheckoutPage() {
                     { name: "email", label: t.email, type: "email" },
                     { name: "phone", label: t.phone, type: "tel" },
                     { name: "address", label: t.address, type: "text" },
-                    { name: "city", label: t.city, type: "text" },
                     { name: "postalCode", label: t.postalCode, type: "text" },
                     { name: "country", label: t.country, type: "text" },
                   ].map(field => (
@@ -379,7 +576,7 @@ export default function CheckoutPage() {
                 <div className="mt-6 border-t border-border/50 pt-4 space-y-2">
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>{t.shipping}</span>
-                    <span>{t.free}</span>
+                    <span>{shipping === null ? t.selectDeliveryCity : `DH ${shipping.toFixed(2)}`}</span>
                   </div>
                   <div className="flex items-center justify-between text-base font-medium text-foreground">
                     <span>{t.total}</span>

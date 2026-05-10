@@ -140,14 +140,17 @@ export function ProductGrid() {
     }
 
     return () => {
-      if (gridRef.current) {
-        gridObserver.unobserve(gridRef.current)
-      }
-      if (headerRef.current) {
-        headerObserver.unobserve(headerRef.current)
-      }
+      gridObserver.disconnect()
+      headerObserver.disconnect()
     }
   }, [])
+
+  useEffect(() => {
+    setIsVisible(false)
+    const timer = window.setTimeout(() => setIsVisible(true), 50)
+
+    return () => window.clearTimeout(timer)
+  }, [selectedCategory])
 
   return (
     <section className="bg-card py-16 sm:py-20 lg:py-24">
@@ -257,6 +260,7 @@ export function ProductGrid() {
                         if (product.stock <= 0) return
                         addItem({
                           id: product.id,
+                          productId: product.dbId,
                           name: product.name[locale as Locale],
                           description: product.description[locale as Locale],
                           price: product.price,

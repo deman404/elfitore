@@ -23,6 +23,8 @@ const translations = {
     postalCode: 'Postal Code',
     country: 'Country',
     orderSummary: 'Order Summary',
+    shipping: 'Shipping',
+    free: 'Calculated at checkout',
     total: 'Total',
     placeOrder: 'Place Order',
     sendViaWhatsApp: 'Send Order via WhatsApp',
@@ -46,6 +48,8 @@ const translations = {
     postalCode: 'Code postal',
     country: 'Pays',
     orderSummary: 'Résumé de la commande',
+    shipping: 'Livraison',
+    free: 'Calculé au paiement',
     total: 'Total',
     placeOrder: 'Passer la commande',
     sendViaWhatsApp: 'Envoyer la commande via WhatsApp',
@@ -69,6 +73,8 @@ const translations = {
     postalCode: 'الرمز البريدي',
     country: 'الدولة',
     orderSummary: 'ملخص الطلب',
+    shipping: 'التوصيل',
+    free: 'يُحسب عند الدفع',
     total: 'الإجمالي',
     placeOrder: 'تقديم الطلب',
     sendViaWhatsApp: 'إرسال الطلب عبر واتس آب',
@@ -282,6 +288,10 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     <span>DH {(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
+                <div className={`flex justify-between gap-3 text-sm text-muted-foreground ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
+                  <span>{t.shipping}</span>
+                  <span>{t.free}</span>
+                </div>
                 <div className={`border-t border-border/50 pt-2 mt-2 font-semibold flex justify-between ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <span>{t.total}:</span>
                   <span>DH {subtotal.toFixed(2)}</span>

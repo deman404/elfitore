@@ -26,7 +26,7 @@ const translations = {
     subtotal: 'Subtotal',
     shipping: 'Shipping',
     total: 'Total',
-    free: 'Free',
+    free: 'Calculated at checkout',
     checkout: 'Checkout'
   },
   fr: {
@@ -38,7 +38,7 @@ const translations = {
     subtotal: 'Sous-total',
     shipping: 'Livraison',
     total: 'Total',
-    free: 'Gratuit',
+    free: 'Calculé au paiement',
     checkout: 'Paiement'
   },
   ar: {
@@ -50,7 +50,7 @@ const translations = {
     subtotal: 'المجموع الجزئي',
     shipping: 'التوصيل',
     total: 'الإجمالي',
-    free: 'مجاني',
+    free: 'يُحسب عند الدفع',
     checkout: 'الدفع'
   }
 }
@@ -193,7 +193,7 @@ export function CartDrawer() {
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t.shipping}</span>
-                  <span>{shipping === 0 ? t.free : `DH ${shipping}`}</span>
+                  <span>{t.free}</span>
                 </div>
                 <div className="flex justify-between text-base font-medium text-foreground pt-2 border-t border-border/50">
                   <span>{t.total}</span>

@@ -32,6 +32,7 @@ const navItems: Array<{
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, section: "dashboard" },
   { href: "/admin/sell-point", label: "Sell Point", icon: BadgeDollarSign, section: "sell-point" },
   { href: "/admin/sell-point/last-receipt", label: "Last Sell", icon: ReceiptText, section: "last-sell" },
+  { href: "/admin/orders", label: "Orders", icon: ReceiptText, section: "orders" },
   { href: "/admin/users", label: "Users", icon: Users, section: "users" },
   { href: "/admin/addProduct", label: "Products", icon: Package, section: "products" },
   { href: "/admin/categories", label: "Categories", icon: Shapes, section: "categories" },

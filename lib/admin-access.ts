@@ -7,6 +7,7 @@ export type AdminSection =
   | "categories"
   | "sell-point"
   | "last-sell"
+  | "orders"
   | "users"
   | "settings"
   | "theme"
@@ -33,6 +34,7 @@ export function canAccessAdminSection(access: AdminAccessSnapshot | null, sectio
       return access.canManageUsers
     case "sell-point":
     case "last-sell":
+    case "orders":
       return access.canManageSales
     case "products":
       return access.canManageProducts
@@ -53,7 +55,7 @@ export function buildAllowedAdminSections(access: AdminAccessSnapshot | null): A
   if (!access) return sections
 
   if (access.canManageSales) {
-    sections.push("sell-point", "last-sell")
+    sections.push("sell-point", "last-sell", "orders")
   }
 
   if (access.canManageUsers) {

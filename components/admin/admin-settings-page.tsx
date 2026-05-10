@@ -6,7 +6,12 @@ import { Loader2, Lock, MessageSquareMore, Save, Shield, Smartphone } from "luci
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import { fetchSiteSettings, isValidWhatsAppNumber } from "@/lib/site-settings"
+import {
+  DEFAULT_DELIVERY_METHODS,
+  fetchSiteSettings,
+  isValidWhatsAppNumber,
+  type DeliveryMethod,
+} from "@/lib/site-settings"
 
 type MessageState = {
   type: "error" | "success"
@@ -20,11 +25,14 @@ export function AdminSettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [whatsappNumber, setWhatsappNumber] = useState("")
+  const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>(DEFAULT_DELIVERY_METHODS)
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [savingWhatsapp, setSavingWhatsapp] = useState(false)
+  const [savingDeliveryMethods, setSavingDeliveryMethods] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordMessage, setPasswordMessage] = useState<MessageState | null>(null)
   const [whatsappMessage, setWhatsappMessage] = useState<MessageState | null>(null)
+  const [deliveryMessage, setDeliveryMessage] = useState<MessageState | null>(null)
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -34,6 +42,7 @@ export function AdminSettingsPage() {
 
       setAdminEmail(authData.user?.email ?? "")
       setWhatsappNumber(settings.whatsappNumber ?? "")
+      setDeliveryMethods(settings.deliveryMethods?.length ? settings.deliveryMethods : DEFAULT_DELIVERY_METHODS)
       setLoadingSettings(false)
     }
 
@@ -131,6 +140,110 @@ export function AdminSettingsPage() {
     }
 
     setSavingWhatsapp(false)
+  }
+
+  const addDeliveryMethod = () => {
+    setDeliveryMethods((current) => [
+      ...current,
+      {
+        id: `delivery-${Date.now()}`,
+        name: "New delivery company",
+        description: "",
+        active: true,
+        rates: [{ city: "", price: 0 }],
+      },
+    ])
+  }
+
+  const updateDeliveryMethod = (index: number, field: keyof Pick<DeliveryMethod, "name" | "description" | "active">, value: string | boolean) => {
+    setDeliveryMethods((current) =>
+      current.map((method, methodIndex) =>
+        methodIndex === index ? { ...method, [field]: value } : method
+      )
+    )
+  }
+
+  const addDeliveryRate = (methodIndex: number) => {
+    setDeliveryMethods((current) =>
+      current.map((method, index) =>
+        index === methodIndex
+          ? { ...method, rates: [...method.rates, { city: "", price: 0 }] }
+          : method
+      )
+    )
+  }
+
+  const updateDeliveryRate = (
+    methodIndex: number,
+    rateIndex: number,
+    field: "city" | "price",
+    value: string
+  ) => {
+    setDeliveryMethods((current) =>
+      current.map((method, index) =>
+        index === methodIndex
+          ? {
+              ...method,
+              rates: method.rates.map((rate, currentRateIndex) =>
+                currentRateIndex === rateIndex
+                  ? {
+                      ...rate,
+                      [field]: field === "price" ? Number(value) : value,
+                    }
+                  : rate
+              ),
+            }
+          : method
+      )
+    )
+  }
+
+  const removeDeliveryRate = (methodIndex: number, rateIndex: number) => {
+    setDeliveryMethods((current) =>
+      current.map((method, index) =>
+        index === methodIndex
+          ? { ...method, rates: method.rates.filter((_, currentRateIndex) => currentRateIndex !== rateIndex) }
+          : method
+      )
+    )
+  }
+
+  const removeDeliveryMethod = (index: number) => {
+    setDeliveryMethods((current) => current.filter((_, currentIndex) => currentIndex !== index))
+  }
+
+  const handleSaveDeliveryMethods = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setDeliveryMessage(null)
+    setSavingDeliveryMethods(true)
+
+    const response = await fetch("/api/admin/site-settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        whatsappNumber: isValidWhatsAppNumber(whatsappNumber) ? whatsappNumber : undefined,
+        deliveryMethods,
+      }),
+    })
+
+    const data = (await response.json().catch(() => ({}))) as { error?: string; deliveryMethods?: DeliveryMethod[] }
+
+    if (!response.ok) {
+      setDeliveryMessage({
+        type: "error",
+        text: data.error ?? "Could not save delivery methods.",
+      })
+    } else {
+      setDeliveryMethods(data.deliveryMethods ?? deliveryMethods)
+      setDeliveryMessage({
+        type: "success",
+        text: "Delivery companies and prices have been saved.",
+      })
+    }
+
+    setSavingDeliveryMethods(false)
   }
 
   return (
@@ -267,6 +380,144 @@ export function AdminSettingsPage() {
               ) : null}
             </form>
           </article>
+        </section>
+
+        <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-3xl">
+              <h3 className="text-xl font-semibold text-slate-950">Delivery companies and city prices</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Add the delivery services you use, then assign prices by city. The checkout page will use these values instead of showing free shipping.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={addDeliveryMethod} className="gap-2">
+                <span>Add company</span>
+              </Button>
+            </div>
+          </div>
+
+          <form className="mt-6 space-y-4" onSubmit={handleSaveDeliveryMethods}>
+            {deliveryMethods.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                No delivery companies yet. Add one to start defining prices.
+              </div>
+            ) : null}
+
+            {deliveryMethods.map((method, methodIndex) => (
+              <article key={method.id} className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                    <label className="block space-y-2 sm:col-span-2">
+                      <span className="text-sm font-medium text-slate-700">Company name</span>
+                      <input
+                        value={method.name}
+                        onChange={(event) => updateDeliveryMethod(methodIndex, "name", event.target.value)}
+                        className="admin-input"
+                        placeholder="Maroc Delivery"
+                      />
+                    </label>
+
+                    <label className="block space-y-2 sm:col-span-2">
+                      <span className="text-sm font-medium text-slate-700">Description</span>
+                      <textarea
+                        value={method.description}
+                        onChange={(event) => updateDeliveryMethod(methodIndex, "description", event.target.value)}
+                        className="admin-input min-h-24 resize-y"
+                        placeholder="Short note shown at checkout"
+                      />
+                    </label>
+
+                    <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={method.active}
+                        onChange={(event) => updateDeliveryMethod(methodIndex, "active", event.target.checked)}
+                      />
+                      Active delivery method
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeDeliveryMethod(methodIndex)}
+                    className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                  >
+                    Remove company
+                  </button>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-semibold text-slate-950">City prices</h4>
+                      <p className="mt-1 text-xs text-slate-500">Add one price per city for this delivery company.</p>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => addDeliveryRate(methodIndex)}>
+                      Add city
+                    </Button>
+                  </div>
+
+                  {method.rates.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                      No city prices yet.
+                    </div>
+                  ) : null}
+
+                  {method.rates.map((rate, rateIndex) => (
+                    <div key={`${method.id}-${rateIndex}`} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_160px_auto] md:items-end">
+                      <label className="block space-y-2">
+                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">City</span>
+                        <input
+                          value={rate.city}
+                          onChange={(event) => updateDeliveryRate(methodIndex, rateIndex, "city", event.target.value)}
+                          className="admin-input"
+                          placeholder="Ksar sghir"
+                        />
+                      </label>
+
+                      <label className="block space-y-2">
+                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Price DH</span>
+                        <input
+                          value={String(rate.price)}
+                          onChange={(event) => updateDeliveryRate(methodIndex, rateIndex, "price", event.target.value)}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="admin-input"
+                          placeholder="45"
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => removeDeliveryRate(methodIndex, rateIndex)}
+                        className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-slate-500">
+                Changes apply to checkout immediately after saving.
+              </p>
+              <Button type="submit" className="gap-2" disabled={savingDeliveryMethods}>
+                {savingDeliveryMethods ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {savingDeliveryMethods ? "Saving..." : "Save delivery"}
+              </Button>
+            </div>
+          </form>
+
+          {deliveryMessage ? (
+            <div className="mt-4">
+              <Notice type={deliveryMessage.type} text={deliveryMessage.text} />
+            </div>
+          ) : null}
         </section>
 
         <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white/70 p-6">

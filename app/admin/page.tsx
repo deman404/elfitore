@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowUpRight, BadgeCheck, BadgeDollarSign, CircleDollarSign, Database, Lock, Package2, Shapes, ShieldCheck, Sparkles, Users } from "lucide-react"
+import { ArrowUpRight, BadgeCheck, BadgeDollarSign, CircleDollarSign, Database, Lock, Package2, ReceiptText, Shapes, ShieldCheck, Sparkles, Users } from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
 import { canAccessAdminSection, type AdminAccessSnapshot } from "@/lib/admin-access"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
@@ -11,6 +11,7 @@ import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } f
 export default function AdminPage() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const [products, setProducts] = useState<NormalizedProduct[]>([])
+  const [webOrdersCount, setWebOrdersCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [access, setAccess] = useState<AdminAccessSnapshot | null>(null)
@@ -21,6 +22,13 @@ export default function AdminPage() {
       setError("")
 
       const { data, error: queryError } = await supabase.from("products").select("*").order("id", { ascending: false })
+      let ordersCount = 0
+      try {
+        const { count } = await supabase.from("web_orders").select("id", { count: "exact", head: true })
+        ordersCount = count ?? 0
+      } catch {
+        ordersCount = 0
+      }
 
       if (queryError) {
         setError(`Could not load products from Supabase: ${queryError.message}`)
@@ -28,6 +36,8 @@ export default function AdminPage() {
       } else {
         setProducts(((data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
       }
+
+      setWebOrdersCount(ordersCount)
 
       setLoading(false)
     }
@@ -191,6 +201,13 @@ export default function AdminPage() {
             tone="blue"
           />
           <StateCard
+            icon={ReceiptText}
+            label="Web orders"
+            value={loading ? "..." : `${webOrdersCount}`}
+            note="WhatsApp and COD orders"
+            tone="green"
+          />
+          <StateCard
             icon={Users}
             label="Users"
             value="Manage"
@@ -264,6 +281,14 @@ export default function AdminPage() {
                     description="Open the in-store checkout portal."
                     href="/admin/sell-point"
                     icon={BadgeDollarSign}
+                  />
+                ) : null}
+                {canAccessAdminSection(access, "sell-point") ? (
+                  <ActionCard
+                    title="Orders"
+                    description="Review WhatsApp and COD orders captured from the storefront."
+                    href="/admin/orders"
+                    icon={ReceiptText}
                   />
                 ) : null}
                 <ActionCard

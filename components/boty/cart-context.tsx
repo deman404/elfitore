@@ -4,6 +4,7 @@ import { createContext, useContext, useState, type ReactNode } from "react"
 
 export interface CartItem {
   id: string
+  productId?: number
   name: string
   description: string
   price: number

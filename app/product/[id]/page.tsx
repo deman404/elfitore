@@ -12,6 +12,7 @@ import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { fetchSiteSettings } from "@/lib/site-settings"
 import { generateWhatsAppMessage, getWhatsAppChatUrl, getWhatsAppMessageUrl } from "@/lib/whatsapp"
+import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
 
@@ -124,6 +125,7 @@ export default function ProductPage() {
     Array.from({ length: quantity }).forEach(() => {
       addItem({
         id: `${product.id}-${selectedSize || "standard"}`,
+        productId: product.dbId,
         name: product.name[locale as Locale],
         description: `${product.description[locale as Locale]}${selectedSize ? ` • ${selectedSize}` : ""}`,
         price: unitPrice,
@@ -136,6 +138,48 @@ export default function ProductPage() {
   const handleOrderViaWhatsApp = () => {
     if (!product || !whatsappNumber) return
 
+    const orderItems = [
+      {
+        productId: product.dbId,
+        productName: product.name[locale as Locale],
+        quantity,
+        unitPrice: unitPrice,
+        image: selectedImage || product.image,
+      },
+    ]
+
+    const savedOrder: StorefrontOrderRecord = {
+      id: Date.now(),
+      reference: `WEB-${Date.now()}`,
+      channel: "product-page",
+      paymentMethod: "whatsapp",
+      deliveryMethod: "",
+      deliveryCity: "",
+      shipping: 0,
+      status: "pending",
+      subtotal: totalPrice,
+      total: totalPrice,
+      createdAt: new Date().toISOString(),
+      customer: {
+        fullName: "",
+        email: "",
+        phone: "",
+        address: "",
+        city: "",
+        postalCode: "",
+        country: "",
+      },
+      items: orderItems.map((item) => ({
+        productId: item.productId,
+        name: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        image: item.image,
+      })),
+    }
+
+    saveBrowserStorefrontOrder(savedOrder)
+
     const message = generateWhatsAppMessage(
       {
         fullName: "",
@@ -144,13 +188,11 @@ export default function ProductPage() {
         address: "",
         city: "",
         country: "",
-        items: [
-          {
-            name: product.name[locale as Locale],
-            quantity,
-            price: unitPrice,
-          },
-        ],
+        items: orderItems.map((item) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.unitPrice,
+        })),
         total: totalPrice,
       },
       locale as Locale
