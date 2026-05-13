@@ -12,6 +12,7 @@ import { fetchSiteSettings } from "@/lib/site-settings"
 import { generateWhatsAppMessage, getWhatsAppMessageUrl } from "@/lib/whatsapp"
 import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
 import type { DeliveryMethod } from "@/lib/site-settings"
+import { YouMayLikeSection } from "@/components/boty/you-may-like-section"
 import type { Locale } from "@/i18n.config"
 
 const translations = {
@@ -225,6 +226,11 @@ export default function CheckoutPage() {
     e.preventDefault()
     if (!validateForm()) return
 
+    const whatsappWindow =
+      paymentMethod === "whatsapp" && typeof window !== "undefined"
+        ? window.open("about:blank", "_blank", "noopener,noreferrer")
+        : null
+
     setIsSubmitting(true)
     setLastOrderReference("")
 
@@ -279,6 +285,7 @@ export default function CheckoutPage() {
     }
 
     if (!response.ok) {
+      whatsappWindow?.close()
       setErrors((current) => ({ ...current, paymentMethod: data.error ?? "Could not save the order." }))
       setIsSubmitting(false)
       return
@@ -319,6 +326,7 @@ export default function CheckoutPage() {
 
     if (paymentMethod === "whatsapp") {
       if (!whatsappNumber) {
+        whatsappWindow?.close()
         clearCart()
         setIsSuccess(true)
         setIsSubmitting(false)
@@ -346,7 +354,12 @@ export default function CheckoutPage() {
         locale as Locale
       )
 
-      window.open(getWhatsAppMessageUrl(message, whatsappNumber), "_blank")
+      const whatsappUrl = getWhatsAppMessageUrl(message, whatsappNumber)
+      if (whatsappWindow) {
+        whatsappWindow.location.href = whatsappUrl
+      } else {
+        window.open(whatsappUrl, "_blank")
+      }
     }
 
     clearCart()
@@ -379,6 +392,10 @@ export default function CheckoutPage() {
               >
                 {t.backToShop}
               </Link>
+            </div>
+
+            <div className="mt-12 text-left">
+              <YouMayLikeSection limit={4} />
             </div>
           </div>
         </div>
@@ -592,6 +609,13 @@ export default function CheckoutPage() {
                 </p>
               </section>
             </aside>
+          </div>
+
+          <div className="mt-12">
+            <YouMayLikeSection
+              excludeProductIds={items.map((item) => item.productId ?? item.id)}
+              limit={4}
+            />
           </div>
         </div>
       </div>

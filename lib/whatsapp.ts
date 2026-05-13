@@ -46,3 +46,18 @@ export function getWhatsAppMessageUrl(message: string, number = DEFAULT_WHATSAPP
   const encodedMessage = encodeURIComponent(message)
   return `https://wa.me/${formatWhatsAppNumberForLink(number)}?text=${encodedMessage}`
 }
+
+export function openWhatsAppMessage(message: string, number = DEFAULT_WHATSAPP_NUMBER) {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const whatsappUrl = getWhatsAppMessageUrl(message, number)
+  const popup = window.open(whatsappUrl, "_blank", "noopener,noreferrer")
+
+  if (!popup) {
+    window.location.href = whatsappUrl
+  }
+
+  return popup
+}

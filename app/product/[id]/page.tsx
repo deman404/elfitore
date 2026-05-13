@@ -11,9 +11,10 @@ import { useCart } from "@/components/boty/cart-context"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { fetchSiteSettings } from "@/lib/site-settings"
-import { generateWhatsAppMessage, getWhatsAppChatUrl, getWhatsAppMessageUrl } from "@/lib/whatsapp"
+import { generateWhatsAppMessage, getWhatsAppChatUrl, openWhatsAppMessage } from "@/lib/whatsapp"
 import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
+import { YouMayLikeSection } from "@/components/boty/you-may-like-section"
 import type { Locale } from "@/i18n.config"
 
 const translations = {
@@ -198,7 +199,7 @@ export default function ProductPage() {
       locale as Locale
     )
 
-    window.open(getWhatsAppMessageUrl(message, whatsappNumber), "_blank")
+    openWhatsAppMessage(message, whatsappNumber)
   }
 
   const handleContactViaWhatsApp = () => {
@@ -390,6 +391,16 @@ export default function ProductPage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="pb-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <YouMayLikeSection
+            focusCategory={product.category}
+            excludeProductIds={[product.id]}
+            limit={4}
+          />
         </div>
       </div>
 
