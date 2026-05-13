@@ -47,12 +47,12 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
             <Lock className="h-5 w-5" />
           </div>
 
-          <h1 className="mt-5 font-serif text-3xl text-foreground">Admin login</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Sign in with your email and password.</p>
+          <h1 className="mt-5 font-serif text-3xl text-foreground">Connexion admin</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Connectez-vous avec votre e-mail et votre mot de passe.</p>
 
           <form className="mt-6 space-y-4" onSubmit={signIn}>
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-foreground">Email</span>
+              <span className="text-sm font-medium text-foreground">E-mail</span>
               <input
                 value={form.email}
                 onChange={handleChange("email")}
@@ -64,7 +64,7 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-foreground">Password</span>
+              <span className="text-sm font-medium text-foreground">Mot de passe</span>
               <input
                 value={form.password}
                 onChange={handleChange("password")}
@@ -81,7 +81,7 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
               className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Connexion..." : "Se connecter"}
             </button>
           </form>
 
@@ -95,4 +95,3 @@ export function AdminLoginForm({ nextPath }: { nextPath: string }) {
     </main>
   )
 }
-

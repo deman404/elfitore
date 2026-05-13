@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { Locale } from '@/i18n.config'
+import { defaultLocale, type Locale } from '@/i18n.config'
 
 interface LanguageContextType {
   locale: Locale
@@ -12,7 +12,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en')
+  const [locale, setLocaleState] = useState<Locale>(defaultLocale)
   const isRTL = locale === 'ar'
 
   useEffect(() => {

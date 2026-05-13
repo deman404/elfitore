@@ -168,9 +168,6 @@ export function CartDrawer() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {item.stock <= 0 ? "Out of stock" : `${item.stock} available`}
-                      </p>
                     </div>
 
                     {/* Price */}

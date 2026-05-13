@@ -260,7 +260,7 @@ export function AdminSettingsPage() {
       setDeliveryMethods(data.deliveryMethods ?? deliveryMethods)
       setDeliveryMessage({
         type: "success",
-        text: "Delivery companies and prices have been saved.",
+        text: "Les sociétés de livraison et leurs tarifs ont été enregistrés.",
       })
     }
 
@@ -270,8 +270,8 @@ export function AdminSettingsPage() {
   return (
     <AdminShell
       current="settings"
-      title="Settings"
-      description="Update the admin password and the WhatsApp number used by customer command links."
+      title="Paramètres"
+      description="Mettez à jour le mot de passe admin et le numéro WhatsApp utilisé pour les liens de commande."
     >
       <div className="space-y-6">
         <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
@@ -287,9 +287,9 @@ export function AdminSettingsPage() {
             </div>
 
             <div className="grid gap-3">
-              <SettingPill label="Account" value={loadingSettings ? "Loading..." : adminEmail || "Not signed in"} />
-              <SettingPill label="WhatsApp" value={loadingSettings ? "Loading..." : whatsappNumber || "Not set"} />
-              <SettingPill label="Scope" value="Admin-only" />
+              <SettingPill label="Compte" value={loadingSettings ? "Chargement..." : adminEmail || "Non connecté"} />
+              <SettingPill label="WhatsApp" value={loadingSettings ? "Chargement..." : whatsappNumber || "Non défini"} />
+              <SettingPill label="Accès" value="Admin uniquement" />
             </div>
           </div>
         </section>
@@ -301,58 +301,58 @@ export function AdminSettingsPage() {
                 <Lock className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-slate-950">Change password</h3>
+                <h3 className="text-xl font-semibold text-slate-950">Changer le mot de passe</h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Re-enter your current password, then choose a new one for the admin account.
+                  Saisissez à nouveau votre mot de passe actuel, puis choisissez-en un nouveau pour le compte admin.
                 </p>
               </div>
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={handleChangePassword}>
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Admin email</span>
+                <span className="text-sm font-medium text-slate-700">E-mail admin</span>
                 <input value={adminEmail} readOnly className="admin-input bg-slate-50 text-slate-500" />
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Current password</span>
+                <span className="text-sm font-medium text-slate-700">Mot de passe actuel</span>
                 <input
                   value={currentPassword}
                   onChange={(event) => setCurrentPassword(event.target.value)}
                   type="password"
                   autoComplete="current-password"
                   className="admin-input"
-                  placeholder="Enter your current password"
+                  placeholder="Entrez votre mot de passe actuel"
                 />
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">New password</span>
+                <span className="text-sm font-medium text-slate-700">Nouveau mot de passe</span>
                 <input
                   value={newPassword}
                   onChange={(event) => setNewPassword(event.target.value)}
                   type="password"
                   autoComplete="new-password"
                   className="admin-input"
-                  placeholder="Use at least 8 characters"
+                  placeholder="Utilisez au moins 8 caractères"
                 />
               </label>
 
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Confirm new password</span>
+                <span className="text-sm font-medium text-slate-700">Confirmer le nouveau mot de passe</span>
                 <input
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   type="password"
                   autoComplete="new-password"
                   className="admin-input"
-                  placeholder="Repeat the new password"
+                  placeholder="Répétez le nouveau mot de passe"
                 />
               </label>
 
               <Button type="submit" className="w-full gap-2" disabled={changingPassword || !adminEmail}>
                 {changingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Shield className="h-4 w-4" />}
-                {changingPassword ? "Updating password..." : "Update password"}
+                {changingPassword ? "Mise à jour..." : "Mettre à jour le mot de passe"}
               </Button>
 
               {passwordMessage ? (
@@ -367,16 +367,16 @@ export function AdminSettingsPage() {
                 <MessageSquareMore className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-slate-950">WhatsApp command number</h3>
+                <h3 className="text-xl font-semibold text-slate-950">Numéro WhatsApp de commande</h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  This number is used when customers tap WhatsApp on product pages, checkout, and the cart modal.
+                  Ce numéro est utilisé lorsque les clients cliquent sur WhatsApp depuis les pages produit, la commande et le panier.
                 </p>
               </div>
             </div>
 
             <form className="mt-6 space-y-4" onSubmit={handleSaveWhatsapp}>
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">WhatsApp number</span>
+                <span className="text-sm font-medium text-slate-700">Numéro WhatsApp</span>
                 <input
                   value={whatsappNumber}
                   onChange={(event) => setWhatsappNumber(event.target.value)}
@@ -388,12 +388,12 @@ export function AdminSettingsPage() {
               </label>
 
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
-                Use the full international format with the country code. The app strips spaces and symbols before building the WhatsApp link.
+                Utilisez le format international complet avec l'indicatif du pays. L'application supprime les espaces et les symboles avant de créer le lien WhatsApp.
               </div>
 
               <Button type="submit" className="w-full gap-2" disabled={savingWhatsapp}>
                 {savingWhatsapp ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {savingWhatsapp ? "Saving..." : "Save WhatsApp number"}
+                {savingWhatsapp ? "Enregistrement..." : "Enregistrer le numéro WhatsApp"}
               </Button>
 
               {whatsappMessage ? (
@@ -406,15 +406,15 @@ export function AdminSettingsPage() {
         <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-3xl">
-              <h3 className="text-xl font-semibold text-slate-950">Delivery companies and city prices</h3>
+                <h3 className="text-xl font-semibold text-slate-950">Sociétés de livraison et tarifs par ville</h3>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                Add the delivery services you use, then assign prices by city. The checkout page will use these values instead of showing free shipping.
+                Ajoutez les services de livraison que vous utilisez, puis attribuez des prix par ville. La page de commande utilisera ces valeurs au lieu d'afficher la livraison gratuite.
               </p>
             </div>
             <div className="flex gap-3">
               <Button type="button" variant="outline" onClick={addDeliveryMethod} className="gap-2">
                 <Plus className="h-4 w-4" />
-                <span>Add company</span>
+                <span>Ajouter une société</span>
               </Button>
             </div>
           </div>
@@ -422,7 +422,7 @@ export function AdminSettingsPage() {
           <form className="mt-6 space-y-4" onSubmit={handleSaveDeliveryMethods}>
             {deliveryMethods.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-                No delivery companies yet. Add one to start defining prices.
+                Aucune société de livraison pour le moment. Ajoutez-en une pour commencer à définir les tarifs.
               </div>
             ) : null}
 
@@ -436,7 +436,7 @@ export function AdminSettingsPage() {
                       className="min-w-[11rem] flex-none justify-between rounded-[1rem] px-4 py-3 text-left data-[state=active]:bg-white"
                     >
                       <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-sm font-semibold">{method.name || `Company ${methodIndex + 1}`}</span>
+                        <span className="truncate text-sm font-semibold">{method.name || `Société ${methodIndex + 1}`}</span>
                         <span className="text-xs text-slate-500">
                           {method.rates.length} city{method.rates.length === 1 ? "" : "ies"}
                         </span>
@@ -451,12 +451,12 @@ export function AdminSettingsPage() {
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="grid flex-1 gap-4 sm:grid-cols-2">
                           <label className="block space-y-2 sm:col-span-2">
-                            <span className="text-sm font-medium text-slate-700">Company name</span>
+                            <span className="text-sm font-medium text-slate-700">Nom de la société</span>
                             <input
                               value={method.name}
                               onChange={(event) => updateDeliveryMethod(methodIndex, "name", event.target.value)}
                               className="admin-input"
-                              placeholder="Maroc Delivery"
+                              placeholder="Livraison Maroc"
                             />
                           </label>
 
@@ -466,7 +466,7 @@ export function AdminSettingsPage() {
                               value={method.description}
                               onChange={(event) => updateDeliveryMethod(methodIndex, "description", event.target.value)}
                               className="admin-input min-h-24 resize-y"
-                              placeholder="Short note shown at checkout"
+                              placeholder="Courte note affichée lors de la commande"
                             />
                           </label>
 
@@ -476,7 +476,7 @@ export function AdminSettingsPage() {
                               checked={method.active}
                               onChange={(event) => updateDeliveryMethod(methodIndex, "active", event.target.checked)}
                             />
-                            Active delivery method
+                            Mode de livraison actif
                           </label>
                         </div>
 
@@ -486,18 +486,18 @@ export function AdminSettingsPage() {
                           className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
                         >
                           <Trash2 className="h-4 w-4" />
-                          Remove company
+                          Supprimer la société
                         </button>
                       </div>
 
                       <div className="mt-5 space-y-3">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <h4 className="text-sm font-semibold text-slate-950">City prices</h4>
-                            <p className="mt-1 text-xs text-slate-500">Add one price per city for this delivery company.</p>
+                            <h4 className="text-sm font-semibold text-slate-950">Tarifs par ville</h4>
+                            <p className="mt-1 text-xs text-slate-500">Ajoutez un prix par ville pour cette société de livraison.</p>
                           </div>
                           <Button type="button" variant="outline" size="sm" onClick={() => addDeliveryRate(methodIndex)}>
-                            Add city
+                            Ajouter une ville
                           </Button>
                         </div>
 
@@ -510,7 +510,7 @@ export function AdminSettingsPage() {
                         {method.rates.map((rate, rateIndex) => (
                           <div key={`${method.id}-${rateIndex}`} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-[1fr_160px_auto] md:items-end">
                             <label className="block space-y-2">
-                              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">City</span>
+                              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Ville</span>
                               <input
                                 value={rate.city}
                                 onChange={(event) => updateDeliveryRate(methodIndex, rateIndex, "city", event.target.value)}
@@ -520,7 +520,7 @@ export function AdminSettingsPage() {
                             </label>
 
                             <label className="block space-y-2">
-                              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Price DH</span>
+                              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Prix DH</span>
                               <input
                                 value={String(rate.price)}
                                 onChange={(event) => updateDeliveryRate(methodIndex, rateIndex, "price", event.target.value)}
@@ -537,7 +537,7 @@ export function AdminSettingsPage() {
                               onClick={() => removeDeliveryRate(methodIndex, rateIndex)}
                               className="h-10 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                             >
-                              Remove
+                              Supprimer
                             </button>
                           </div>
                         ))}
@@ -550,11 +550,11 @@ export function AdminSettingsPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-slate-500">
-                Changes apply to checkout immediately after saving.
+                Les changements s'appliquent immédiatement au tunnel de commande après l'enregistrement.
               </p>
               <Button type="submit" className="gap-2" disabled={savingDeliveryMethods}>
                 {savingDeliveryMethods ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {savingDeliveryMethods ? "Saving..." : "Save delivery"}
+                {savingDeliveryMethods ? "Enregistrement..." : "Enregistrer la livraison"}
               </Button>
             </div>
           </form>
@@ -573,9 +573,9 @@ export function AdminSettingsPage() {
                 <Smartphone className="h-4 w-4" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-950">How it is used</h3>
+                <h3 className="text-lg font-semibold text-slate-950">Utilisation</h3>
                 <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                  Public storefront buttons read the saved number at runtime, so one change here updates all customer-facing WhatsApp links without a redeploy.
+                  Les boutons publics du site lisent le numéro enregistré à l'exécution, donc une seule modification ici met à jour tous les liens WhatsApp côté client sans redéploiement.
                 </p>
               </div>
             </div>

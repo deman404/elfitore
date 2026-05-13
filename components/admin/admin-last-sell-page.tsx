@@ -72,7 +72,7 @@ export function AdminLastSellPage({ initialReference }: Props) {
 
     if (queryError) {
       setSales([])
-      setError(`Could not load sales: ${queryError.message}`)
+      setError(`Impossible de charger les ventes : ${queryError.message}`)
     } else {
       setSales((data ?? []) as SaleRow[])
     }
@@ -115,7 +115,7 @@ export function AdminLastSellPage({ initialReference }: Props) {
       .order("id", { ascending: true })
 
     if (itemsError) {
-      setDetailsError(`Could not load sale items: ${itemsError.message}`)
+      setDetailsError(`Impossible de charger les articles de vente : ${itemsError.message}`)
       setSelectedItems([])
     } else {
       setSelectedItems((data ?? []) as SaleItemRow[])
@@ -129,26 +129,26 @@ export function AdminLastSellPage({ initialReference }: Props) {
   return (
     <AdminShell
       current="last-sell"
-      title="Last Sell"
-      description="Browse recent sales and open a receipt sheet for any completed order."
+      title="Dernière vente"
+      description="Parcourez les ventes récentes et ouvrez une fiche de reçu pour chaque commande terminée."
     >
       <div className="space-y-6">
         <section className="rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
           <div className="grid gap-6 px-6 py-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:px-8 lg:py-8">
             <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Sales history</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Historique des ventes</p>
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Last sell records in one table
+                Les dernières ventes dans un seul tableau
               </h1>
               <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                Click any row to open the full receipt in a sheet, including line items and totals.
+                Cliquez sur une ligne pour ouvrir le reçu complet dans un panneau, avec les articles et les totaux.
               </p>
             </div>
 
             <div className="grid gap-3">
-              <MiniStat label="Sales loaded" value={loading ? "..." : String(sales.length)} />
-              <MiniStat label="Total revenue" value={loading ? "..." : `DH ${totalRevenue.toFixed(2)}`} />
-              <MiniStat label="Newest sale" value={loading ? "..." : (sales[0]?.reference ?? "None")} />
+              <MiniStat label="Ventes chargées" value={loading ? "..." : String(sales.length)} />
+              <MiniStat label="Chiffre total" value={loading ? "..." : `DH ${totalRevenue.toFixed(2)}`} />
+              <MiniStat label="Dernière vente" value={loading ? "..." : (sales[0]?.reference ?? "Aucune")} />
             </div>
           </div>
         </section>
@@ -156,18 +156,18 @@ export function AdminLastSellPage({ initialReference }: Props) {
         <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Recent sales</h2>
-              <p className="mt-1 text-sm text-slate-500">Open the sheet on the right side for the selected sale.</p>
+              <h2 className="text-xl font-semibold text-slate-950">Ventes récentes</h2>
+              <p className="mt-1 text-sm text-slate-500">Ouvrez le panneau à droite pour la vente sélectionnée.</p>
             </div>
 
             <label className="block w-full space-y-2 sm:max-w-sm">
-              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Search</span>
+              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Recherche</span>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Reference, cashier, notes..."
+                  placeholder="Référence, caisse, notes..."
                   className="admin-input pl-9"
                 />
               </div>
@@ -182,33 +182,33 @@ export function AdminLastSellPage({ initialReference }: Props) {
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  <th className="px-4 py-3">Reference</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3">Payment</th>
-                  <th className="px-4 py-3">Cashier</th>
+                  <th className="px-4 py-3">Référence</th>
+                  <th className="px-4 py-3">Créée</th>
+                  <th className="px-4 py-3">Paiement</th>
+                  <th className="px-4 py-3">Caissier</th>
                   <th className="px-4 py-3">Total</th>
-                  <th className="px-4 py-3 text-right">Open</th>
+                  <th className="px-4 py-3 text-right">Ouvrir</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">
-                      Loading recent sales...
+                      Chargement des ventes récentes...
                     </td>
                   </tr>
                 ) : filteredSales.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">
-                      No sales found.
+                      Aucune vente trouvée.
                     </td>
                   </tr>
                 ) : (
                   filteredSales.map((sale) => (
                     <tr key={sale.id} className="text-sm text-slate-700">
                       <td className="px-4 py-4">
-                        <p className="font-medium text-slate-950">{sale.reference ?? "Pending"}</p>
-                        <p className="mt-1 text-xs text-slate-400">{sale.notes || "No notes"}</p>
+                        <p className="font-medium text-slate-950">{sale.reference ?? "En attente"}</p>
+                        <p className="mt-1 text-xs text-slate-400">{sale.notes || "Aucune note"}</p>
                       </td>
                       <td className="px-4 py-4">{new Date(sale.created_at).toLocaleString()}</td>
                       <td className="px-4 py-4">{formatPaymentMethod(sale.payment_method)}</td>
@@ -216,7 +216,7 @@ export function AdminLastSellPage({ initialReference }: Props) {
                       <td className="px-4 py-4 font-semibold text-slate-950">DH {toNumber(sale.total).toFixed(2)}</td>
                       <td className="px-4 py-4 text-right">
                         <Button type="button" variant="outline" size="sm" onClick={() => void openSale(sale)} className="gap-2">
-                          View
+                          Voir
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </td>
@@ -234,10 +234,10 @@ export function AdminLastSellPage({ initialReference }: Props) {
           <SheetHeader className="border-b border-slate-200 px-6 py-5">
             <SheetTitle className="flex items-center gap-2 text-slate-950">
               <ReceiptText className="h-5 w-5" />
-              Sale details
+              Détails de la vente
             </SheetTitle>
             <SheetDescription>
-              {selectedSale?.reference ?? "Select a sale"} and its receipt items.
+              {selectedSale?.reference ?? "Sélectionnez une vente"} et ses articles de reçu.
             </SheetDescription>
           </SheetHeader>
 
@@ -245,17 +245,17 @@ export function AdminLastSellPage({ initialReference }: Props) {
             {selectedSale ? (
               <div className="space-y-6">
                 <section className="grid gap-3 sm:grid-cols-2">
-                  <MiniCard label="Reference" value={selectedSale.reference ?? "Pending"} />
-                  <MiniCard label="Created" value={new Date(selectedSale.created_at).toLocaleString()} />
-                  <MiniCard label="Payment" value={formatPaymentMethod(selectedSale.payment_method)} />
-                  <MiniCard label="Cashier" value={selectedSale.cashier_email || "Unknown"} />
+                  <MiniCard label="Référence" value={selectedSale.reference ?? "En attente"} />
+                  <MiniCard label="Créée" value={new Date(selectedSale.created_at).toLocaleString()} />
+                  <MiniCard label="Paiement" value={formatPaymentMethod(selectedSale.payment_method)} />
+                  <MiniCard label="Caissier" value={selectedSale.cashier_email || "Inconnu"} />
                 </section>
 
                 <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-950">Items</h3>
-                      <p className="mt-1 text-xs text-slate-500">Products included in this sale.</p>
+                      <h3 className="text-sm font-semibold text-slate-950">Articles</h3>
+                      <p className="mt-1 text-xs text-slate-500">Produits inclus dans cette vente.</p>
                     </div>
                     {detailsLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-500" /> : null}
                   </div>
@@ -280,13 +280,13 @@ export function AdminLastSellPage({ initialReference }: Props) {
                         {detailsLoading ? (
                           <tr>
                             <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                              Loading items...
+                              Chargement des articles...
                             </td>
                           </tr>
                         ) : selectedItems.length === 0 ? (
                           <tr>
                             <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                              No items found.
+                              Aucun article trouvé.
                             </td>
                           </tr>
                         ) : (

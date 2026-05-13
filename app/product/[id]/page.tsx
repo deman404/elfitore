@@ -352,9 +352,6 @@ export default function ProductPage() {
                         +
                       </button>
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {availableStock <= 0 ? "Out of stock" : `${availableStock} available`}
-                    </p>
                   </div>
                 </div>
 
@@ -390,9 +387,6 @@ export default function ProductPage() {
                 >
                   {t.contactViaWhatsApp}
                 </button>
-              </div>
-              <div className={`rounded-2xl px-4 py-3 text-sm ${availableStock <= 0 ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
-                {availableStock <= 0 ? "This product is currently out of stock." : `${availableStock} units available.`}
               </div>
             </div>
           </div>

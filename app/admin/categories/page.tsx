@@ -78,7 +78,7 @@ export default function CategoriesPage() {
 
     if (error) {
       setRows([])
-      setStatus(`Could not load categories from Supabase: ${error.message}`)
+      setStatus(`Impossible de charger les catégories depuis Supabase : ${error.message}`)
     } else {
       setRows((data ?? []) as CategoryRow[])
     }
@@ -135,9 +135,9 @@ export default function CategoriesPage() {
     const { error } = await query
 
     if (error) {
-      setStatus(`Could not save category: ${error.message}`)
+      setStatus(`Impossible d'enregistrer la catégorie : ${error.message}`)
     } else {
-      setStatus(editingId === null ? "Category added." : "Category updated.")
+      setStatus(editingId === null ? "Catégorie ajoutée." : "Catégorie mise à jour.")
       setSheetOpen(false)
       setEditingId(null)
       setForm(emptyForm)
@@ -153,9 +153,9 @@ export default function CategoriesPage() {
     const { error } = await supabase.from("product_categories").delete().eq("id", id)
 
     if (error) {
-      setStatus(`Could not delete category: ${error.message}`)
+      setStatus(`Impossible de supprimer la catégorie : ${error.message}`)
     } else {
-      setStatus("Category deleted.")
+      setStatus("Catégorie supprimée.")
       await loadCategories()
     }
 
@@ -173,15 +173,15 @@ export default function CategoriesPage() {
   return (
     <AdminShell
       current="categories"
-      title="Categories"
-      description="Create product categories for the add product form."
+      title="Catégories"
+      description="Créez des catégories de produits pour le formulaire d'ajout."
     >
       <div className="space-y-6">
         <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#1877F2]">Catalog structure</p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Categories</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#1877F2]">Structure du catalogue</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Catégories</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
                 Keep the product taxonomy tidy so the product form stays fast and the storefront stays understandable.
               </p>
@@ -190,7 +190,7 @@ export default function CategoriesPage() {
                   {loading ? "..." : `${rows.filter((row) => row.active).length} active`}
                 </span>
                 <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">
-                  Sort order respected
+                  Ordre respecté
                 </span>
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function CategoriesPage() {
               className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               <Plus className="h-4 w-4" />
-              Add category
+              Ajouter une catégorie
             </button>
           </div>
 
@@ -216,11 +216,11 @@ export default function CategoriesPage() {
           <div className="space-y-4 lg:hidden">
             {loading ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-                Loading categories...
+                Chargement des catégories...
               </div>
             ) : rows.length === 0 ? (
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-                No categories yet. Add the first category to define the catalog.
+                Aucune catégorie pour le moment. Ajoutez la première catégorie pour définir le catalogue.
               </div>
             ) : (
               rows.map((row) => (
@@ -241,12 +241,12 @@ export default function CategoriesPage() {
 
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                      Order
+                      Ordre
                       <div className="mt-1 text-sm font-semibold text-slate-900">{row.sort_order}</div>
                     </div>
                     <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                      Status
-                      <div className="mt-1 text-sm font-semibold text-slate-900">{row.active ? "Visible" : "Hidden"}</div>
+                      Statut
+                      <div className="mt-1 text-sm font-semibold text-slate-900">{row.active ? "Visible" : "Masquée"}</div>
                     </div>
                   </div>
 
@@ -257,7 +257,7 @@ export default function CategoriesPage() {
                       className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                      Edit
+                      Modifier
                     </button>
                     <button
                       type="button"
@@ -266,7 +266,7 @@ export default function CategoriesPage() {
                       className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Delete
+                      Supprimer
                     </button>
                   </div>
                 </div>
@@ -281,8 +281,8 @@ export default function CategoriesPage() {
                 <TableHead className="w-[100px]">ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Slug</TableHead>
-                <TableHead>Order</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Ordre</TableHead>
+                <TableHead>Statut</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -291,13 +291,13 @@ export default function CategoriesPage() {
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="py-10 text-center text-slate-500">
-                    Loading categories...
+                    Chargement des catégories...
                   </TableCell>
                 </TableRow>
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="py-10 text-center text-slate-500">
-                    No categories yet. Add your first category to begin.
+                    Aucune catégorie pour le moment. Ajoutez votre première catégorie pour commencer.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -321,7 +321,7 @@ export default function CategoriesPage() {
                           className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                         >
                           <Pencil className="h-3.5 w-3.5" />
-                          Edit
+                          Modifier
                         </button>
                         <button
                           type="button"
@@ -330,7 +330,7 @@ export default function CategoriesPage() {
                           className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          Delete
+                          Supprimer
                         </button>
                       </div>
                     </TableCell>
@@ -347,10 +347,10 @@ export default function CategoriesPage() {
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
           <SheetHeader className="border-b border-slate-200 px-6 py-5">
             <SheetTitle className="text-3xl font-semibold text-slate-900">
-              {editingId === null ? "Add category" : "Edit category"}
+              {editingId === null ? "Ajouter une catégorie" : "Modifier une catégorie"}
             </SheetTitle>
             <SheetDescription className="text-slate-500">
-              Create a category and it will become available in product creation.
+              Créez une catégorie et elle sera disponible dans la création de produit.
             </SheetDescription>
           </SheetHeader>
 
@@ -389,7 +389,7 @@ export default function CategoriesPage() {
                 className="inline-flex items-center gap-2 rounded-2xl bg-[#1877F2] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1669d4] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {saving ? "Saving..." : editingId === null ? "Create category" : "Update category"}
+                {saving ? "Enregistrement..." : editingId === null ? "Créer la catégorie" : "Mettre à jour la catégorie"}
               </button>
               <button
                 type="button"
@@ -410,7 +410,7 @@ export default function CategoriesPage() {
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete category?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer la catégorie ?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove {deleteTarget?.name ? <span className="font-medium text-slate-900">{deleteTarget.name}</span> : "this category"} from Supabase.
               Products that use this category may need to be updated first.
@@ -426,7 +426,7 @@ export default function CategoriesPage() {
               disabled={saving}
               className="bg-red-600 text-white hover:bg-red-700"
             >
-              {saving ? "Deleting..." : "Delete category"}
+              {saving ? "Suppression..." : "Supprimer la catégorie"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

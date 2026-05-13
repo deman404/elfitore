@@ -12,8 +12,8 @@ type WebOrderRow = {
   reference: string | null
   channel: string
   payment_method: string
-  delivery_method: string
-  delivery_city: string
+  delivery_method?: string | null
+  delivery_city?: string | null
   shipping_amount: string | number
   status: string
   customer_full_name: string
@@ -51,6 +51,10 @@ function formatLabel(value: string) {
     .join(" ")
 }
 
+function getDeliveryLabel(order: WebOrderRow) {
+  return order.delivery_city?.trim() || order.delivery_method?.trim() || "Non défini"
+}
+
 export function AdminOrdersPage() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const [orders, setOrders] = useState<WebOrderRow[]>([])
@@ -69,9 +73,7 @@ export function AdminOrdersPage() {
 
     const { data, error: queryError } = await supabase
       .from("web_orders")
-      .select(
-        "id, reference, channel, payment_method, delivery_method, delivery_city, shipping_amount, status, customer_full_name, customer_email, customer_phone, customer_address, customer_city, customer_postal_code, customer_country, notes, subtotal, total, created_at"
-      )
+      .select("*")
       .order("created_at", { ascending: false })
       .limit(20)
 
@@ -94,8 +96,8 @@ export function AdminOrdersPage() {
       order.reference,
       order.channel,
       order.payment_method,
-      order.delivery_method,
       order.delivery_city,
+      order.delivery_method,
       order.status,
       order.customer_full_name,
       order.customer_email,
@@ -134,24 +136,24 @@ export function AdminOrdersPage() {
   const totalRevenue = orders.reduce((sum, order) => sum + toNumber(order.total), 0)
 
   return (
-    <AdminShell current="orders" title="Orders" description="Review storefront WhatsApp and COD orders saved from the website.">
+    <AdminShell current="orders" title="Commandes" description="Consultez les commandes WhatsApp et paiement à la livraison enregistrées depuis le site.">
       <div className="space-y-6">
         <section className="rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
           <div className="grid gap-6 px-6 py-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:px-8 lg:py-8">
             <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Storefront orders</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Commandes du site</p>
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                Orders captured from the website
+                Commandes récupérées depuis le site
               </h1>
               <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                WhatsApp and COD checkouts are saved here even when the customer finishes the conversation in another tab or app.
+                Les commandes WhatsApp et paiement à la livraison sont enregistrées ici, même si le client termine la conversation dans un autre onglet ou une autre application.
               </p>
             </div>
 
             <div className="grid gap-3">
-              <MiniStat label="Orders loaded" value={loading ? "..." : String(orders.length)} />
-              <MiniStat label="Total value" value={loading ? "..." : `DH ${totalRevenue.toFixed(2)}`} />
-              <MiniStat label="Newest order" value={loading ? "..." : (orders[0]?.reference ?? "None")} />
+              <MiniStat label="Commandes chargées" value={loading ? "..." : String(orders.length)} />
+              <MiniStat label="Valeur totale" value={loading ? "..." : `DH ${totalRevenue.toFixed(2)}`} />
+              <MiniStat label="Commande la plus récente" value={loading ? "..." : (orders[0]?.reference ?? "Aucune")} />
             </div>
           </div>
         </section>
@@ -159,18 +161,18 @@ export function AdminOrdersPage() {
         <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Recent orders</h2>
-              <p className="mt-1 text-sm text-slate-500">Open any order to inspect the customer details and line items.</p>
+              <h2 className="text-xl font-semibold text-slate-950">Commandes récentes</h2>
+              <p className="mt-1 text-sm text-slate-500">Ouvrez une commande pour consulter les détails client et les articles.</p>
             </div>
 
             <label className="block w-full space-y-2 sm:max-w-sm">
-              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Search</span>
+              <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Recherche</span>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Reference, customer, notes..."
+                  placeholder="Référence, client, notes..."
                   className="admin-input pl-9"
                 />
               </div>
@@ -185,56 +187,56 @@ export function AdminOrdersPage() {
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  <th className="px-4 py-3">Reference</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3">Channel</th>
-                  <th className="px-4 py-3">Payment</th>
-                  <th className="px-4 py-3">Delivery</th>
-                  <th className="px-4 py-3">Customer</th>
+                  <th className="px-4 py-3">Référence</th>
+                  <th className="px-4 py-3">Créée</th>
+                  <th className="px-4 py-3">Canal</th>
+                  <th className="px-4 py-3">Paiement</th>
+                  <th className="px-4 py-3">Livraison</th>
+                  <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Total</th>
-                  <th className="px-4 py-3 text-right">Open</th>
+                  <th className="px-4 py-3 text-right">Ouvrir</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
                 {loading ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
-                      Loading recent orders...
+                      Chargement des commandes récentes...
                     </td>
                   </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
-                      No orders found.
+                      Aucune commande trouvée.
                     </td>
                   </tr>
                 ) : (
                   filteredOrders.map((order) => (
                     <tr key={order.id} className="text-sm text-slate-700">
                       <td className="px-4 py-4">
-                        <p className="font-medium text-slate-950">{order.reference ?? "Pending"}</p>
+                        <p className="font-medium text-slate-950">{order.reference ?? "En attente"}</p>
                         <p className="mt-1 text-xs text-slate-400">{order.status}</p>
                       </td>
                       <td className="px-4 py-4">{new Date(order.created_at).toLocaleString()}</td>
                       <td className="px-4 py-4">{formatLabel(order.channel)}</td>
                       <td className="px-4 py-4">{formatLabel(order.payment_method)}</td>
                       <td className="px-4 py-4">
-                        <p className="font-medium text-slate-950">{order.delivery_method || "Not set"}</p>
-                        <p className="mt-1 text-xs text-slate-400">{order.delivery_city || "No city"}</p>
+                        <p className="font-medium text-slate-950">{getDeliveryLabel(order)}</p>
+                        <p className="mt-1 text-xs text-slate-400">Livraison</p>
                       </td>
                       <td className="px-4 py-4">
                         <p className="font-medium text-slate-950">{order.customer_full_name || "Anonymous"}</p>
-                        <p className="mt-1 text-xs text-slate-400">{order.customer_phone || order.customer_email || "No contact details"}</p>
+                        <p className="mt-1 text-xs text-slate-400">{order.customer_phone || order.customer_email || "Aucune coordonnée"}</p>
                       </td>
                       <td className="px-4 py-4 font-semibold text-slate-950">
                         DH {toNumber(order.total).toFixed(2)}
                         <p className="mt-1 text-xs font-normal text-slate-400">
-                          Shipping DH {toNumber(order.shipping_amount).toFixed(2)}
+                          Livraison DH {toNumber(order.shipping_amount).toFixed(2)}
                         </p>
                       </td>
                       <td className="px-4 py-4 text-right">
                         <Button type="button" variant="outline" size="sm" onClick={() => void openOrder(order)} className="gap-2">
-                          View
+                          Voir
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </td>
@@ -252,10 +254,10 @@ export function AdminOrdersPage() {
           <SheetHeader className="border-b border-slate-200 px-6 py-5">
             <SheetTitle className="flex items-center gap-2 text-slate-950">
               <ReceiptText className="h-5 w-5" />
-              Order details
+              Détails de la commande
             </SheetTitle>
             <SheetDescription>
-              {selectedOrder?.reference ?? "Select an order"} and its saved items.
+              {selectedOrder?.reference ?? "Sélectionnez une commande"} et ses articles enregistrés.
             </SheetDescription>
           </SheetHeader>
 
@@ -263,15 +265,15 @@ export function AdminOrdersPage() {
             {selectedOrder ? (
               <div className="space-y-6">
                 <section className="grid gap-3 sm:grid-cols-2">
-                  <MiniCard label="Reference" value={selectedOrder.reference ?? "Pending"} />
-                  <MiniCard label="Created" value={new Date(selectedOrder.created_at).toLocaleString()} />
-                  <MiniCard label="Channel" value={formatLabel(selectedOrder.channel)} />
-                  <MiniCard label="Payment" value={formatLabel(selectedOrder.payment_method)} />
-                  <MiniCard label="Delivery" value={selectedOrder.delivery_method || "Not set"} />
+                  <MiniCard label="Référence" value={selectedOrder.reference ?? "En attente"} />
+                  <MiniCard label="Créée" value={new Date(selectedOrder.created_at).toLocaleString()} />
+                  <MiniCard label="Canal" value={formatLabel(selectedOrder.channel)} />
+                  <MiniCard label="Paiement" value={formatLabel(selectedOrder.payment_method)} />
+                  <MiniCard label="Livraison" value={getDeliveryLabel(selectedOrder)} />
                 </section>
 
                 <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-sm font-semibold text-slate-950">Customer</h3>
+                  <h3 className="text-sm font-semibold text-slate-950">Client</h3>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <MiniCard label="Name" value={selectedOrder.customer_full_name || "Anonymous"} />
                     <MiniCard label="Phone" value={selectedOrder.customer_phone || "Not provided"} />
@@ -282,15 +284,15 @@ export function AdminOrdersPage() {
                     {[
                       selectedOrder.customer_address,
                       selectedOrder.customer_postal_code,
-                    ].filter(Boolean).join(" - ") || "No delivery address provided."}
+                    ].filter(Boolean).join(" - ") || "Aucune adresse de livraison fournie."}
                   </p>
                 </section>
 
                 <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="text-sm font-semibold text-slate-950">Items</h3>
-                      <p className="mt-1 text-xs text-slate-500">Products saved with this storefront order.</p>
+                      <h3 className="text-sm font-semibold text-slate-950">Articles</h3>
+                      <p className="mt-1 text-xs text-slate-500">Produits enregistrés avec cette commande du site.</p>
                     </div>
                     {detailsLoading ? <Loader2 className="h-4 w-4 animate-spin text-slate-500" /> : null}
                   </div>
@@ -315,13 +317,13 @@ export function AdminOrdersPage() {
                         {detailsLoading ? (
                           <tr>
                             <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                              Loading items...
+                              Chargement des articles...
                             </td>
                           </tr>
                         ) : selectedItems.length === 0 ? (
                           <tr>
                             <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                              No items found.
+                              Aucun article trouvé.
                             </td>
                           </tr>
                         ) : (
@@ -345,14 +347,14 @@ export function AdminOrdersPage() {
                 </section>
 
                 <section className="grid gap-3 sm:grid-cols-2">
-                  <MiniCard label="Subtotal" value={`DH ${toNumber(selectedOrder.subtotal).toFixed(2)}`} />
-                  <MiniCard label="Shipping" value={`DH ${toNumber(selectedOrder.shipping_amount).toFixed(2)}`} />
+                  <MiniCard label="Sous-total" value={`DH ${toNumber(selectedOrder.subtotal).toFixed(2)}`} />
+                  <MiniCard label="Livraison" value={`DH ${toNumber(selectedOrder.shipping_amount).toFixed(2)}`} />
                   <MiniCard label="Total" value={`DH ${toNumber(selectedOrder.total).toFixed(2)}`} />
                 </section>
 
                 <section className="rounded-2xl border border-slate-200 bg-white p-4">
                   <h3 className="text-sm font-semibold text-slate-950">Notes</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{selectedOrder.notes || "No notes added."}</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{selectedOrder.notes || "Aucune note ajoutée."}</p>
                 </section>
               </div>
             ) : (

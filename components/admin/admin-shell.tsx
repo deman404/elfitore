@@ -29,16 +29,16 @@ const navItems: Array<{
   icon: typeof LayoutDashboard
   section: AdminSection
 }> = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, section: "dashboard" },
-  { href: "/admin/sell-point", label: "Sell Point", icon: BadgeDollarSign, section: "sell-point" },
-  { href: "/admin/sell-point/last-receipt", label: "Last Sell", icon: ReceiptText, section: "last-sell" },
-  { href: "/admin/orders", label: "Orders", icon: ReceiptText, section: "orders" },
-  { href: "/admin/users", label: "Users", icon: Users, section: "users" },
-  { href: "/admin/addProduct", label: "Products", icon: Package, section: "products" },
-  { href: "/admin/categories", label: "Categories", icon: Shapes, section: "categories" },
-  { href: "/admin/theme", label: "Theme", icon: Palette, section: "theme" },
-  { href: "/admin/settings", label: "Settings", icon: SlidersHorizontal, section: "settings" },
-  { href: "/admin/auth", label: "Auth", icon: Lock, section: "auth" },
+  { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, section: "dashboard" },
+  { href: "/admin/sell-point", label: "Point de vente", icon: BadgeDollarSign, section: "sell-point" },
+  { href: "/admin/sell-point/last-receipt", label: "Dernière vente", icon: ReceiptText, section: "last-sell" },
+  { href: "/admin/orders", label: "Commandes", icon: ReceiptText, section: "orders" },
+  { href: "/admin/users", label: "Utilisateurs", icon: Users, section: "users" },
+  { href: "/admin/addProduct", label: "Produits", icon: Package, section: "products" },
+  { href: "/admin/categories", label: "Catégories", icon: Shapes, section: "categories" },
+  { href: "/admin/theme", label: "Thème", icon: Palette, section: "theme" },
+  { href: "/admin/settings", label: "Paramètres", icon: SlidersHorizontal, section: "settings" },
+  { href: "/admin/auth", label: "Connexion", icon: Lock, section: "auth" },
 ]
 
 export function AdminShell({
@@ -101,8 +101,8 @@ export function AdminShell({
   if (accessLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-blue-50 px-4 text-slate-700">
-        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm shadow-sm">
-          Loading admin access...
+          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm shadow-sm">
+          Chargement des accès admin...
         </div>
       </main>
     )
@@ -134,7 +134,7 @@ export function AdminShell({
                 className="flex w-full items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
               >
                 <Lock className="h-4 w-4" />
-                Logout
+                Déconnexion
               </button>
             </div>
           </div>
@@ -173,13 +173,13 @@ export function AdminShell({
       <div className="min-h-screen lg:pl-64">
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
           <div className="flex w-full items-center gap-2 px-3 py-2 sm:px-4 lg:px-6">
-            <Button
+              <Button
               type="button"
               variant="outline"
               size="icon-sm"
               className="shrink-0 border-slate-200 bg-white text-slate-700 lg:hidden"
               onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open admin menu"
+              aria-label="Ouvrir le menu admin"
             >
               <PanelLeftOpen className="h-3.5 w-3.5" />
             </Button>
@@ -207,23 +207,23 @@ export function AdminShell({
               children
             ) : (
               <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-6 text-amber-900">
-                <h2 className="text-lg font-semibold">You do not have access to this page</h2>
+                <h2 className="text-lg font-semibold">Vous n'avez pas accès à cette page</h2>
                 <p className="mt-2 text-sm leading-6">
-                  Your current role does not allow this section. Use the pages your admin account can access, or contact an owner to update your permissions.
+                  Votre rôle actuel ne permet pas d'ouvrir cette section. Utilisez les pages accessibles par votre compte admin, ou contactez un propriétaire pour mettre à jour vos permissions.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Link
                     href="/admin"
                     className="inline-flex items-center rounded-md bg-amber-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800"
                   >
-                    Go to dashboard
+                    Aller au tableau de bord
                   </Link>
                   <button
                     type="button"
                     onClick={() => void handleLogout()}
                     className="inline-flex items-center rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
                   >
-                    Logout
+                    Déconnexion
                   </button>
                 </div>
               </div>

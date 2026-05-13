@@ -66,6 +66,7 @@ export function ProductGrid() {
   const filteredProducts = selectedCategory === "all"
     ? products
     : products.filter((product) => product.category === selectedCategory)
+  const visibleProducts = filteredProducts.slice(0, 4)
 
   const handleCategoryChange = (category: FilterCategory) => {
     if (category === selectedCategory) return
@@ -227,12 +228,12 @@ export function ProductGrid() {
                 <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-muted" />
               </div>
             ))
-          ) : filteredProducts.length === 0 ? (
+          ) : visibleProducts.length === 0 ? (
             <div className="col-span-full rounded-3xl bg-background p-8 text-center text-sm text-muted-foreground">
               No products available from Supabase yet.
             </div>
           ) : (
-            filteredProducts.map((product, index) => (
+            visibleProducts.map((product, index) => (
               <Link
                 key={product.id}
                 href={`/product/${product.id}`}
@@ -297,9 +298,6 @@ export function ProductGrid() {
                           {product.sizes.length > 1 ? ` +${product.sizes.length - 1}` : ""}
                         </span>
                       ) : null}
-                      <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${product.stock <= 0 ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}`}>
-                        {product.stock <= 0 ? "Out of stock" : `${product.stock} in stock`}
-                      </span>
                     </div>
                   </div>
                 </div>

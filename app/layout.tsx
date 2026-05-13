@@ -48,7 +48,7 @@ export default function RootLayout({
   return (
     <LanguageProvider>
       <RtlWrapper>
-        <html lang="en" suppressHydrationWarning>
+        <html lang="fr" suppressHydrationWarning>
           <body className={`${dmSans.variable} ${playfairDisplay.variable} ${cairo.variable} font-sans antialiased`}>
             <CartProvider>
               {children}

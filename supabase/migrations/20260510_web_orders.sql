@@ -1,3 +1,9 @@
+alter table if exists public.web_orders
+  add column if not exists delivery_method text not null default '';
+
+alter table if exists public.web_orders
+  add column if not exists delivery_city text not null default '';
+
 create table if not exists public.web_orders (
   id bigserial primary key,
   reference text unique,

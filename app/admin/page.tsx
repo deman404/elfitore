@@ -94,15 +94,15 @@ export default function AdminPage() {
             <div className="space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/75">
                 <BadgeCheck className="h-4 w-4 text-emerald-400" />
-                Supabase connected
+                Supabase connecté
               </div>
 
               <div className="space-y-3">
                 <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-                  Keep the catalog moving with a dashboard that actually helps you operate it.
+                  Gardez le catalogue en mouvement avec un tableau de bord vraiment utile au quotidien.
                 </h1>
                 <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                  This panel shows the live catalog, the active structure behind it, and the fastest routes to add new inventory or update the store.
+                  Ce panneau affiche le catalogue en direct, sa structure active et les chemins les plus rapides pour ajouter du stock ou mettre à jour la boutique.
                 </p>
               </div>
 
@@ -111,14 +111,14 @@ export default function AdminPage() {
                   href="/admin/addProduct"
                   className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                 >
-                  Add product
+                  Ajouter un produit
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/admin/categories"
                   className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
-                  Manage categories
+                  Gérer les catégories
                   <ArrowUpRight className="h-4 w-4" />
                 </Link>
                 {canAccessAdminSection(access, "theme") ? (
@@ -126,7 +126,7 @@ export default function AdminPage() {
                     href="/admin/theme"
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    Theme
+                    Thème
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 ) : null}
@@ -135,7 +135,7 @@ export default function AdminPage() {
                     href="/admin/sell-point"
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    Sell Point
+                    Point de vente
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 ) : null}
@@ -144,7 +144,7 @@ export default function AdminPage() {
                     href="/admin/settings"
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    Store settings
+                    Paramètres de la boutique
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 ) : null}
@@ -153,7 +153,7 @@ export default function AdminPage() {
                     href="/admin/users"
                     className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
                   >
-                    Users
+                    Utilisateurs
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 ) : null}
@@ -161,10 +161,10 @@ export default function AdminPage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <MiniPill label="Products" value={loading ? "..." : `${totalProducts}`} />
-              <MiniPill label="Catalog value" value={loading ? "..." : `DH ${catalogValue}`} />
-              <MiniPill label="Active categories" value={loading ? "..." : `${categoryBreakdown.length}`} />
-              <MiniPill label="Stock units" value={loading ? "..." : `${totalStock}`} />
+              <MiniPill label="Produits" value={loading ? "..." : `${totalProducts}`} />
+              <MiniPill label="Valeur du catalogue" value={loading ? "..." : `DH ${catalogValue}`} />
+              <MiniPill label="Catégories actives" value={loading ? "..." : `${categoryBreakdown.length}`} />
+              <MiniPill label="Unités en stock" value={loading ? "..." : `${totalStock}`} />
             </div>
           </div>
         </section>
@@ -172,46 +172,46 @@ export default function AdminPage() {
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <StateCard
             icon={Package2}
-            label="Total products"
+            label="Produits totaux"
             value={loading ? "..." : `${totalProducts}`}
-            note="Live items in Supabase"
+            note="Articles actifs dans Supabase"
             tone="blue"
           />
-          <StateCard icon={Sparkles} label="Oil products" value={loading ? "..." : `${oilCount}`} note="Olive oil items" tone="green" />
-          <StateCard icon={ShieldCheck} label="Olive products" value={loading ? "..." : `${olivesCount}`} note="Olive selections" tone="amber" />
+          <StateCard icon={Sparkles} label="Produits huile" value={loading ? "..." : `${oilCount}`} note="Articles d'huile d'olive" tone="green" />
+          <StateCard icon={ShieldCheck} label="Produits olives" value={loading ? "..." : `${olivesCount}`} note="Sélections d'olives" tone="amber" />
           <StateCard
             icon={CircleDollarSign}
             label="Catalog value"
             value={loading ? "..." : `DH ${catalogValue}`}
-            note="Combined list price"
+            note="Prix total du catalogue"
             tone="slate"
           />
           <StateCard
             icon={Package2}
-            label="Out of stock"
+            label="Rupture de stock"
             value={loading ? "..." : `${outOfStockCount}`}
-            note="Products with zero inventory"
+            note="Produits sans stock"
             tone="amber"
           />
           <StateCard
             icon={BadgeDollarSign}
             label="Sell point"
             value="Open"
-            note="Fast in-store checkout"
+            note="Encaissement rapide en magasin"
             tone="blue"
           />
           <StateCard
             icon={ReceiptText}
-            label="Web orders"
+            label="Commandes web"
             value={loading ? "..." : `${webOrdersCount}`}
-            note="WhatsApp and COD orders"
+            note="Commandes WhatsApp et paiement à la livraison"
             tone="green"
           />
           <StateCard
             icon={Users}
-            label="Users"
-            value="Manage"
-            note="Roles and permissions"
+            label="Utilisateurs"
+            value="Gérer"
+            note="Rôles et permissions"
             tone="slate"
           />
         </section>
@@ -220,13 +220,13 @@ export default function AdminPage() {
           <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-semibold text-slate-950">Recent catalog activity</h2>
+                <h2 className="text-xl font-semibold text-slate-950">Activité récente du catalogue</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  A live view of the newest products pulled from Supabase.
+                  Vue en direct des produits les plus récents récupérés depuis Supabase.
                 </p>
               </div>
               <Link href="/admin/addProduct" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1877F2]">
-                Open product manager
+                Ouvrir le gestionnaire de produits
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>
@@ -263,60 +263,60 @@ export default function AdminPage() {
 
           <aside className="space-y-6">
             <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-              <h2 className="text-xl font-semibold text-slate-950">Operational shortcuts</h2>
-              <p className="mt-1 text-sm text-slate-500">The most common places to move after reviewing the dashboard.</p>
+              <h2 className="text-xl font-semibold text-slate-950">Raccourcis opérationnels</h2>
+              <p className="mt-1 text-sm text-slate-500">Les endroits les plus utiles après avoir consulté le tableau de bord.</p>
 
               <div className="mt-5 grid gap-3">
                 {canAccessAdminSection(access, "theme") ? (
                   <ActionCard
-                    title="Theme"
-                    description="Change hero media and homepage copy."
+                    title="Thème"
+                    description="Modifier le média principal et le texte de la page d'accueil."
                     href="/admin/theme"
                     icon={Sparkles}
                   />
                 ) : null}
                 {canAccessAdminSection(access, "sell-point") ? (
                   <ActionCard
-                    title="Sell Point"
-                    description="Open the in-store checkout portal."
+                    title="Point de vente"
+                    description="Ouvrir l'interface d'encaissement en magasin."
                     href="/admin/sell-point"
                     icon={BadgeDollarSign}
                   />
                 ) : null}
                 {canAccessAdminSection(access, "sell-point") ? (
                   <ActionCard
-                    title="Orders"
-                    description="Review WhatsApp and COD orders captured from the storefront."
+                    title="Commandes"
+                    description="Consulter les commandes WhatsApp et paiement à la livraison."
                     href="/admin/orders"
                     icon={ReceiptText}
                   />
                 ) : null}
                 <ActionCard
-                  title="Authentication"
-                  description="Check the Supabase sign-in flow and protected admin access."
+                  title="Authentification"
+                  description="Vérifier la connexion Supabase et l'accès admin protégé."
                   href="/admin/auth"
                   icon={Lock}
                 />
                 {canAccessAdminSection(access, "products") ? (
                   <ActionCard
-                    title="Products"
-                    description="Create, edit, and remove products from the catalog."
+                    title="Produits"
+                    description="Créer, modifier et supprimer des produits du catalogue."
                     href="/admin/addProduct"
                     icon={Database}
                   />
                 ) : null}
                 {canAccessAdminSection(access, "categories") ? (
                   <ActionCard
-                    title="Categories"
-                    description="Keep the product structure clean and consistent."
+                    title="Catégories"
+                    description="Garder une structure produit propre et cohérente."
                     href="/admin/categories"
                     icon={Shapes}
                   />
                 ) : null}
                 {canAccessAdminSection(access, "users") ? (
                   <ActionCard
-                    title="Users"
-                    description="Manage admins and permissions."
+                    title="Utilisateurs"
+                    description="Gérer les administrateurs et les permissions."
                     href="/admin/users"
                     icon={Users}
                   />
@@ -325,15 +325,15 @@ export default function AdminPage() {
             </section>
 
             <section className="rounded-[2rem] border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
-              <h2 className="text-lg font-semibold">Catalog mix</h2>
+              <h2 className="text-lg font-semibold">Répartition du catalogue</h2>
               <p className="mt-1 text-sm leading-6 text-white/70">
-                A quick snapshot of which catalog groups are carrying the assortment right now.
+                Un aperçu rapide des familles de produits qui portent l'assortiment actuellement.
               </p>
 
               <div className="mt-4 space-y-3">
                 {categoryBreakdown.length === 0 ? (
                   <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-                    No products loaded yet.
+                    Aucun produit chargé pour le moment.
                   </div>
                 ) : (
                   categoryBreakdown.map(([category, count]) => (

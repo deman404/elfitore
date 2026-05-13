@@ -85,7 +85,7 @@ export function AdminUsersPage() {
 
     if (!response.ok) {
       setUsers([])
-      setError(data.error ?? "Could not load users.")
+      setError(data.error ?? "Impossible de charger les utilisateurs.")
       setLoading(false)
       return
     }
@@ -172,7 +172,7 @@ export function AdminUsersPage() {
     const data = (await response.json().catch(() => ({}))) as { error?: string; user?: AdminUserSummary }
 
     if (!response.ok) {
-      setStatus(data.error ?? "Could not save user permissions.")
+      setStatus(data.error ?? "Impossible d'enregistrer les permissions utilisateur.")
       setSaving(false)
       return
     }
@@ -192,7 +192,7 @@ export function AdminUsersPage() {
     }
 
     setSaving(false)
-    setStatus("Permissions updated successfully.")
+    setStatus("Permissions mises à jour avec succès.")
   }
 
   const saveNewUser = async () => {
@@ -208,7 +208,7 @@ export function AdminUsersPage() {
     const data = (await response.json().catch(() => ({}))) as { error?: string; user?: AdminUserSummary }
 
     if (!response.ok) {
-      setStatus(data.error ?? "Could not create user.")
+      setStatus(data.error ?? "Impossible de créer l'utilisateur.")
       setCreating(false)
       return
     }
@@ -220,7 +220,7 @@ export function AdminUsersPage() {
     setCreating(false)
     setCreateOpen(false)
     setCreateDraft(emptyUserDraft())
-    setStatus("User created successfully.")
+    setStatus("Utilisateur créé avec succès.")
   }
 
   const stats = useMemo(
@@ -235,24 +235,24 @@ export function AdminUsersPage() {
   return (
     <AdminShell
       current="users"
-      title="Users & Permissions"
-      description="Manage admin accounts and decide what each user can access."
+      title="Utilisateurs et permissions"
+      description="Gérez les comptes admin et décidez de ce que chaque utilisateur peut ouvrir."
     >
       <div className="space-y-6">
         <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
           <div className="grid gap-6 px-6 py-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:px-8 lg:py-8">
             <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Access control</p>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Manage who can do what in the admin area</h1>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Contrôle d'accès</p>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Gérez qui peut faire quoi dans l'espace admin</h1>
               <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                Assign roles, toggle permissions, and keep control over users who can sell, edit products, change theme content, or manage other admins.
+                Attribuez des rôles, activez ou désactivez des permissions et gardez le contrôle sur les utilisateurs qui peuvent vendre, modifier les produits, changer le contenu du thème ou gérer d'autres administrateurs.
               </p>
             </div>
 
             <div className="grid gap-3">
-              <MiniStat label="Users" value={loading ? "..." : String(users.length)} />
-              <MiniStat label="Owners" value={loading ? "..." : String(stats.owners)} />
-              <MiniStat label="Active" value={loading ? "..." : String(stats.active)} />
+              <MiniStat label="Utilisateurs" value={loading ? "..." : String(users.length)} />
+              <MiniStat label="Propriétaires" value={loading ? "..." : String(stats.owners)} />
+              <MiniStat label="Actifs" value={loading ? "..." : String(stats.active)} />
             </div>
           </div>
         </section>
@@ -264,19 +264,19 @@ export function AdminUsersPage() {
         <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Admin users</h2>
-              <p className="mt-1 text-sm text-slate-500">Click a row to edit role and permissions.</p>
+              <h2 className="text-xl font-semibold text-slate-950">Utilisateurs admin</h2>
+              <p className="mt-1 text-sm text-slate-500">Cliquez sur une ligne pour modifier le rôle et les permissions.</p>
             </div>
 
             <div className="flex flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
               <label className="block w-full space-y-2 sm:max-w-sm">
-                <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Search</span>
+                <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Recherche</span>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Email, name, role..."
+                    placeholder="E-mail, nom, rôle..."
                     className="admin-input pl-9"
                   />
                 </div>
@@ -284,7 +284,7 @@ export function AdminUsersPage() {
 
               <Button type="button" className="gap-2" onClick={openCreateUser} disabled={!canManageUsers}>
                 <UserPlus className="h-4 w-4" />
-                Create user
+                Créer un utilisateur
               </Button>
             </div>
           </div>
@@ -293,24 +293,24 @@ export function AdminUsersPage() {
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
                 <tr className="text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  <th className="px-4 py-3">User</th>
-                  <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Utilisateur</th>
+                  <th className="px-4 py-3">Rôle</th>
                   <th className="px-4 py-3">Permissions</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Edit</th>
+                  <th className="px-4 py-3">Statut</th>
+                  <th className="px-4 py-3 text-right">Modifier</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-500">
-                      Loading users...
+                      Chargement des utilisateurs...
                     </td>
                   </tr>
                 ) : visibleUsers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-500">
-                      No users found.
+                      Aucun utilisateur trouvé.
                     </td>
                   </tr>
                 ) : (
@@ -324,7 +324,7 @@ export function AdminUsersPage() {
                               <Users className="h-4 w-4" />
                             </div>
                             <div>
-                              <p className="font-medium text-slate-950">{user.fullName || "Unnamed user"}</p>
+                              <p className="font-medium text-slate-950">{user.fullName || "Utilisateur sans nom"}</p>
                               <p className="mt-1 text-xs text-slate-400">{user.email}</p>
                             </div>
                           </div>
@@ -334,14 +334,14 @@ export function AdminUsersPage() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap gap-2">
-                            {user.canManageUsers ? <PermBadge label="Users" tone="emerald" /> : null}
-                            {user.canManageSales ? <PermBadge label="Sales" tone="blue" /> : null}
-                            {user.canManageProducts ? <PermBadge label="Products" tone="amber" /> : null}
-                            {user.canManageTheme ? <PermBadge label="Theme" tone="violet" /> : null}
-                            {user.canManageSettings ? <PermBadge label="Settings" tone="slate" /> : null}
-                            {user.canManageCategories ? <PermBadge label="Categories" tone="cyan" /> : null}
+                            {user.canManageUsers ? <PermBadge label="Utilisateurs" tone="emerald" /> : null}
+                            {user.canManageSales ? <PermBadge label="Ventes" tone="blue" /> : null}
+                            {user.canManageProducts ? <PermBadge label="Produits" tone="amber" /> : null}
+                            {user.canManageTheme ? <PermBadge label="Thème" tone="violet" /> : null}
+                            {user.canManageSettings ? <PermBadge label="Paramètres" tone="slate" /> : null}
+                            {user.canManageCategories ? <PermBadge label="Catégories" tone="cyan" /> : null}
                             {!user.canManageUsers && !user.canManageSales && !user.canManageProducts && !user.canManageTheme && !user.canManageSettings && !user.canManageCategories ? (
-                              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">No access</span>
+                              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">Aucun accès</span>
                             ) : null}
                           </div>
                         </td>
@@ -349,7 +349,7 @@ export function AdminUsersPage() {
                           {user.isActive ? (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                               <BadgeCheck className="h-3.5 w-3.5" />
-                              Active
+                              Actif
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
@@ -361,7 +361,7 @@ export function AdminUsersPage() {
                         <td className="px-4 py-4 text-right">
                           <Button type="button" variant="outline" size="sm" onClick={() => openEditor(user)} className="gap-2">
                             <UserRoundCog className="h-4 w-4" />
-                            Manage
+                            Gérer
                           </Button>
                           {isCurrent ? <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-slate-400">You</p> : null}
                         </td>
@@ -376,7 +376,7 @@ export function AdminUsersPage() {
 
         {!canManageUsers ? (
           <section className="rounded-[2rem] border border-amber-200 bg-amber-50 p-5 text-amber-900">
-            You can view the user directory, but your current permissions do not allow changes.
+            Vous pouvez voir la liste des utilisateurs, mais vos permissions actuelles ne permettent pas de modifier.
           </section>
         ) : null}
 
@@ -390,11 +390,11 @@ export function AdminUsersPage() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="w-full sm:max-w-2xl">
           <SheetHeader className="border-b border-slate-200 px-6 py-5">
-            <SheetTitle className="flex items-center gap-2 text-slate-950">
-              <Shield className="h-5 w-5" />
-              Edit user permissions
+              <SheetTitle className="flex items-center gap-2 text-slate-950">
+                <Shield className="h-5 w-5" />
+              Modifier les permissions utilisateur
             </SheetTitle>
-            <SheetDescription>Change the role and the capabilities assigned to this admin user.</SheetDescription>
+            <SheetDescription>Modifiez le rôle et les capacités attribués à cet utilisateur admin.</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-5">
@@ -403,11 +403,11 @@ export function AdminUsersPage() {
                 <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-sm font-semibold text-slate-950">{selectedUser.fullName || "Unnamed user"}</p>
                   <p className="mt-1 text-sm text-slate-500">{selectedUser.email}</p>
-                  <p className="mt-2 text-xs text-slate-400">User ID: {selectedUser.id}</p>
+                  <p className="mt-2 text-xs text-slate-400">ID utilisateur : {selectedUser.id}</p>
                 </section>
 
                 <label className="block space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Role</span>
+                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Rôle</span>
                   <select
                     value={selectedUser.role}
                     onChange={(event) => {
@@ -426,7 +426,7 @@ export function AdminUsersPage() {
 
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={() => applyRoleDefaults(selectedUser.role as AdminUserRole)}>
-                    Apply role defaults
+                    Appliquer les valeurs par défaut du rôle
                   </Button>
                   <Button
                     type="button"
@@ -443,38 +443,38 @@ export function AdminUsersPage() {
                       )
                     }
                   >
-                    {selectedUser.isActive ? "Deactivate user" : "Activate user"}
+                    {selectedUser.isActive ? "Désactiver l'utilisateur" : "Activer l'utilisateur"}
                   </Button>
                 </div>
 
                 <section className="grid gap-3 sm:grid-cols-2">
                   <PermissionToggle
-                    label="Manage users"
+                    label="Gérer les utilisateurs"
                     checked={selectedUser.canManageUsers}
                     onChange={(checked) => setSelectedUser((current) => (current ? { ...current, canManageUsers: checked } : current))}
                   />
                   <PermissionToggle
-                    label="Manage sales"
+                    label="Gérer les ventes"
                     checked={selectedUser.canManageSales}
                     onChange={(checked) => setSelectedUser((current) => (current ? { ...current, canManageSales: checked } : current))}
                   />
                   <PermissionToggle
-                    label="Manage products"
+                    label="Gérer les produits"
                     checked={selectedUser.canManageProducts}
                     onChange={(checked) => setSelectedUser((current) => (current ? { ...current, canManageProducts: checked } : current))}
                   />
                   <PermissionToggle
-                    label="Manage categories"
+                    label="Gérer les catégories"
                     checked={selectedUser.canManageCategories}
                     onChange={(checked) => setSelectedUser((current) => (current ? { ...current, canManageCategories: checked } : current))}
                   />
                   <PermissionToggle
-                    label="Manage theme"
+                    label="Gérer le thème"
                     checked={selectedUser.canManageTheme}
                     onChange={(checked) => setSelectedUser((current) => (current ? { ...current, canManageTheme: checked } : current))}
                   />
                   <PermissionToggle
-                    label="Manage settings"
+                    label="Gérer les paramètres"
                     checked={selectedUser.canManageSettings}
                     onChange={(checked) => setSelectedUser((current) => (current ? { ...current, canManageSettings: checked } : current))}
                   />
@@ -482,7 +482,7 @@ export function AdminUsersPage() {
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-sm text-slate-500">
-                Select a user from the table to edit permissions.
+                Sélectionnez un utilisateur dans le tableau pour modifier ses permissions.
               </div>
             )}
           </div>
@@ -490,11 +490,11 @@ export function AdminUsersPage() {
           <div className="border-t border-slate-200 px-6 py-4">
             <div className="flex gap-3">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setSheetOpen(false)}>
-                Close
+                Fermer
               </Button>
               <Button type="button" className="flex-1" onClick={() => void saveUser()} disabled={saving || !selectedUser || !canManageUsers}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {saving ? "Saving..." : "Save changes"}
+                {saving ? "Enregistrement..." : "Enregistrer les changements"}
               </Button>
             </div>
           </div>
@@ -514,16 +514,16 @@ export function AdminUsersPage() {
           <SheetHeader className="border-b border-slate-200 px-6 py-5">
             <SheetTitle className="flex items-center gap-2 text-slate-950">
               <Plus className="h-5 w-5" />
-              Create user
+              Créer un utilisateur
             </SheetTitle>
-            <SheetDescription>Invite a new admin account and assign permissions right away.</SheetDescription>
+            <SheetDescription>Invitez un nouveau compte admin et attribuez les permissions immédiatement.</SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-6 py-5">
             <div className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Email</span>
+                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">E-mail</span>
                   <input
                     value={createDraft.email}
                     onChange={(event) => setCreateDraft((current) => ({ ...current, email: event.target.value }))}
@@ -534,18 +534,18 @@ export function AdminUsersPage() {
                 </label>
 
                 <label className="block space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Password</span>
+                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Mot de passe</span>
                   <input
                     value={createDraft.password}
                     onChange={(event) => setCreateDraft((current) => ({ ...current, password: event.target.value }))}
                     type="password"
                     className="admin-input"
-                    placeholder="Create a login password"
+                    placeholder="Créer un mot de passe"
                   />
                 </label>
 
                 <label className="block space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Full name</span>
+                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Nom complet</span>
                   <input
                     value={createDraft.fullName}
                     onChange={(event) => setCreateDraft((current) => ({ ...current, fullName: event.target.value }))}
@@ -557,7 +557,7 @@ export function AdminUsersPage() {
               </div>
 
               <label className="block space-y-2">
-                <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Role</span>
+                  <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Rôle</span>
                 <select
                   value={createDraft.role}
                   onChange={(event) => {
@@ -580,33 +580,33 @@ export function AdminUsersPage() {
               </label>
 
               <section className="grid gap-3 sm:grid-cols-2">
-                <PermissionToggle
-                  label="Manage users"
+                  <PermissionToggle
+                  label="Gérer les utilisateurs"
                   checked={createDraft.canManageUsers}
                   onChange={(checked) => setCreateDraft((current) => ({ ...current, canManageUsers: checked }))}
                 />
-                <PermissionToggle
-                  label="Manage sales"
+                  <PermissionToggle
+                  label="Gérer les ventes"
                   checked={createDraft.canManageSales}
                   onChange={(checked) => setCreateDraft((current) => ({ ...current, canManageSales: checked }))}
                 />
-                <PermissionToggle
-                  label="Manage products"
+                  <PermissionToggle
+                  label="Gérer les produits"
                   checked={createDraft.canManageProducts}
                   onChange={(checked) => setCreateDraft((current) => ({ ...current, canManageProducts: checked }))}
                 />
-                <PermissionToggle
-                  label="Manage categories"
+                  <PermissionToggle
+                  label="Gérer les catégories"
                   checked={createDraft.canManageCategories}
                   onChange={(checked) => setCreateDraft((current) => ({ ...current, canManageCategories: checked }))}
                 />
-                <PermissionToggle
-                  label="Manage theme"
+                  <PermissionToggle
+                  label="Gérer le thème"
                   checked={createDraft.canManageTheme}
                   onChange={(checked) => setCreateDraft((current) => ({ ...current, canManageTheme: checked }))}
                 />
-                <PermissionToggle
-                  label="Manage settings"
+                  <PermissionToggle
+                  label="Gérer les paramètres"
                   checked={createDraft.canManageSettings}
                   onChange={(checked) => setCreateDraft((current) => ({ ...current, canManageSettings: checked }))}
                 />
@@ -617,7 +617,7 @@ export function AdminUsersPage() {
           <div className="border-t border-slate-200 px-6 py-4">
             <div className="flex gap-3">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button
                 type="button"
@@ -626,7 +626,7 @@ export function AdminUsersPage() {
                 disabled={creating || !createDraft.email.trim() || !createDraft.password.trim() || !canManageUsers}
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                {creating ? "Creating..." : "Create user"}
+                {creating ? "Création..." : "Créer l'utilisateur"}
               </Button>
             </div>
           </div>
