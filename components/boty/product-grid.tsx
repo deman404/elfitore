@@ -7,12 +7,7 @@ import { ShoppingBag } from "lucide-react"
 import { useCart } from "./cart-context"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import {
-  normalizeProductRow,
-  type CatalogCategoryRow,
-  type CatalogProductRow,
-  type NormalizedProduct,
-} from "@/lib/catalog"
+import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
 
 const headerText: Record<Locale, { collection: string; title: string; description: string }> = {
@@ -39,22 +34,11 @@ const viewAllText: Record<Locale, string> = {
   ar: "عرض جميع المنتجات",
 }
 
-const allProductsText: Record<Locale, string> = {
-  en: "All Products",
-  fr: "Tous les produits",
-  ar: "جميع المنتجات",
-}
-
-type FilterCategory = "all" | string
-
 export function ProductGrid() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
-  const [selectedCategory, setSelectedCategory] = useState<FilterCategory>("all")
   const [isVisible, setIsVisible] = useState(false)
-  const [isTransitioning, setIsTransitioning] = useState(false)
   const [headerVisible, setHeaderVisible] = useState(false)
   const [products, setProducts] = useState<NormalizedProduct[]>([])
-  const [categories, setCategories] = useState<CatalogCategoryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const gridRef = useRef<HTMLDivElement>(null)
@@ -62,49 +46,20 @@ export function ProductGrid() {
   const { addItem } = useCart()
   const { locale, isRTL } = useLanguage()
   const header = headerText[locale as Locale]
-
-  const filteredProducts = selectedCategory === "all"
-    ? products
-    : products.filter((product) => product.category === selectedCategory)
-  const visibleProducts = filteredProducts.slice(0, 4)
-
-  const handleCategoryChange = (category: FilterCategory) => {
-    if (category === selectedCategory) return
-
-    setIsTransitioning(true)
-    setTimeout(() => {
-      setSelectedCategory(category)
-      setTimeout(() => {
-        setIsTransitioning(false)
-      }, 50)
-    }, 220)
-  }
+  const visibleProducts = products.slice(0, 4)
 
   useEffect(() => {
     const loadCatalog = async () => {
       setLoading(true)
       setError("")
 
-      const [productsResult, categoriesResult] = await Promise.all([
-        supabase.from("products").select("*").order("id", { ascending: false }),
-        supabase
-          .from("product_categories")
-          .select("id, name, slug, active")
-          .eq("active", true)
-          .order("sort_order", { ascending: true }),
-      ])
+      const productsResult = await supabase.from("products").select("*").order("id", { ascending: false })
 
       if (productsResult.error) {
         setProducts([])
         setError(`Could not load products: ${productsResult.error.message}`)
       } else {
         setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
-      }
-
-      if (categoriesResult.error) {
-        setCategories([])
-      } else {
-        setCategories((categoriesResult.data ?? []) as CatalogCategoryRow[])
       }
 
       setLoading(false)
@@ -146,13 +101,6 @@ export function ProductGrid() {
     }
   }, [])
 
-  useEffect(() => {
-    setIsVisible(false)
-    const timer = window.setTimeout(() => setIsVisible(true), 50)
-
-    return () => window.clearTimeout(timer)
-  }, [selectedCategory])
-
   return (
     <section className="bg-card py-16 sm:py-20 lg:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -183,43 +131,13 @@ export function ProductGrid() {
           </p>
         </div>
 
-        <div className="mb-10 flex justify-center sm:mb-12">
-          <div className="flex max-w-full gap-2 overflow-x-auto rounded-full bg-background p-1">
-            <button
-              type="button"
-              onClick={() => handleCategoryChange("all")}
-              className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-medium transition ${
-                selectedCategory === "all"
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {allProductsText[locale as Locale]}
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category.slug}
-                type="button"
-                onClick={() => handleCategoryChange(category.slug)}
-                className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-medium transition ${
-                  selectedCategory === category.slug
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {error ? (
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         ) : null}
 
-        <div ref={gridRef} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        <div ref={gridRef} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
           {loading ? (
             Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="rounded-3xl bg-background p-4 shadow-sm">
@@ -238,9 +156,9 @@ export function ProductGrid() {
                 key={product.id}
                 href={`/product/${product.id}`}
                 className={`group transition-all duration-500 ease-out ${
-                  isVisible && !isTransitioning ? "opacity-100 scale-100" : "opacity-0 scale-95"
+                  isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
                 }`}
-                style={{ transitionDelay: isTransitioning ? "0ms" : `${index * 80}ms` }}
+                style={{ transitionDelay: `${index * 80}ms` }}
               >
                 <div className="overflow-hidden rounded-3xl bg-background boty-shadow boty-transition group-hover:scale-[1.02]">
                   <div className="relative aspect-square overflow-hidden bg-muted">

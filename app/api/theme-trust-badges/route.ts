@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdminClient } from "@/lib/supabase-admin"
-import { DEFAULT_THEME_TRUST_BADGES, type ThemeTrustBadgesData } from "@/lib/theme-trust-badges"
+import {
+  DEFAULT_THEME_TRUST_BADGES,
+  normalizeThemeTrustBadgeIcon,
+  type ThemeTrustBadgesData,
+} from "@/lib/theme-trust-badges"
 
 export const dynamic = "force-dynamic"
 
@@ -27,6 +31,7 @@ function normalize(row: Record<string, unknown>): ThemeTrustBadgesData {
 
   return {
     badges: badges.map((item: any, index: number) => ({
+      icon: normalizeThemeTrustBadgeIcon(item?.icon, DEFAULT_THEME_TRUST_BADGES.badges[index]?.icon),
       title: {
         en: item?.title?.en ?? DEFAULT_THEME_TRUST_BADGES.badges[index]?.title.en ?? "",
         fr: item?.title?.fr ?? DEFAULT_THEME_TRUST_BADGES.badges[index]?.title.fr ?? "",

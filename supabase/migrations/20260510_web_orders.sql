@@ -4,6 +4,9 @@ alter table if exists public.web_orders
 alter table if exists public.web_orders
   add column if not exists delivery_city text not null default '';
 
+alter table if exists public.web_orders
+  add column if not exists updated_at timestamptz not null default now();
+
 create table if not exists public.web_orders (
   id bigserial primary key,
   reference text unique,
@@ -23,7 +26,8 @@ create table if not exists public.web_orders (
   notes text not null default '',
   subtotal numeric(10,2) not null default 0,
   total numeric(10,2) not null default 0,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.web_order_items (
@@ -39,7 +43,33 @@ create table if not exists public.web_order_items (
 
 create index if not exists web_order_items_web_order_id_idx on public.web_order_items (web_order_id);
 create index if not exists web_orders_created_at_idx on public.web_orders (created_at desc);
+create index if not exists web_orders_updated_at_idx on public.web_orders (updated_at desc);
 create index if not exists web_orders_reference_idx on public.web_orders (reference);
+
+create or replace function public.touch_web_orders_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = tg_table_schema
+      and table_name = tg_table_name
+      and column_name = 'updated_at'
+  ) then
+    new.updated_at = now();
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists touch_web_orders_updated_at on public.web_orders;
+
+create trigger touch_web_orders_updated_at
+before update on public.web_orders
+for each row
+execute function public.touch_web_orders_updated_at();
 
 create or replace function public.create_web_order(
   p_channel text,
@@ -182,6 +212,7 @@ begin
   update public.web_orders
   set subtotal = order_subtotal,
       total = order_subtotal,
+      updated_at = now(),
       reference = reference_local
   where id = order_id_local;
 

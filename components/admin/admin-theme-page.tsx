@@ -2,7 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
-import { Check, Clapperboard, Image as ImageIcon, Loader2, Palette, Save, Type } from "lucide-react"
+import {
+  Check,
+  Clapperboard,
+  Droplets,
+  Flower2,
+  Globe,
+  Image as ImageIcon,
+  Leaf,
+  Loader2,
+  Palette,
+  Recycle,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+  Type,
+} from "lucide-react"
 import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -14,7 +30,9 @@ import {
 } from "@/lib/theme-feature-section"
 import {
   DEFAULT_THEME_TRUST_BADGES,
+  TRUST_BADGE_ICON_OPTIONS,
   fetchThemeTrustBadges,
+  type ThemeTrustBadgeIcon,
   type ThemeTrustBadgesData,
 } from "@/lib/theme-trust-badges"
 import {
@@ -42,6 +60,17 @@ const localeLabels = {
 const locales = ["en", "fr", "ar"] as const
 
 const featureCardLabels = ["Card 1", "Card 2", "Card 3", "Card 4"] as const
+
+const trustBadgeIconMap: Record<ThemeTrustBadgeIcon, typeof Leaf> = {
+  leaf: Leaf,
+  droplets: Droplets,
+  sparkles: Sparkles,
+  flower: Flower2,
+  recycle: Recycle,
+  globe: Globe,
+  shield: ShieldCheck,
+  truck: Truck,
+}
 
 type LocaleKey = keyof ThemeHeroData["subtitle"]
 
@@ -240,6 +269,14 @@ export function AdminThemePage() {
         ),
       }))
     }
+
+  const updateTrustBadgeIcon = (index: number) => (event: ChangeEvent<HTMLSelectElement>) => {
+    const icon = event.target.value as ThemeTrustBadgeIcon
+    setTrustForm((current) => ({
+      ...current,
+      badges: current.badges.map((badge, badgeIndex) => (badgeIndex === index ? { ...badge, icon } : badge)),
+    }))
+  }
 
   const handleTrustSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -559,9 +596,32 @@ export function AdminThemePage() {
             </div>
 
             <div className="mt-6 space-y-4">
-              {trustForm.badges.map((badge, index) => (
+              {trustForm.badges.map((badge, index) => {
+                const Icon = trustBadgeIconMap[badge.icon] ?? Leaf
+
+                return (
                 <div key={`${badge.title.en}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Badge {index + 1}</p>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Badge {index + 1}</p>
+                      <div className="mt-3 flex items-center gap-3 text-slate-700">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="text-sm font-medium">{badge.title.en || "Trust badge"}</span>
+                      </div>
+                    </div>
+                    <label className="block w-full space-y-2 sm:max-w-xs">
+                      <span className="text-sm font-medium text-slate-700">Icon</span>
+                      <select value={badge.icon} onChange={updateTrustBadgeIcon(index)} className="admin-input">
+                        {TRUST_BADGE_ICON_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
                   <div className="mt-4 space-y-6">
                     {locales.map((locale) => (
                       <div key={`${index}-${locale}`} className="grid gap-4 md:grid-cols-2">
@@ -576,7 +636,8 @@ export function AdminThemePage() {
                     ))}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="mt-6 flex flex-col gap-4 rounded-[1.75rem] border border-dashed border-slate-300 bg-white/70 p-5 lg:flex-row lg:items-center lg:justify-between">

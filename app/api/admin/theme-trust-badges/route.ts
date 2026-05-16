@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseAdminClient } from "@/lib/supabase-admin"
-import { DEFAULT_THEME_TRUST_BADGES, type ThemeTrustBadgesData } from "@/lib/theme-trust-badges"
+import {
+  DEFAULT_THEME_TRUST_BADGES,
+  normalizeThemeTrustBadgeIcon,
+  type ThemeTrustBadgesData,
+} from "@/lib/theme-trust-badges"
 
 export const dynamic = "force-dynamic"
 
@@ -15,9 +19,16 @@ export async function PUT(request: Request) {
     }
 
     const body = (await request.json()) as ThemeTrustBadgesData
+    const incomingBadges = Array.isArray(body.badges) ? body.badges : []
+    const badges = incomingBadges.length
+      ? incomingBadges.map((badge, index) => ({
+          ...badge,
+          icon: normalizeThemeTrustBadgeIcon(badge.icon, DEFAULT_THEME_TRUST_BADGES.badges[index]?.icon),
+        }))
+      : DEFAULT_THEME_TRUST_BADGES.badges
     const payload = {
       id: 1,
-      badges: body.badges.length ? body.badges : DEFAULT_THEME_TRUST_BADGES.badges,
+      badges,
     }
 
     const admin = getSupabaseAdminClient()

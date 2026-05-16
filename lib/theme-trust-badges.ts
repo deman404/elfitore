@@ -1,6 +1,20 @@
 import type { Locale } from "@/i18n.config"
 
+export const TRUST_BADGE_ICON_OPTIONS = [
+  { value: "leaf", label: "Leaf" },
+  { value: "droplets", label: "Droplets" },
+  { value: "sparkles", label: "Sparkles" },
+  { value: "flower", label: "Flower" },
+  { value: "recycle", label: "Recycle" },
+  { value: "globe", label: "Globe" },
+  { value: "shield", label: "Shield" },
+  { value: "truck", label: "Delivery" },
+] as const
+
+export type ThemeTrustBadgeIcon = (typeof TRUST_BADGE_ICON_OPTIONS)[number]["value"]
+
 export type ThemeTrustBadge = {
+  icon: ThemeTrustBadgeIcon
   title: Record<Locale, string>
   description: Record<Locale, string>
 }
@@ -12,6 +26,7 @@ export type ThemeTrustBadgesData = {
 export const DEFAULT_THEME_TRUST_BADGES: ThemeTrustBadgesData = {
   badges: [
     {
+      icon: "leaf",
       title: {
         en: "Cold Pressed",
         fr: "Pressé à froid",
@@ -24,6 +39,7 @@ export const DEFAULT_THEME_TRUST_BADGES: ThemeTrustBadgesData = {
       },
     },
     {
+      icon: "droplets",
       title: {
         en: "Pure Olive Oil",
         fr: "Huile pure",
@@ -36,6 +52,7 @@ export const DEFAULT_THEME_TRUST_BADGES: ThemeTrustBadgesData = {
       },
     },
     {
+      icon: "sparkles",
       title: {
         en: "Trusted Quality",
         fr: "Qualité fiable",
@@ -48,6 +65,7 @@ export const DEFAULT_THEME_TRUST_BADGES: ThemeTrustBadgesData = {
       },
     },
     {
+      icon: "flower",
       title: {
         en: "Moroccan Heritage",
         fr: "Héritage marocain",
@@ -60,6 +78,11 @@ export const DEFAULT_THEME_TRUST_BADGES: ThemeTrustBadgesData = {
       },
     },
   ],
+}
+
+export function normalizeThemeTrustBadgeIcon(value: unknown, fallback?: ThemeTrustBadgeIcon) {
+  const fallbackIcon = fallback ?? "leaf"
+  return TRUST_BADGE_ICON_OPTIONS.some((option) => option.value === value) ? (value as ThemeTrustBadgeIcon) : fallbackIcon
 }
 
 export function fetchThemeTrustBadges() {
