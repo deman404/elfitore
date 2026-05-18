@@ -6,6 +6,7 @@ import { Testimonials } from "@/components/boty/testimonials"
 import { CTABanner } from "@/components/boty/cta-banner"
 import { Newsletter } from "@/components/boty/newsletter"
 import { Footer } from "@/components/boty/footer"
+import { AuthDialog } from "@/components/boty/auth-dialog"
 
 export default function HomePage() {
   return (
@@ -18,6 +19,7 @@ export default function HomePage() {
       <CTABanner />
       <Newsletter />
       <Footer />
+      <AuthDialog />
     </main>
   )
 }

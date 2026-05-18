@@ -3,94 +3,177 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
-  ArrowLeft,
+  ArrowLeftRight,
   BadgeDollarSign,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
   LayoutDashboard,
   Lock,
-  ReceiptText,
-  Palette,
+  LogOut,
+  Menu,
   Package,
-  PanelLeftOpen,
-  Shapes,
-  SlidersHorizontal,
-  Users,
+  Palette,
+  Settings,
+  Store,
+  UserCircle,
+  X,
 } from "lucide-react"
 import type { ReactNode } from "react"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { canAccessAdminSection, type AdminAccessSnapshot, type AdminSection } from "@/lib/admin-access"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
+import { ADMIN_ROLE_LABELS } from "@/lib/admin-users"
 
-const navItems: Array<{
-  href: string
+type NavGroup = {
   label: string
   icon: typeof LayoutDashboard
-  section: AdminSection
-}> = [
-  { href: "/admin", label: "Tableau de bord", icon: LayoutDashboard, section: "dashboard" },
-  { href: "/admin/sell-point", label: "Point de vente", icon: BadgeDollarSign, section: "sell-point" },
-  { href: "/admin/sell-point/last-receipt", label: "Dernière vente", icon: ReceiptText, section: "last-sell" },
-  { href: "/admin/orders", label: "Commandes", icon: ReceiptText, section: "orders" },
-  { href: "/admin/users", label: "Utilisateurs", icon: Users, section: "users" },
-  { href: "/admin/addProduct", label: "Produits", icon: Package, section: "products" },
-  { href: "/admin/categories", label: "Catégories", icon: Shapes, section: "categories" },
-  { href: "/admin/theme", label: "Thème", icon: Palette, section: "theme" },
-  { href: "/admin/settings", label: "Paramètres", icon: SlidersHorizontal, section: "settings" },
-  { href: "/admin/auth", label: "Connexion", icon: Lock, section: "auth" },
+  items: Array<{
+    href: string
+    label: string
+    section: AdminSection
+  }>
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Principal",
+    icon: Store,
+    items: [{ href: "/admin", label: "Tableau de bord", section: "dashboard" }],
+  },
+  {
+    label: "Ventes",
+    icon: BadgeDollarSign,
+    items: [
+      { href: "/admin/sell-point", label: "Point de vente", section: "sell-point" },
+      { href: "/admin/sell-point/last-receipt", label: "Dernières ventes", section: "last-sell" },
+      { href: "/admin/orders", label: "Commandes web", section: "orders" },
+    ],
+  },
+  {
+    label: "Catalogue",
+    icon: Package,
+    items: [
+      { href: "/admin/addProduct", label: "Produits", section: "products" },
+      { href: "/admin/categories", label: "Catégories", section: "categories" },
+    ],
+  },
+  {
+    label: "Apparence",
+    icon: Palette,
+    items: [{ href: "/admin/theme", label: "Thème", section: "theme" }],
+  },
+  {
+    label: "Administration",
+    icon: Settings,
+    items: [
+      { href: "/admin/users", label: "Utilisateurs", section: "users" },
+      { href: "/admin/settings", label: "Paramètres", section: "settings" },
+    ],
+  },
 ]
 
-export function AdminShell({
-  children,
-  current,
-  description,
-  title,
-}: {
-  children: ReactNode
-  current: AdminSection
-  description: string
-  title: string
-}) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [access, setAccess] = useState<AdminAccessSnapshot | null>(null)
-  const [accessLoading, setAccessLoading] = useState(true)
+const sectionMeta: Record<
+  AdminSection,
+  { title: string; description: string }
+> = {
+  dashboard: { title: "Tableau de bord", description: "Vue d'ensemble de votre boutique en temps réel." },
+  "sell-point": { title: "Point de vente", description: "Encaissement rapide en magasin." },
+  "last-sell": { title: "Dernières ventes", description: "Historique des transactions et reçus." },
+  orders: { title: "Commandes web", description: "Gérez les commandes en ligne et leur statut." },
+  products: { title: "Produits", description: "Ajoutez, modifiez et organisez votre catalogue." },
+  categories: { title: "Catégories", description: "Structurez votre catalogue par catégories." },
+  theme: { title: "Thème", description: "Personnalisez l'apparence de votre boutique." },
+  users: { title: "Utilisateurs", description: "Gérez les rôles et permissions de l'équipe." },
+  settings: { title: "Paramètres", description: "Configurez les options de votre boutique." },
+  auth: { title: "Connexion", description: "" },
+}
+
+export function AdminShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname()
   const router = useRouter()
   const supabase = getSupabaseBrowserClient()
 
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [access, setAccess] = useState<AdminAccessSnapshot | null>(null)
+  const [accessLoading, setAccessLoading] = useState(true)
+
+  const currentSection: AdminSection = useMemo(() => {
+    if (pathname === "/admin") return "dashboard"
+    if (pathname.startsWith("/admin/sell-point/last-receipt")) return "last-sell"
+    if (pathname.startsWith("/admin/sell-point")) return "sell-point"
+    if (pathname.startsWith("/admin/orders")) return "orders"
+    if (pathname.startsWith("/admin/addProduct")) return "products"
+    if (pathname.startsWith("/admin/categories")) return "categories"
+    if (pathname.startsWith("/admin/theme")) return "theme"
+    if (pathname.startsWith("/admin/users")) return "users"
+    if (pathname.startsWith("/admin/settings")) return "settings"
+    if (pathname.startsWith("/admin/auth")) return "auth"
+    return "dashboard"
+  }, [pathname])
+
+  const meta = sectionMeta[currentSection]
+
+  // Load sidebar state
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("admin-sidebar-collapsed")
+      if (saved) setCollapsed(saved === "true")
+      const savedGroups = localStorage.getItem("admin-expanded-groups")
+      if (savedGroups) setExpandedGroups(new Set(JSON.parse(savedGroups)))
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  // Save sidebar state
+  useEffect(() => {
+    try {
+      localStorage.setItem("admin-sidebar-collapsed", String(collapsed))
+      localStorage.setItem("admin-expanded-groups", JSON.stringify([...expandedGroups]))
+    } catch {
+      // ignore
+    }
+  }, [collapsed, expandedGroups])
+
+  // Auto-expand group containing current section
+  useEffect(() => {
+    for (const group of navGroups) {
+      if (group.items.some((item) => item.section === currentSection)) {
+        setExpandedGroups((prev) => new Set([...prev, group.label]))
+        break
+      }
+    }
+  }, [currentSection])
+
+  // Load access
   useEffect(() => {
     let active = true
-
-    const loadAccess = async () => {
+    const load = async () => {
       setAccessLoading(true)
-
-      const response = await fetch("/api/admin/me")
-      const data = (await response.json().catch(() => ({}))) as AdminAccessSnapshot & { error?: string }
-
-      if (!active) {
-        return
-      }
-
-      if (!response.ok) {
-        setAccess(null)
-      } else {
-        setAccess(data)
-      }
-
+      const res = await fetch("/api/admin/me")
+      const data = (await res.json().catch(() => ({}))) as AdminAccessSnapshot & { error?: string }
+      if (!active) return
+      setAccess(res.ok ? data : null)
       setAccessLoading(false)
     }
-
-    void loadAccess()
-
+    void load()
     return () => {
       active = false
     }
   }, [])
-
-  const visibleNavItems = useMemo(
-    () => navItems.filter((item) => canAccessAdminSection(access, item.section)),
-    [access]
-  )
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -98,195 +181,377 @@ export function AdminShell({
     router.refresh()
   }
 
+  const toggleGroup = (label: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      return next
+    })
+  }
+
+  const visibleGroups = useMemo(() => {
+    return navGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => canAccessAdminSection(access, item.section)),
+      }))
+      .filter((group) => group.items.length > 0)
+  }, [access])
+
   if (accessLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-blue-50 px-4 text-slate-700">
-          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm shadow-sm">
-          Chargement des accès admin...
+      <div className="flex min-h-screen items-center justify-center bg-[#f6f7f7]">
+        <div className="flex items-center gap-3 rounded-lg border bg-white px-5 py-3 text-sm text-slate-600 shadow-sm">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+          Chargement de l'administration...
         </div>
-      </main>
+      </div>
     )
   }
 
-  const canViewCurrentSection = canAccessAdminSection(access, current)
+  const canViewCurrent = canAccessAdminSection(access, currentSection)
 
   return (
-    <main className="min-h-screen bg-blue-50 text-foreground">
-      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-        <SheetContent side="left" className="w-[84vw] max-w-[18rem] border-slate-950 bg-slate-950 p-0 text-white sm:max-w-[19rem]">
-          <SheetHeader className="border-b border-white/10 px-5 py-5 text-left">
-            <SheetTitle className="flex items-center gap-2 text-white">
-              <div className="relative h-8 w-16 overflow-hidden rounded-md bg-white">
-                <Image src="/logo.png" alt="El Fitore" fill sizes="64px" className="object-contain p-1" />
-              </div>
-              <span className="text-sm font-semibold">El Fitore Admin</span>
-            </SheetTitle>
-            <SheetDescription className="text-xs text-white/60">
-              {title}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="flex h-[calc(100vh-6rem)] flex-col gap-3 overflow-y-auto px-3 py-3">
-            <SidebarNav current={current} items={visibleNavItems} onNavigate={() => setMobileMenuOpen(false)} />
-            <div className="mt-auto border-t border-white/10 pt-3">
-              <button
-                type="button"
-                onClick={() => void handleLogout()}
-                className="flex w-full items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
-              >
-                <Lock className="h-4 w-4" />
-                Déconnexion
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#f6f7f7]">
+      {/* Mobile drawer */}
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-[280px] border-r border-slate-200 bg-white p-0">
+          <Sidebar
+            groups={visibleGroups}
+            currentSection={currentSection}
+            access={access}
+            collapsed={false}
+            expandedGroups={expandedGroups}
+            toggleGroup={toggleGroup}
+            onNavigate={() => setMobileOpen(false)}
+            isMobile
+          />
         </SheetContent>
       </Sheet>
 
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-950 bg-slate-950 lg:flex">
-        <div className="flex h-full w-full flex-col overflow-y-auto p-3">
-          <Link href="/admin" className="flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-3">
-            <div className="relative h-8 w-16 overflow-hidden rounded-md bg-white">
-              <Image src="/logo.png" alt="El Fitore" fill sizes="64px" className="object-contain p-1" />
-            </div>
-          <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-[0.22em] text-white/45">Admin</div>
-            <div className="truncate text-sm font-semibold text-white">El Fitore</div>
-          </div>
-        </Link>
-
-          <div className="mt-3">
-            <SidebarNav current={current} items={visibleNavItems} />
-          </div>
-
-          <div className="mt-auto border-t border-white/10 pt-3">
-            <button
-              type="button"
-              onClick={() => void handleLogout()}
-              className="flex w-full items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white"
-            >
-              <Lock className="h-4 w-4" />
-              Logout
-            </button>
-          </div>
-        </div>
+      {/* Desktop sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 hidden border-r border-slate-200 bg-white transition-all duration-300 ease-in-out lg:flex lg:flex-col ${
+          collapsed ? "lg:w-[72px]" : "lg:w-[260px]"
+        }`}
+      >
+        <Sidebar
+          groups={visibleGroups}
+          currentSection={currentSection}
+          access={access}
+          collapsed={collapsed}
+          expandedGroups={expandedGroups}
+          toggleGroup={toggleGroup}
+        />
       </aside>
 
-      <div className="min-h-screen lg:pl-64">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-          <div className="flex w-full items-center gap-2 px-3 py-2 sm:px-4 lg:px-6">
-              <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              className="shrink-0 border-slate-200 bg-white text-slate-700 lg:hidden"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Ouvrir le menu admin"
+      {/* Main content area */}
+      <div className={`transition-all duration-300 ${collapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"}`}>
+        {/* Top header */}
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-slate-500 lg:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Ouvrir le menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden h-8 w-8 text-slate-500 lg:flex"
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? "Développer le menu" : "Réduire le menu"}
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ArrowLeftRight className="h-4 w-4" />}
+          </Button>
+
+          {/* Breadcrumb */}
+          <nav className="hidden items-center gap-1 text-sm text-slate-500 md:flex">
+            <span className="font-medium text-slate-400">Admin</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="font-medium text-slate-900">{meta.title}</span>
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/"
+              target="_blank"
+              className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:inline-flex"
             >
-              <PanelLeftOpen className="h-3.5 w-3.5" />
-            </Button>
+              <ExternalLink className="h-3.5 w-3.5" />
+              Voir le site
+            </Link>
 
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold text-slate-950 sm:text-lg">{title}</h1>
-              <p className="hidden max-w-2xl text-xs text-slate-500 sm:block">{description}</p>
-            </div>
-
-            <div className="ml-auto flex items-center gap-2">
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Site
-              </Link>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 gap-2 px-2 text-slate-600 hover:text-slate-900">
+                  <UserCircle className="h-5 w-5" />
+                  <span className="hidden max-w-[120px] truncate text-xs font-medium sm:inline">
+                    {access?.user?.fullName || access?.user?.email || "Admin"}
+                  </span>
+                  <ChevronDown className="hidden h-3 w-3 sm:block" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium text-slate-900">
+                    {access?.user?.fullName || access?.user?.email || "Admin"}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {access?.user?.role ? ADMIN_ROLE_LABELS[access.user.role] : "Utilisateur"}
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/admin/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Paramètres
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/" target="_blank" className="cursor-pointer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Voir le site
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => void handleLogout()}
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
-        <div className="w-full px-3 py-4 sm:px-4 lg:px-6">
-          <section className="min-w-0 rounded-md border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
-            {canViewCurrentSection ? (
-              children
-            ) : (
-              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-6 text-amber-900">
-                <h2 className="text-lg font-semibold">Vous n'avez pas accès à cette page</h2>
-                <p className="mt-2 text-sm leading-6">
-                  Votre rôle actuel ne permet pas d'ouvrir cette section. Utilisez les pages accessibles par votre compte admin, ou contactez un propriétaire pour mettre à jour vos permissions.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    href="/admin"
-                    className="inline-flex items-center rounded-md bg-amber-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-800"
-                  >
-                    Aller au tableau de bord
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => void handleLogout()}
-                    className="inline-flex items-center rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-                  >
-                    Déconnexion
-                  </button>
+        {/* Page header */}
+        <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
+          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">{meta.title}</h1>
+          {meta.description ? (
+            <p className="mt-1 text-sm text-slate-500">{meta.description}</p>
+          ) : null}
+        </div>
+
+        {/* Content */}
+        <main className="p-4 sm:p-6 lg:p-8">
+          {canViewCurrent ? (
+            children
+          ) : (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-amber-900">
+              <div className="flex items-start gap-3">
+                <Lock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+                <div>
+                  <h2 className="text-lg font-semibold">Accès refusé</h2>
+                  <p className="mt-1 text-sm leading-6 text-amber-800">
+                    Votre rôle actuel ne permet pas d'accéder à cette section. Contactez un administrateur pour modifier vos permissions.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                      href="/admin"
+                      className="inline-flex items-center rounded-md bg-amber-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-amber-800"
+                    >
+                      Tableau de bord
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => void handleLogout()}
+                      className="inline-flex items-center rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 transition hover:bg-amber-100"
+                    >
+                      Déconnexion
+                    </button>
+                  </div>
                 </div>
               </div>
-            )}
-          </section>
-
-        </div>
+            </div>
+          )}
+        </main>
       </div>
-    </main>
+    </div>
   )
 }
 
-function SidebarNav({
-  current,
-  items,
+function Sidebar({
+  groups,
+  currentSection,
+  access,
+  collapsed,
+  expandedGroups,
+  toggleGroup,
   onNavigate,
+  isMobile,
 }: {
-  current: AdminSection
-  items: Array<{
-    href: string
-    label: string
-    icon: typeof LayoutDashboard
-    section: AdminSection
-  }>
+  groups: NavGroup[]
+  currentSection: AdminSection
+  access: AdminAccessSnapshot | null
+  collapsed: boolean
+  expandedGroups: Set<string>
+  toggleGroup: (label: string) => void
   onNavigate?: () => void
+  isMobile?: boolean
 }) {
-  return (
-    <nav className="space-y-1">
-      {items.map((item) => {
-        const Icon = item.icon
-        const active = item.section === current
-        const isSalesEntry = item.section === "sell-point"
-        const isHistoryEntry = item.section === "last-sell"
+  const router = useRouter()
+  const supabase = getSupabaseBrowserClient()
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/admin/auth")
+    router.refresh()
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Logo area */}
+      <div className="flex h-14 items-center gap-3 border-b border-slate-200 px-4">
+        <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
+          <Image src="/logo.png" alt="El Fitore" fill sizes="32px" className="object-contain" />
+        </div>
+        {!collapsed && (
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-900">El Fitore</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Administration</p>
+          </div>
+        )}
+        {isMobile && (
+          <button
             onClick={onNavigate}
-            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition ${
-              active
-                ? "bg-white/10 text-white"
-                : isSalesEntry
-                  ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-400/30 hover:bg-emerald-500/25 hover:text-white"
-                  : isHistoryEntry
-                    ? "bg-sky-500/15 text-sky-200 ring-1 ring-sky-400/30 hover:bg-sky-500/25 hover:text-white"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
-            }`}
+            className="ml-auto text-slate-400 hover:text-slate-600"
+            aria-label="Fermer"
           >
-            <Icon className="h-4 w-4 shrink-0" />
-            <span>{item.label}</span>
-            {isSalesEntry ? (
-              <span className="ml-auto rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-100">
-                POS
-              </span>
-            ) : isHistoryEntry ? (
-              <span className="ml-auto rounded-full bg-sky-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-100">
-                History
-              </span>
-            ) : null}
-          </Link>
-        )
-      })}
-    </nav>
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 overflow-y-auto px-3 py-3">
+        {groups.map((group) => (
+          <div key={group.label} className="mb-1">
+            {collapsed && !isMobile ? (
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const active = item.section === currentSection
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={item.label}
+                      className={`flex items-center justify-center rounded-md px-2 py-2 text-sm font-medium transition ${
+                        active
+                          ? "bg-[#2271b1]/10 text-[#2271b1]"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                    >
+                      <GroupIcon label={group.label} active={active} />
+                    </Link>
+                  )
+                })}
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.label)}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 transition hover:text-slate-600"
+                >
+                  <GroupIcon label={group.label} active={false} />
+                  <span className="flex-1 text-left">{group.label}</span>
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${
+                      expandedGroups.has(group.label) ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {expandedGroups.has(group.label) && (
+                  <div className="mt-1 space-y-0.5 pl-7">
+                    {group.items.map((item) => {
+                      const active = item.section === currentSection
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={onNavigate}
+                          className={`relative flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition ${
+                            active
+                              ? "bg-[#2271b1]/10 text-[#2271b1]"
+                              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          }`}
+                        >
+                          {active && <span className="absolute -left-0.5 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[#2271b1]" />}
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* User / Logout */}
+      <div className="border-t border-slate-200 p-3">
+        {collapsed && !isMobile ? (
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            className="flex w-full items-center justify-center rounded-md p-2 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+            title="Déconnexion"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 rounded-md px-2 py-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                <UserCircle className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-slate-900">
+                  {access?.user?.fullName || access?.user?.email || "Admin"}
+                </p>
+                <p className="truncate text-xs text-slate-500">
+                  {access?.user?.role ? ADMIN_ROLE_LABELS[access.user.role] : "Utilisateur"}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+            >
+              <LogOut className="h-4 w-4" />
+              Déconnexion
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   )
+}
+
+function GroupIcon({ label, active }: { label: string; active: boolean }) {
+  const className = `h-4 w-4 shrink-0 ${active ? "text-[#2271b1]" : "text-slate-400"}`
+  switch (label) {
+    case "Principal":
+      return <LayoutDashboard className={className} />
+    case "Ventes":
+      return <BadgeDollarSign className={className} />
+    case "Catalogue":
+      return <Package className={className} />
+    case "Apparence":
+      return <Palette className={className} />
+    case "Administration":
+      return <Settings className={className} />
+    default:
+      return <ChevronRight className={className} />
+  }
 }

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ChevronRight, Loader2, ReceiptText, Search } from "lucide-react"
-import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
@@ -127,11 +126,7 @@ export function AdminLastSellPage({ initialReference }: Props) {
   const totalRevenue = sales.reduce((sum, sale) => sum + toNumber(sale.total), 0)
 
   return (
-    <AdminShell
-      current="last-sell"
-      title="Dernière vente"
-      description="Parcourez les ventes récentes et ouvrez une fiche de reçu pour chaque commande terminée."
-    >
+    <>
       <div className="space-y-6">
         <section className="rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
           <div className="grid gap-6 px-6 py-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:px-8 lg:py-8">
@@ -336,7 +331,7 @@ export function AdminLastSellPage({ initialReference }: Props) {
           </div>
         </SheetContent>
       </Sheet>
-    </AdminShell>
+    </>
   )
 }
 

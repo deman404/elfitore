@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent, ReactNode } from "react"
 import { Check, Loader2, Plus, Pencil, Trash2 } from "lucide-react"
-import { AdminShell } from "@/components/admin/admin-shell"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import {
   AlertDialog,
@@ -171,11 +170,7 @@ export default function CategoriesPage() {
   }
 
   return (
-    <AdminShell
-      current="categories"
-      title="Catégories"
-      description="Créez des catégories de produits pour le formulaire d'ajout."
-    >
+    <>
       <div className="space-y-6">
         <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -431,7 +426,7 @@ export default function CategoriesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </AdminShell>
+    </>
   )
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
+import { Minus, Plus, Trash2, ShoppingBag, X } from "lucide-react"
 import Image from "next/image"
 import {
   Drawer,
@@ -85,10 +85,19 @@ export function CartDrawer() {
   return (
     <>
       <Drawer open={isOpen} onOpenChange={setIsOpen} direction="right">
-        <DrawerContent className="h-full w-full sm:max-w-[440px]">
-          <DrawerHeader className="border-b border-border/50 p-6 py-2.5">
-            <DrawerTitle className="font-serif text-2xl">{t.cart}</DrawerTitle>
-            <DrawerDescription>{itemCount} {itemCount === 1 ? t.item : t.items}</DrawerDescription>
+        <DrawerContent className="h-full w-full max-w-none rounded-none sm:max-w-[440px] sm:rounded-none">
+          <DrawerHeader className="relative border-b border-border/50 p-6 py-2.5">
+            <DrawerClose asChild>
+              <button
+                type="button"
+                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full p-2 hover:bg-muted sm:hidden"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </DrawerClose>
+            <DrawerTitle className="text-center font-serif text-2xl sm:text-left">{t.cart}</DrawerTitle>
+            <DrawerDescription className="text-center sm:text-left">{itemCount} {itemCount === 1 ? t.item : t.items}</DrawerDescription>
           </DrawerHeader>
 
           {/* Cart Items */}

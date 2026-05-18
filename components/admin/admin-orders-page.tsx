@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { ChevronRight, Loader2, ReceiptText, Search, ShoppingBag } from "lucide-react"
-import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
@@ -136,7 +135,7 @@ export function AdminOrdersPage() {
   const totalRevenue = orders.reduce((sum, order) => sum + toNumber(order.total), 0)
 
   return (
-    <AdminShell current="orders" title="Commandes" description="Consultez les commandes WhatsApp et paiement à la livraison enregistrées depuis le site.">
+    <>
       <div className="space-y-6">
         <section className="rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
           <div className="grid gap-6 px-6 py-7 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] lg:px-8 lg:py-8">
@@ -365,7 +364,7 @@ export function AdminOrdersPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </AdminShell>
+    </>
   )
 }
 

@@ -14,37 +14,37 @@ const testimonials: Record<Locale, Array<{
   product: string
 }>> = {
   en: [
-    { id: 1, name: "Nadia El A.", location: "Casablanca, Morocco", rating: 5, text: "The flavor is so fresh and balanced. This olive oil makes every salad, tagine, and finishing drizzle taste better.", product: "Extra Virgin Olive Oil" },
-    { id: 2, name: "Youssef B.", location: "Marrakech, Morocco", rating: 5, text: "You can taste the grove in every drop. It is smooth, peppery, and perfect with warm bread and olive tapenade.", product: "Olive Oil Reserve" },
-    { id: 3, name: "Fatima Z.", location: "Rabat, Morocco", rating: 5, text: "We use it every day at home. It feels authentic, wholesome, and deeply connected to Moroccan cooking.", product: "Family Blend" },
-    { id: 4, name: "Hassan R.", location: "Fes, Morocco", rating: 5, text: "The aroma is beautiful and natural. It reminds me of traditional meals, olive groves, and slow cooking.", product: "Moroccan Harvest" },
-    { id: 5, name: "Leila S.", location: "Tangier, Morocco", rating: 5, text: "The bottle looks elegant, but the real magic is inside. It is the olive oil I reach for first now.", product: "Daily Kitchen Oil" },
-    { id: 6, name: "Omar T.", location: "Agadir, Morocco", rating: 5, text: "Great for bread, grilled fish, and finishing dishes. Clean taste, rich body, and very refined.", product: "Chef Selection" },
-    { id: 7, name: "Salma K.", location: "Tetouan, Morocco", rating: 5, text: "This feels like a true Moroccan pantry essential. The taste is bright, smooth, and beautifully layered.", product: "Pure Press" },
-    { id: 8, name: "Karim E.", location: "Chefchaouen, Morocco", rating: 5, text: "From the first drizzle, you know it is special. It brings warmth and character to every dish.", product: "Olive Grove Blend" },
-    { id: 9, name: "Meryem N.", location: "Essaouira, Morocco", rating: 5, text: "Pure, fragrant, and versatile. It tastes like sunshine, soil, and the spirit of Morocco.", product: "Sun-Kissed Olive Oil" }
+    { id: 1, name: "Ken Zer", location: "Verified Customer", rating: 5, text: "I highly recommend them; very good quality products, very fast service, they are the best, keep up the good work ELFITOR 🙏🙏🙏", product: "Olive Oil & Olives" },
+    { id: 2, name: "Samira IGUIDER", location: "Verified Customer", rating: 5, text: "I highly recommend them. I congratulate you on your professionalism and the quality of your products—a true delight. Thank you so much.", product: "Premium Selection" },
+    { id: 3, name: "Asma Asma", location: "Local Guide", rating: 5, text: "A real treat! Healthy products that take us on a journey through time, an exceptional delight that reminds us of the times of our grandmothers! I highly recommend Elfitor.", product: "Traditional Collection" },
+    { id: 4, name: "Amal Jallouli", location: "Verified Customer", rating: 5, text: "Your products are excellent, with wonderful taste, superb quality, and fast delivery. We wish you continued success.", product: "Family Bundle" },
+    { id: 5, name: "Reda Elghozlafi", location: "Verified Customer", rating: 5, text: "Natural products of excellent quality, may God bless you. May God grant you success and prosperity.", product: "Organic Range" },
+    { id: 6, name: "M EL", location: "Verified Customer", rating: 5, text: "Masha Allah, may Allah bless your products, they are second to none in terms of quality and taste, as well as the good treatment of customers and respect for time in delivering orders.", product: "Full Collection" },
+    { id: 7, name: "Myriam Abdennasser", location: "Verified Customer", rating: 5, text: "Very good quality products 👍! A real natural delight and professional service!", product: "Cold Pressed Oil" },
+    { id: 8, name: "hamil hanan", location: "Verified Customer", rating: 5, text: "Excellent quality product, mashallah, professional service and a competent team.", product: "Gourmet Set" },
+    { id: 9, name: "Khadija Akaou", location: "Verified Customer", rating: 5, text: "The first taste took me back to my childhood when I used to visit my grandmothers; their products are worth trying and using regularly.", product: "Heritage Blend" }
   ],
   fr: [
-    { id: 1, name: "Nadia El A.", location: "Casablanca, Maroc", rating: 5, text: "La saveur est fraîche et équilibrée. Cette huile d’olive rend chaque salade, tajine et filet de finition encore meilleur.", product: "Huile d’olive vierge extra" },
-    { id: 2, name: "Youssef B.", location: "Marrakech, Maroc", rating: 5, text: "On sent le verger dans chaque goutte. Elle est douce, légèrement poivrée, et parfaite avec du pain chaud et de la tapenade.", product: "Réserve d’huile d’olive" },
-    { id: 3, name: "Fatima Z.", location: "Rabat, Maroc", rating: 5, text: "Nous l’utilisons tous les jours à la maison. Elle paraît authentique, saine et profondément liée à la cuisine marocaine.", product: "Mélange familial" },
-    { id: 4, name: "Hassan R.", location: "Fès, Maroc", rating: 5, text: "L’arôme est beau et naturel. Il me rappelle les repas traditionnels, les oliveraies et la cuisine lente.", product: "Récolte marocaine" },
-    { id: 5, name: "Leila S.", location: "Tanger, Maroc", rating: 5, text: "La bouteille est élégante, mais la vraie magie est à l’intérieur. C’est maintenant l’huile que je choisis en premier.", product: "Huile du quotidien" },
-    { id: 6, name: "Omar T.", location: "Agadir, Maroc", rating: 5, text: "Parfaite pour le pain, le poisson grillé et les plats de finition. Goût net, texture riche et très raffinée.", product: "Sélection du chef" },
-    { id: 7, name: "Salma K.", location: "Tétouan, Maroc", rating: 5, text: "On dirait un indispensable du garde-manger marocain. Le goût est vif, doux et magnifiquement structuré.", product: "Pressée pure" },
-    { id: 8, name: "Karim E.", location: "Chefchaouen, Maroc", rating: 5, text: "Dès la première goutte, on comprend que c’est spécial. Elle apporte chaleur et caractère à chaque plat.", product: "Mélange des oliveraies" },
-    { id: 9, name: "Meryem N.", location: "Essaouira, Maroc", rating: 5, text: "Pure, parfumée et polyvalente. Elle a le goût du soleil, de la terre et de l’esprit du Maroc.", product: "Huile solaire" }
+    { id: 1, name: "Ken Zer", location: "Client vérifié", rating: 5, text: "Je les recommande vivement ; produits de très bonne qualité, service très rapide, ils sont les meilleurs, continuez le bon travail ELFITOR 🙏🙏🙏", product: "Huile & Olives" },
+    { id: 2, name: "Samira IGUIDER", location: "Client vérifié", rating: 5, text: "Je les recommande vivement. Je vous félicite pour votre professionnalisme et la qualité de vos produits — un vrai régal. Merci beaucoup.", product: "Sélection Premium" },
+    { id: 3, name: "Asma Asma", location: "Guide Local", rating: 5, text: "Un vrai régal ! Des produits sains qui nous font voyager dans le temps, un délice exceptionnel qui nous rappelle l'époque de nos grand-mères ! Je recommande vivement Elfitor.", product: "Collection Traditionnelle" },
+    { id: 4, name: "Amal Jallouli", location: "Client vérifié", rating: 5, text: "Vos produits sont excellents, avec un goût merveilleux, une qualité superbe et une livraison rapide. Nous vous souhaitons un succès continu.", product: "Pack Famille" },
+    { id: 5, name: "Reda Elghozlafi", location: "Client vérifié", rating: 5, text: "Produits naturels d'excellente qualité, que Dieu vous bénisse. Que Dieu vous accorde succès et prospérité.", product: "Gamme Bio" },
+    { id: 6, name: "M EL", location: "Client vérifié", rating: 5, text: "Masha Allah, que Dieu bénisse vos produits, ils sont inégalés en termes de qualité et de goût, ainsi que le bon traitement des clients et le respect des délais de livraison.", product: "Collection Complète" },
+    { id: 7, name: "Myriam Abdennasser", location: "Client vérifié", rating: 5, text: "Produits de très bonne qualité 👍 ! Un vrai délice naturel et un service professionnel !", product: "Huile Pressée à Froid" },
+    { id: 8, name: "hamil hanan", location: "Client vérifié", rating: 5, text: "Produit d'excellente qualité, mashallah, service professionnel et une équipe compétente.", product: "Set Gourmet" },
+    { id: 9, name: "Khadija Akaou", location: "Client vérifié", rating: 5, text: "La première dégustation m'a ramenée à mon enfance quand je rendais visite à mes grand-mères ; leurs produits méritent d'être essayés et utilisés régulièrement.", product: "Mélange Heritage" }
   ],
   ar: [
-    { id: 1, name: "نادية أ.", location: "الدار البيضاء، المغرب", rating: 5, text: "النكهة منعشة ومتوازنة جدًا. تجعل هذه الزيتون كل سلطة وطاجين ورشة نهائية أطيب.", product: "زيت الزيتون البكر الممتاز" },
-    { id: 2, name: "يوسف ب.", location: "مراكش، المغرب", rating: 5, text: "يمكنك تذوق البستان في كل قطرة. إنها ناعمة مع لمسة فلفلية، ومثالية مع الخبز الدافئ وطريقة الزيتون.", product: "خلاصة زيت الزيتون" },
-    { id: 3, name: "فاطمة ز.", location: "الرباط، المغرب", rating: 5, text: "نستخدمها كل يوم في المنزل. تبدو أصيلة ومغذية ومرتبطة بعمق بالمطبخ المغربي.", product: "الخليط العائلي" },
-    { id: 4, name: "حسن ر.", location: "فاس، المغرب", rating: 5, text: "الرائحة جميلة وطبيعية. تذكرني بالوجبات التقليدية وبساتين الزيتون والطهي البطيء.", product: "حصاد مغربي" },
-    { id: 5, name: "ليلى س.", location: "طنجة، المغرب", rating: 5, text: "الزجاجة أنيقة، لكن السحر الحقيقي بداخلها. أصبحت الزيت التي أختارها أولًا الآن.", product: "زيت المطبخ اليومي" },
-    { id: 6, name: "عمر ت.", location: "أكادير، المغرب", rating: 5, text: "رائعة مع الخبز والسمك المشوي والأطباق النهائية. طعم نظيف وجسم غني وأنيق جدًا.", product: "اختيار الشيف" },
-    { id: 7, name: "سلمى ك.", location: "تطوان، المغرب", rating: 5, text: "تشعر أنها من أساسيات المخزن المغربي الحقيقي. الطعم لامع وناعم ومتعدد الطبقات.", product: "عصر نقي" },
-    { id: 8, name: "كريم ا.", location: "شفشاون، المغرب", rating: 5, text: "من أول رشة تعرف أنها مميزة. تضيف دفئًا وشخصية لكل طبق.", product: "خليط بساتين الزيتون" },
-    { id: 9, name: "مريم ن.", location: "الصويرة، المغرب", rating: 5, text: "نقية وعطرية ومتعددة الاستخدامات. مذاقها كالشمس والتربة وروح المغرب.", product: "زيت مشمس" }
+    { id: 1, name: "Ken Zer", location: "عميل مُحقق", rating: 5, text: "أنصح بهم بشدة؛ منتجات ذات جودة ممتازة، خدمة سريعة جداً، هم الأفضل، استمروا في العمل الرائع ELFITOR 🙏🙏🙏", product: "زيت وزيتون" },
+    { id: 2, name: "Samira IGUIDER", location: "عميل مُحقق", rating: 5, text: "أنصح بهم بشدة. أهنئكم على احترافيتكم وجودة منتجاتكم — لذة حقيقية. شكراً جزيلاً.", product: "الselection الممتازة" },
+    { id: 3, name: "Asma Asma", location: "دليل محلي", rating: 5, text: "لذة حقيقية! منتجات صحية تأخذنا في رحلة عبر الزمن، متعة استثنائية تذكرنا بزمن جداتنا! أنصح بـ Elfitor بشدة.", product: "المجموعة التقليدية" },
+    { id: 4, name: "Amal Jallouli", location: "عميل مُحقق", rating: 5, text: "منتجاتكم ممتازة، ذات طعم رائع وجودة فائقة وتوصيل سريع. نتمنى لكم النجاح المستمر.", product: "باقة العائلة" },
+    { id: 5, name: "Reda Elghozlafi", location: "عميل مُحقق", rating: 5, text: "منتجات طبيعية بجودة ممتازة، بارك الله فيكم. وفقكم الله لكل خير وازدهار.", product: "المنتجات العضوية" },
+    { id: 6, name: "M EL", location: "عميل مُحقق", rating: 5, text: "ما شاء الله، بارك الله في منتجاتكم، لا مثيل لها في الجودة والطعم، وكذلك حسن معاملة العملاء والتزام المواعيد في التوصيل.", product: "المجموعة الكاملة" },
+    { id: 7, name: "Myriam Abdennasser", location: "عميل مُحقق", rating: 5, text: "منتجات ذات جودة ممتازة 👍! لذة طبيعية حقيقية وخدمة احترافية!", product: "زيت معصور على البارد" },
+    { id: 8, name: "hamil hanan", location: "عميل مُحقق", rating: 5, text: "منتج بجودة ممتازة، ما شاء الله، خدمة احترافية وفريق كفء.", product: "طقم الذواقة" },
+    { id: 9, name: "Khadija Akaou", location: "عميل مُحقق", rating: 5, text: "أول قضمة أعادتني إلى طفولتي حين كنت أزور جداتي؛ منتجاتهم تستحق التجربة والاستخدام المنتظم.", product: "خليط التراث" }
   ]
 }
 

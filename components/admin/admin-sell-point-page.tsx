@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { BadgeDollarSign, Loader2, Minus, Plus, ReceiptText, Search, ShoppingCart, Trash2 } from "lucide-react"
-import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { normalizeProductRow, type CatalogCategoryRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
@@ -221,11 +220,7 @@ export function AdminSellPointPage() {
   )
 
   return (
-    <AdminShell
-      current="sell-point"
-      title="Sell Point"
-      description="Fast in-store checkout with stock-safe sales and receipt tracking."
-    >
+    <>
       <div className="space-y-6">
         <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
           <div className="grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)] lg:px-8 lg:py-8">
@@ -486,7 +481,7 @@ export function AdminSellPointPage() {
           </aside>
         </div>
       </div>
-    </AdminShell>
+    </>
   )
 }
 

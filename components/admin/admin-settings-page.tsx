@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
 import { Loader2, Lock, MessageSquareMore, Plus, Save, Shield, Smartphone, Trash2 } from "lucide-react"
-import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
@@ -268,11 +267,7 @@ export function AdminSettingsPage() {
   }
 
   return (
-    <AdminShell
-      current="settings"
-      title="Paramètres"
-      description="Mettez à jour le mot de passe admin et le numéro WhatsApp utilisé pour les liens de commande."
-    >
+    <>
       <div className="space-y-6">
         <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
           <div className="grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)] lg:px-8 lg:py-8">
@@ -585,7 +580,7 @@ export function AdminSettingsPage() {
           </div>
         </section>
       </div>
-    </AdminShell>
+    </>
   )
 }
 

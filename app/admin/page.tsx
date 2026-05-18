@@ -2,16 +2,41 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowUpRight, BadgeCheck, BadgeDollarSign, CircleDollarSign, Database, Lock, Package2, ReceiptText, Shapes, ShieldCheck, Sparkles, Users } from "lucide-react"
-import { AdminShell } from "@/components/admin/admin-shell"
+import {
+  ArrowUpRight,
+  BadgeDollarSign,
+  BarChart3,
+  Box,
+  Layers,
+  Package,
+  Palette,
+  ReceiptText,
+  Settings,
+  ShoppingBag,
+  SlidersHorizontal,
+  Sparkles,
+  TrendingUp,
+  Users,
+  AlertTriangle,
+} from "lucide-react"
 import { canAccessAdminSection, type AdminAccessSnapshot } from "@/lib/admin-access"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
+
+type RecentOrder = {
+  id: number
+  reference: string | null
+  customer_full_name: string
+  status: string
+  total: string | number
+  created_at: string
+}
 
 export default function AdminPage() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const [products, setProducts] = useState<NormalizedProduct[]>([])
   const [webOrdersCount, setWebOrdersCount] = useState(0)
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [access, setAccess] = useState<AdminAccessSnapshot | null>(null)
@@ -21,24 +46,26 @@ export default function AdminPage() {
       setLoading(true)
       setError("")
 
-      const { data, error: queryError } = await supabase.from("products").select("*").order("id", { ascending: false })
-      let ordersCount = 0
-      try {
-        const { count } = await supabase.from("web_orders").select("id", { count: "exact", head: true })
-        ordersCount = count ?? 0
-      } catch {
-        ordersCount = 0
-      }
+      const [{ data: productsData, error: productsError }, ordersCountResult, { data: ordersData }] =
+        await Promise.all([
+          supabase.from("products").select("*").order("id", { ascending: false }),
+          supabase.from("web_orders").select("id", { count: "exact", head: true }),
+          supabase
+            .from("web_orders")
+            .select("id, reference, customer_full_name, status, total, created_at")
+            .order("created_at", { ascending: false })
+            .limit(5),
+        ])
 
-      if (queryError) {
-        setError(`Could not load products from Supabase: ${queryError.message}`)
+      if (productsError) {
+        setError(`Erreur de chargement : ${productsError.message}`)
         setProducts([])
       } else {
-        setProducts(((data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+        setProducts(((productsData ?? []) as CatalogProductRow[]).map(normalizeProductRow))
       }
 
-      setWebOrdersCount(ordersCount)
-
+      setWebOrdersCount(ordersCountResult.count ?? 0)
+      setRecentOrders((ordersData ?? []) as RecentOrder[])
       setLoading(false)
     }
 
@@ -49,390 +76,412 @@ export default function AdminPage() {
     const loadAccess = async () => {
       const response = await fetch("/api/admin/me")
       const data = (await response.json().catch(() => ({}))) as AdminAccessSnapshot & { error?: string }
-
-      if (response.ok) {
-        setAccess(data)
-      }
+      if (response.ok) setAccess(data)
     }
-
     void loadAccess()
   }, [])
 
   const totalProducts = products.length
-  const oilCount = products.filter((product) => product.category === "oil").length
-  const olivesCount = products.filter((product) => product.category === "olives").length
-  const catalogValue = products.reduce((sum, product) => sum + product.price, 0)
-  const totalStock = products.reduce((sum, product) => sum + product.stock, 0)
-  const outOfStockCount = products.filter((product) => product.stock <= 0).length
-  const categoryBreakdown = useMemo(() => {
-    const counts = new Map<string, number>()
+  const totalStock = products.reduce((sum, p) => sum + p.stock, 0)
+  const outOfStockCount = products.filter((p) => p.stock <= 0).length
+  const catalogValue = products.reduce((sum, p) => sum + p.price, 0)
+  const lowStockCount = products.filter((p) => p.stock > 0 && p.stock <= 5).length
 
-    for (const product of products) {
-      counts.set(product.category, (counts.get(product.category) ?? 0) + 1)
-    }
-
-    return [...counts.entries()]
-      .sort((left, right) => right[1] - left[1])
-      .slice(0, 4)
-  }, [products])
+  const stats = [
+    { label: "Produits", value: totalProducts, icon: Package, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "En stock", value: totalStock, icon: Box, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Commandes", value: webOrdersCount, icon: ShoppingBag, color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Valeur catalogue", value: `DH ${catalogValue.toLocaleString()}`, icon: BarChart3, color: "text-amber-600", bg: "bg-amber-50" },
+  ]
 
   return (
-    <AdminShell
-      current="dashboard"
-      title="Overview"
-      description="Track catalog health, launch new products, and keep the store organized."
-    >
-      <div className="space-y-6">
-        {error ? (
-          <div className="rounded-3xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
+    <div className="space-y-6">
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      ) : null}
+
+      {/* Welcome + Quick Actions */}
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Bienvenue dans l'administration</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Gérez votre boutique, suivez les commandes et mettez à jour votre catalogue en un seul endroit.
+            </p>
           </div>
-        ) : null}
-
-        <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
-          <div className="grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)] lg:px-8 lg:py-8">
-            <div className="space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/75">
-                <BadgeCheck className="h-4 w-4 text-emerald-400" />
-                Supabase connecté
-              </div>
-
-              <div className="space-y-3">
-                <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-                  Gardez le catalogue en mouvement avec un tableau de bord vraiment utile au quotidien.
-                </h1>
-                <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                  Ce panneau affiche le catalogue en direct, sa structure active et les chemins les plus rapides pour ajouter du stock ou mettre à jour la boutique.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/admin/addProduct"
-                  className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-                >
-                  Ajouter un produit
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/admin/categories"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Gérer les catégories
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-                {canAccessAdminSection(access, "theme") ? (
-                  <Link
-                    href="/admin/theme"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Thème
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                ) : null}
-                {canAccessAdminSection(access, "sell-point") ? (
-                  <Link
-                    href="/admin/sell-point"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Point de vente
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                ) : null}
-                {canAccessAdminSection(access, "settings") ? (
-                  <Link
-                    href="/admin/settings"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Paramètres de la boutique
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                ) : null}
-                {canAccessAdminSection(access, "users") ? (
-                  <Link
-                    href="/admin/users"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Utilisateurs
-                    <ArrowUpRight className="h-4 w-4" />
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <MiniPill label="Produits" value={loading ? "..." : `${totalProducts}`} />
-              <MiniPill label="Valeur du catalogue" value={loading ? "..." : `DH ${catalogValue}`} />
-              <MiniPill label="Catégories actives" value={loading ? "..." : `${categoryBreakdown.length}`} />
-              <MiniPill label="Unités en stock" value={loading ? "..." : `${totalStock}`} />
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <QuickLink href="/admin/addProduct" label="Produit" icon={Package} />
+            <QuickLink href="/admin/sell-point" label="Vente" icon={BadgeDollarSign} />
+            <QuickLink href="/admin/orders" label="Commandes" icon={ReceiptText} />
           </div>
-        </section>
+        </div>
+      </div>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StateCard
-            icon={Package2}
-            label="Produits totaux"
-            value={loading ? "..." : `${totalProducts}`}
-            note="Articles actifs dans Supabase"
-            tone="blue"
-          />
-          <StateCard icon={Sparkles} label="Produits huile" value={loading ? "..." : `${oilCount}`} note="Articles d'huile d'olive" tone="green" />
-          <StateCard icon={ShieldCheck} label="Produits olives" value={loading ? "..." : `${olivesCount}`} note="Sélections d'olives" tone="amber" />
-          <StateCard
-            icon={CircleDollarSign}
-            label="Catalog value"
-            value={loading ? "..." : `DH ${catalogValue}`}
-            note="Prix total du catalogue"
-            tone="slate"
-          />
-          <StateCard
-            icon={Package2}
-            label="Rupture de stock"
-            value={loading ? "..." : `${outOfStockCount}`}
-            note="Produits sans stock"
-            tone="amber"
-          />
-          <StateCard
-            icon={BadgeDollarSign}
-            label="Sell point"
-            value="Open"
-            note="Encaissement rapide en magasin"
-            tone="blue"
-          />
-          <StateCard
-            icon={ReceiptText}
-            label="Commandes web"
-            value={loading ? "..." : `${webOrdersCount}`}
-            note="Commandes WhatsApp et paiement à la livraison"
-            tone="green"
-          />
-          <StateCard
-            icon={Users}
-            label="Utilisateurs"
-            value="Gérer"
-            note="Rôles et permissions"
-            tone="slate"
-          />
-        </section>
-
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-          <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-            <div className="flex items-center justify-between gap-4">
+      {/* Stats Row */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300"
+          >
+            <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-slate-950">Activité récente du catalogue</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Vue en direct des produits les plus récents récupérés depuis Supabase.
+                <p className="text-sm font-medium text-slate-500">{stat.label}</p>
+                <p className="mt-1 text-2xl font-semibold text-slate-900">
+                  {loading ? "—" : stat.value}
                 </p>
               </div>
-              <Link href="/admin/addProduct" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1877F2]">
-                Ouvrir le gestionnaire de produits
-                <ArrowUpRight className="h-4 w-4" />
+              <div className={`rounded-lg p-2.5 ${stat.bg} ${stat.color}`}>
+                <stat.icon className="h-5 w-5" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Alerts */}
+      {!loading && (outOfStockCount > 0 || lowStockCount > 0) ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div>
+              <p className="text-sm font-medium text-amber-900">Alertes stock</p>
+              <p className="mt-0.5 text-sm text-amber-800">
+                {outOfStockCount > 0 && `${outOfStockCount} produit${outOfStockCount > 1 ? "s" : ""} en rupture de stock. `}
+                {lowStockCount > 0 && `${lowStockCount} produit${lowStockCount > 1 ? "s" : ""} avec stock faible (≤ 5).`}
+              </p>
+              <Link
+                href="/admin/addProduct"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-900 underline underline-offset-2 hover:text-amber-700"
+              >
+                Gérer les produits <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </div>
+          </div>
+        </div>
+      ) : null}
 
-            <div className="mt-5 grid gap-3">
-              {(loading ? [] : products.slice(0, 5)).map((product) => (
-                <div
-                  key={product.id}
-                  className="rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-4 transition hover:border-slate-300 hover:bg-white"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-slate-950">{product.name.en}</p>
-                        <span className="rounded-full bg-[#1877F2]/10 px-2.5 py-1 text-xs font-semibold text-[#1877F2]">
+      {/* Main Grid */}
+      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+        {/* Left column */}
+        <div className="space-y-6">
+          {/* Recent Orders */}
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <h3 className="font-semibold text-slate-900">Commandes récentes</h3>
+                <p className="text-xs text-slate-500">Les 5 dernières commandes en ligne</p>
+              </div>
+              <Link
+                href="/admin/orders"
+                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#2271b1] transition hover:bg-[#2271b1]/5"
+              >
+                Voir tout <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {loading ? (
+                <div className="px-5 py-8 text-center text-sm text-slate-400">Chargement...</div>
+              ) : recentOrders.length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-slate-400">Aucune commande pour le moment</div>
+              ) : (
+                recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium text-slate-900">
+                          {order.reference || `#${order.id}`}
+                        </span>
+                        <OrderStatusBadge status={order.status} />
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-slate-500">{order.customer_full_name}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-slate-900">DH {order.total}</p>
+                      <p className="text-xs text-slate-400">
+                        {new Date(order.created_at).toLocaleDateString("fr-FR")}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Recent Products */}
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <h3 className="font-semibold text-slate-900">Produits récents</h3>
+                <p className="text-xs text-slate-500">Les derniers articles ajoutés au catalogue</p>
+              </div>
+              <Link
+                href="/admin/addProduct"
+                className="inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs font-medium text-[#2271b1] transition hover:bg-[#2271b1]/5"
+              >
+                Voir tout <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {loading ? (
+                <div className="px-5 py-8 text-center text-sm text-slate-400">Chargement...</div>
+              ) : products.length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-slate-400">Aucun produit</div>
+              ) : (
+                products.slice(0, 5).map((product) => (
+                  <div key={product.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium text-slate-900">{product.name.en}</span>
+                        <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-600">
                           {product.category}
                         </span>
                       </div>
-                      <p className="boty-line-clamp-2 mt-1 text-sm leading-6 text-slate-500">{product.description.en}</p>
+                      <p className="mt-0.5 truncate text-xs text-slate-500">{product.description.en}</p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <div className="rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white">
-                        DH {product.price}
-                      </div>
-                      <Link href="/admin/addProduct" className="text-slate-400 transition hover:text-slate-950">
-                        <ArrowUpRight className="h-4 w-4" />
-                      </Link>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          product.stock <= 0
+                            ? "bg-red-50 text-red-700"
+                            : product.stock <= 5
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-emerald-50 text-emerald-700"
+                        }`}
+                      >
+                        {product.stock <= 0 ? "Rupture" : `${product.stock} en stock`}
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold text-slate-900">DH {product.price}</span>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          </section>
+          </div>
+        </div>
 
-          <aside className="space-y-6">
-            <section className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-              <h2 className="text-xl font-semibold text-slate-950">Raccourcis opérationnels</h2>
-              <p className="mt-1 text-sm text-slate-500">Les endroits les plus utiles après avoir consulté le tableau de bord.</p>
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h3 className="font-semibold text-slate-900">Actions rapides</h3>
+              <p className="text-xs text-slate-500">Accès direct aux outils fréquemment utilisés</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+              <ActionRow
+                href="/admin/addProduct"
+                icon={Package}
+                label="Ajouter un produit"
+                description="Créer un nouvel article dans le catalogue"
+                show={canAccessAdminSection(access, "products")}
+              />
+              <ActionRow
+                href="/admin/categories"
+                icon={Layers}
+                label="Gérer les catégories"
+                description="Organiser la structure du catalogue"
+                show={canAccessAdminSection(access, "categories")}
+              />
+              <ActionRow
+                href="/admin/sell-point"
+                icon={BadgeDollarSign}
+                label="Point de vente"
+                description="Encaisser une vente en magasin"
+                show={canAccessAdminSection(access, "sell-point")}
+              />
+              <ActionRow
+                href="/admin/orders"
+                icon={ReceiptText}
+                label="Commandes"
+                description="Consulter et traiter les commandes"
+                show={canAccessAdminSection(access, "orders")}
+              />
+              <ActionRow
+                href="/admin/theme"
+                icon={Palette}
+                label="Personnaliser le thème"
+                description="Modifier l'apparence du site"
+                show={canAccessAdminSection(access, "theme")}
+              />
+              <ActionRow
+                href="/admin/settings"
+                icon={SlidersHorizontal}
+                label="Paramètres"
+                description="Configurer la boutique"
+                show={canAccessAdminSection(access, "settings")}
+              />
+              <ActionRow
+                href="/admin/users"
+                icon={Users}
+                label="Utilisateurs"
+                description="Gérer l'équipe et les permissions"
+                show={canAccessAdminSection(access, "users")}
+              />
+            </div>
+          </div>
 
-              <div className="mt-5 grid gap-3">
-                {canAccessAdminSection(access, "theme") ? (
-                  <ActionCard
-                    title="Thème"
-                    description="Modifier le média principal et le texte de la page d'accueil."
-                    href="/admin/theme"
-                    icon={Sparkles}
-                  />
-                ) : null}
-                {canAccessAdminSection(access, "sell-point") ? (
-                  <ActionCard
-                    title="Point de vente"
-                    description="Ouvrir l'interface d'encaissement en magasin."
-                    href="/admin/sell-point"
-                    icon={BadgeDollarSign}
-                  />
-                ) : null}
-                {canAccessAdminSection(access, "sell-point") ? (
-                  <ActionCard
-                    title="Commandes"
-                    description="Consulter les commandes WhatsApp et paiement à la livraison."
-                    href="/admin/orders"
-                    icon={ReceiptText}
-                  />
-                ) : null}
-                <ActionCard
-                  title="Authentification"
-                  description="Vérifier la connexion Supabase et l'accès admin protégé."
-                  href="/admin/auth"
-                  icon={Lock}
-                />
-                {canAccessAdminSection(access, "products") ? (
-                  <ActionCard
-                    title="Produits"
-                    description="Créer, modifier et supprimer des produits du catalogue."
-                    href="/admin/addProduct"
-                    icon={Database}
-                  />
-                ) : null}
-                {canAccessAdminSection(access, "categories") ? (
-                  <ActionCard
-                    title="Catégories"
-                    description="Garder une structure produit propre et cohérente."
-                    href="/admin/categories"
-                    icon={Shapes}
-                  />
-                ) : null}
-                {canAccessAdminSection(access, "users") ? (
-                  <ActionCard
-                    title="Utilisateurs"
-                    description="Gérer les administrateurs et les permissions."
-                    href="/admin/users"
-                    icon={Users}
-                  />
-                ) : null}
+          {/* Store Health */}
+          <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h3 className="font-semibold text-slate-900">Santé de la boutique</h3>
+              <p className="text-xs text-slate-500">Aperçu des indicateurs clés</p>
+            </div>
+            <div className="space-y-3 p-5">
+              <HealthBar
+                label="Stock disponible"
+                value={totalProducts - outOfStockCount}
+                max={totalProducts}
+                tone={outOfStockCount > 0 ? "warning" : "success"}
+                loading={loading}
+              />
+              <HealthBar
+                label="Commandes ce mois"
+                value={webOrdersCount}
+                max={Math.max(webOrdersCount, 10)}
+                tone="info"
+                loading={loading}
+              />
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="rounded-md border border-slate-100 bg-slate-50 p-3 text-center">
+                  <p className="text-xs text-slate-500">Ruptures</p>
+                  <p className={`mt-1 text-lg font-semibold ${outOfStockCount > 0 ? "text-red-600" : "text-slate-900"}`}>
+                    {loading ? "—" : outOfStockCount}
+                  </p>
+                </div>
+                <div className="rounded-md border border-slate-100 bg-slate-50 p-3 text-center">
+                  <p className="text-xs text-slate-500">Stock faible</p>
+                  <p className={`mt-1 text-lg font-semibold ${lowStockCount > 0 ? "text-amber-600" : "text-slate-900"}`}>
+                    {loading ? "—" : lowStockCount}
+                  </p>
+                </div>
               </div>
-            </section>
+            </div>
+          </div>
 
-            <section className="rounded-[2rem] border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
-              <h2 className="text-lg font-semibold">Répartition du catalogue</h2>
-              <p className="mt-1 text-sm leading-6 text-white/70">
-                Un aperçu rapide des familles de produits qui portent l'assortiment actuellement.
-              </p>
-
-              <div className="mt-4 space-y-3">
-                {categoryBreakdown.length === 0 ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-                    Aucun produit chargé pour le moment.
+          {/* Catalog Summary */}
+          <div className="rounded-lg border border-slate-200 bg-slate-950 p-5 text-white shadow-sm">
+            <h3 className="font-semibold">Résumé du catalogue</h3>
+            <p className="mt-1 text-xs text-white/60">Vue d'ensemble des produits</p>
+            <div className="mt-4 space-y-3">
+              {loading ? (
+                <div className="text-sm text-white/40">Chargement...</div>
+              ) : products.length === 0 ? (
+                <div className="text-sm text-white/40">Aucun produit</div>
+              ) : (
+                products.slice(0, 4).map((product) => (
+                  <div key={product.id} className="flex items-center justify-between text-sm">
+                    <span className="truncate text-white/80">{product.name.en}</span>
+                    <span className="shrink-0 font-medium text-white">DH {product.price}</span>
                   </div>
-                ) : (
-                  categoryBreakdown.map(([category, count]) => (
-                    <div key={category} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="capitalize text-white/85">{category}</span>
-                        <span className="font-semibold text-white">{count}</span>
-                      </div>
-                      <div className="mt-2 h-2 rounded-full bg-white/10">
-                        <div
-                          className="h-2 rounded-full bg-emerald-400"
-                          style={{ width: `${Math.max(10, Math.min(100, (count / Math.max(totalProducts, 1)) * 100))}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </section>
-          </aside>
-        </section>
-      </div>
-    </AdminShell>
-  )
-}
-
-function StateCard({
-  icon: Icon,
-  label,
-  value,
-  note,
-  tone,
-}: {
-  icon: typeof Package2
-  label: string
-  value: string
-  note: string
-  tone: "blue" | "green" | "amber" | "slate"
-}) {
-  const toneStyles: Record<"blue" | "green" | "amber" | "slate", string> = {
-    blue: "bg-[#1877F2]/10 text-[#1877F2]",
-    green: "bg-emerald-500/10 text-emerald-600",
-    amber: "bg-amber-500/10 text-amber-600",
-    slate: "bg-slate-500/10 text-slate-600",
-  }
-
-  return (
-    <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500">{label}</p>
-          <p className="mt-1 text-3xl font-semibold text-slate-950">{value}</p>
-        </div>
-        <div className={`rounded-2xl p-3 ${toneStyles[tone]}`}>
-          <Icon className="h-5 w-5" />
+                ))
+              )}
+            </div>
+            <Link
+              href="/admin/addProduct"
+              className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/80 transition hover:bg-white/10"
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              Voir le catalogue complet
+            </Link>
+          </div>
         </div>
       </div>
-      <p className="mt-4 text-sm text-slate-500">{note}</p>
     </div>
   )
 }
 
-function MiniPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-white/50">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-white">{value}</p>
-    </div>
-  )
-}
-
-function ActionCard({
-  title,
-  description,
-  href,
-  icon: Icon,
-}: {
-  title: string
-  description: string
-  href: string
-  icon: typeof Lock
-}) {
+function QuickLink({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Package }) {
   return (
     <Link
       href={href}
-      className="group rounded-[1.5rem] border border-slate-200/80 bg-slate-50 p-4 transition hover:border-slate-300 hover:bg-white"
+      className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-3">
-          <div className="inline-flex rounded-2xl bg-slate-950 p-3 text-white">
-            <Icon className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-slate-950">{title}</h3>
-            <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
-          </div>
-        </div>
-        <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-slate-950" />
-      </div>
+      <Icon className="h-3.5 w-3.5" />
+      {label}
     </Link>
+  )
+}
+
+function OrderStatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    pending: "bg-amber-50 text-amber-700",
+    processing: "bg-blue-50 text-blue-700",
+    shipped: "bg-violet-50 text-violet-700",
+    delivered: "bg-emerald-50 text-emerald-700",
+    cancelled: "bg-red-50 text-red-700",
+  }
+  const labels: Record<string, string> = {
+    pending: "En attente",
+    processing: "En cours",
+    shipped: "Expédiée",
+    delivered: "Livrée",
+    cancelled: "Annulée",
+  }
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${styles[status] || "bg-slate-100 text-slate-600"}`}>
+      {labels[status] || status}
+    </span>
+  )
+}
+
+function ActionRow({
+  href,
+  icon: Icon,
+  label,
+  description,
+  show,
+}: {
+  href: string
+  icon: typeof Package
+  label: string
+  description: string
+  show: boolean
+}) {
+  if (!show) return null
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50"
+    >
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-slate-900">{label}</p>
+        <p className="text-xs text-slate-500">{description}</p>
+      </div>
+      <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-400" />
+    </Link>
+  )
+}
+
+function HealthBar({
+  label,
+  value,
+  max,
+  tone,
+  loading,
+}: {
+  label: string
+  value: number
+  max: number
+  tone: "success" | "warning" | "info"
+  loading: boolean
+}) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0
+  const barColor =
+    tone === "success" ? "bg-emerald-500" : tone === "warning" ? "bg-amber-500" : "bg-blue-500"
+
+  return (
+    <div>
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-slate-600">{label}</span>
+        <span className="font-medium text-slate-900">{loading ? "—" : `${value} / ${max}`}</span>
+      </div>
+      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   )
 }

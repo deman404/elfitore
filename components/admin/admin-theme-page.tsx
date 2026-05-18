@@ -4,14 +4,17 @@ import { useEffect, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import {
   Check,
+  ChevronDown,
   Clapperboard,
   Droplets,
+  Eye,
   Flower2,
   Globe,
   Image as ImageIcon,
   Leaf,
   Loader2,
-  Palette,
+  Maximize2,
+  Pencil,
   Recycle,
   Save,
   ShieldCheck,
@@ -19,9 +22,9 @@ import {
   Truck,
   Type,
 } from "lucide-react"
-import { AdminShell } from "@/components/admin/admin-shell"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { ThemeMediaUpload } from "@/components/admin/theme-media-upload"
 import { fetchThemeHero, isValidThemeHeroText, type ThemeHeroData } from "@/lib/theme-hero"
 import {
   DEFAULT_THEME_FEATURE_SECTION,
@@ -41,27 +44,14 @@ import {
   type ThemeCtaBannerData,
 } from "@/lib/theme-cta-banner"
 
-type MessageState = {
-  type: "error" | "success"
-  text: string
-}
+type MessageState = { type: "error" | "success"; text: string }
+type LocaleKey = "en" | "fr" | "ar"
+type SectionKey = "hero" | "feature" | "trust" | "cta"
 
-type ThemeFormState = ThemeHeroData
-type ThemeFeatureFormState = ThemeFeatureSectionData
-type ThemeTrustBadgesFormState = ThemeTrustBadgesData
-type ThemeCtaFormState = ThemeCtaBannerData
+const localeLabels: Record<LocaleKey, string> = { en: "English", fr: "Français", ar: "العربية" }
+const locales: LocaleKey[] = ["en", "fr", "ar"]
 
-const localeLabels = {
-  en: "English",
-  fr: "French",
-  ar: "Arabic",
-} as const
-
-const locales = ["en", "fr", "ar"] as const
-
-const featureCardLabels = ["Card 1", "Card 2", "Card 3", "Card 4"] as const
-
-const trustBadgeIconMap: Record<ThemeTrustBadgeIcon, typeof Leaf> = {
+const trustIconMap: Record<ThemeTrustBadgeIcon, typeof Leaf> = {
   leaf: Leaf,
   droplets: Droplets,
   sparkles: Sparkles,
@@ -72,687 +62,716 @@ const trustBadgeIconMap: Record<ThemeTrustBadgeIcon, typeof Leaf> = {
   truck: Truck,
 }
 
-type LocaleKey = keyof ThemeHeroData["subtitle"]
-
 export function AdminThemePage() {
-  const initial = useMemo<ThemeFormState>(() => {
-    return {
-      mediaType: "video",
-      mediaUrl: "",
-      subtitle: { en: "", fr: "", ar: "" },
-      title1: { en: "", fr: "", ar: "" },
-      title2: { en: "", fr: "", ar: "" },
-      description: { en: "", fr: "", ar: "" },
-      cta: { en: "", fr: "", ar: "" },
-      scroll: { en: "", fr: "", ar: "" },
-    }
-  }, [])
+  const [hero, setHero] = useState<ThemeHeroData>({
+    mediaType: "video",
+    mediaUrl: "",
+    subtitle: { en: "", fr: "", ar: "" },
+    title1: { en: "", fr: "", ar: "" },
+    title2: { en: "", fr: "", ar: "" },
+    description: { en: "", fr: "", ar: "" },
+    cta: { en: "", fr: "", ar: "" },
+    scroll: { en: "", fr: "", ar: "" },
+  })
+  const [feature, setFeature] = useState<ThemeFeatureSectionData>(DEFAULT_THEME_FEATURE_SECTION)
+  const [trust, setTrust] = useState<ThemeTrustBadgesData>(DEFAULT_THEME_TRUST_BADGES)
+  const [cta, setCta] = useState<ThemeCtaBannerData>(DEFAULT_THEME_CTA_BANNER)
 
-  const [form, setForm] = useState<ThemeFormState>(initial)
-  const [featureForm, setFeatureForm] = useState<ThemeFeatureFormState>(DEFAULT_THEME_FEATURE_SECTION)
-  const [trustForm, setTrustForm] = useState<ThemeTrustBadgesFormState>(DEFAULT_THEME_TRUST_BADGES)
-  const [ctaForm, setCtaForm] = useState<ThemeCtaFormState>(DEFAULT_THEME_CTA_BANNER)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [savingFeature, setSavingFeature] = useState(false)
-  const [savingTrust, setSavingTrust] = useState(false)
-  const [savingCta, setSavingCta] = useState(false)
-  const [message, setMessage] = useState<MessageState | null>(null)
-  const [featureMessage, setFeatureMessage] = useState<MessageState | null>(null)
-  const [trustMessage, setTrustMessage] = useState<MessageState | null>(null)
-  const [ctaMessage, setCtaMessage] = useState<MessageState | null>(null)
+  const [savingSection, setSavingSection] = useState<SectionKey | null>(null)
+  const [messages, setMessages] = useState<Partial<Record<SectionKey, MessageState>>>({})
+  const [activePanel, setActivePanel] = useState<SectionKey | null>(null)
 
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const [hero, feature, trust, cta] = await Promise.all([
+      const [h, f, t, c] = await Promise.all([
         fetchThemeHero(),
         fetchThemeFeatureSection(),
         fetchThemeTrustBadges(),
         fetchThemeCtaBanner(),
       ])
-      setForm(hero)
-      setFeatureForm(feature)
-      setTrustForm(trust)
-      setCtaForm(cta)
+      setHero(h)
+      setFeature(f)
+      setTrust(t)
+      setCta(c)
       setLoading(false)
     }
-
     void load()
   }, [])
 
-  const updateCopy = (field: keyof Omit<ThemeHeroData, "mediaType" | "mediaUrl">, locale: keyof ThemeHeroData["subtitle"]) => (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const value = event.target.value
-    setForm((current) => ({
-      ...current,
-      [field]: {
-        ...current[field],
-        [locale]: value,
-      },
-    }))
+  const setMessage = (section: SectionKey, msg: MessageState | null) => {
+    setMessages((prev) => ({ ...prev, [section]: msg ?? undefined }))
   }
 
-  const updateMediaType = (mediaType: ThemeHeroData["mediaType"]) => {
-    setForm((current) => ({ ...current, mediaType }))
-  }
+  const handleSave = async (section: SectionKey, endpoint: string, payload: unknown) => {
+    setSavingSection(section)
+    setMessage(section, null)
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setMessage(null)
-
-    if (!form.mediaUrl.trim()) {
-      setMessage({ type: "error", text: "Add a hero image/video URL or path." })
-      return
-    }
-
-    const requiredFields = [
-      form.subtitle.en,
-      form.title1.en,
-      form.title2.en,
-      form.description.en,
-      form.cta.en,
-      form.scroll.en,
-    ]
-
-    if (requiredFields.some((value) => !isValidThemeHeroText(value))) {
-      setMessage({ type: "error", text: "Fill out the English text fields before saving." })
-      return
-    }
-
-    setSaving(true)
-
-    const response = await fetch("/api/admin/theme-hero", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    })
-
-    const data = (await response.json().catch(() => ({}))) as { error?: string }
-
-    if (!response.ok) {
-      setMessage({ type: "error", text: data.error ?? "Could not save the theme." })
-    } else {
-      setMessage({ type: "success", text: "Theme hero updated successfully." })
-    }
-
-    setSaving(false)
-  }
-
-  const updateFeatureText =
-    (field:
-      | "overlayTitle"
-      | "overlayDescription"
-      | "topTitle"
-      | "topSubtitle"
-      | "topBullet1"
-      | "topBullet2"
-      | "topBullet3"
-      | "sectionEyebrow"
-      | "sectionTitle"
-      | "sectionDescription"
-      | "bottomEyebrow"
-      | "bottomTitle",
-    locale: LocaleKey) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value
-      setFeatureForm((current) => ({
-        ...current,
-        [field]: {
-          ...current[field],
-          [locale]: value,
-        },
-      }))
-    }
-
-  const updateFeatureCardText =
-    (index: number, field: "title" | "description", locale: LocaleKey) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value
-      setFeatureForm((current) => ({
-        ...current,
-        cards: current.cards.map((card, cardIndex) =>
-          cardIndex === index
-            ? {
-                ...card,
-                [field]: {
-                  ...card[field],
-                  [locale]: value,
-                },
-              }
-            : card
-        ),
-      }))
-    }
-
-  const handleFeatureSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setFeatureMessage(null)
-    setSavingFeature(true)
-
-    const response = await fetch("/api/admin/theme-feature-section", {
+    const res = await fetch(endpoint, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(featureForm),
+      body: JSON.stringify(payload),
     })
 
-    const data = (await response.json().catch(() => ({}))) as { error?: string }
-
-    if (!response.ok) {
-      setFeatureMessage({ type: "error", text: data.error ?? "Could not save the feature section." })
+    const data = (await res.json().catch(() => ({}))) as { error?: string }
+    if (!res.ok) {
+      setMessage(section, { type: "error", text: data.error ?? "Erreur de sauvegarde." })
     } else {
-      setFeatureMessage({ type: "success", text: "Feature section updated successfully." })
+      setMessage(section, { type: "success", text: "Modifications enregistrées." })
     }
-
-    setSavingFeature(false)
+    setSavingSection(null)
   }
 
-  const updateTrustBadgeText =
-    (index: number, field: "title" | "description", locale: LocaleKey) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value
-      setTrustForm((current) => ({
-        ...current,
-        badges: current.badges.map((badge, badgeIndex) =>
-          badgeIndex === index
-            ? {
-                ...badge,
-                [field]: {
-                  ...badge[field],
-                  [locale]: value,
-                },
-              }
-            : badge
-        ),
-      }))
-    }
-
-  const updateTrustBadgeIcon = (index: number) => (event: ChangeEvent<HTMLSelectElement>) => {
-    const icon = event.target.value as ThemeTrustBadgeIcon
-    setTrustForm((current) => ({
-      ...current,
-      badges: current.badges.map((badge, badgeIndex) => (badgeIndex === index ? { ...badge, icon } : badge)),
-    }))
-  }
-
-  const handleTrustSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setTrustMessage(null)
-    setSavingTrust(true)
-
-    const response = await fetch("/api/admin/theme-trust-badges", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(trustForm),
-    })
-
-    const data = (await response.json().catch(() => ({}))) as { error?: string }
-
-    if (!response.ok) {
-      setTrustMessage({ type: "error", text: data.error ?? "Could not save the trust badges." })
-    } else {
-      setTrustMessage({ type: "success", text: "Trust badges updated successfully." })
-    }
-
-    setSavingTrust(false)
-  }
-
-  const updateCtaText =
-    (field: keyof Omit<ThemeCtaFormState, "backgroundImageUrl">, locale: LocaleKey) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target.value
-      setCtaForm((current) => ({
-        ...current,
-        [field]: {
-          ...current[field],
-          [locale]: value,
-        },
-      }))
-    }
-
-  const handleCtaSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setCtaMessage(null)
-    setSavingCta(true)
-
-    const response = await fetch("/api/admin/theme-cta-banner", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(ctaForm),
-    })
-
-    const data = (await response.json().catch(() => ({}))) as { error?: string }
-
-    if (!response.ok) {
-      setCtaMessage({ type: "error", text: data.error ?? "Could not save the CTA banner." })
-    } else {
-      setCtaMessage({ type: "success", text: "CTA banner updated successfully." })
-    }
-
-    setSavingCta(false)
-  }
+  const isSaving = (s: SectionKey) => savingSection === s
 
   return (
-    <AdminShell
-      current="theme"
-      title="Theme"
-      description="Update the hero media and copy that appear on the homepage."
-    >
-      <div className="space-y-6">
-        <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-slate-950 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
-          <div className="grid gap-8 px-6 py-7 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)] lg:px-8 lg:py-8">
-            <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/50">Homepage theme</p>
-              <h2 className="max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-                Control the first thing visitors see when the home page loads.
-              </h2>
-              <p className="max-w-2xl text-sm leading-7 text-white/70 sm:text-base">
-                Use the tabs to edit each homepage section without scrolling through the full page.
-              </p>
-            </div>
-
-            <div className="grid gap-3">
-              <SettingPill label="Media" value={loading ? "Loading..." : form.mediaType} />
-              <SettingPill label="Asset" value={loading ? "Loading..." : form.mediaUrl || "Not set"} />
-              <SettingPill label="Scope" value="Tabbed sections" />
-            </div>
-          </div>
-        </section>
-
-        <Tabs defaultValue="hero" className="space-y-6">
-          <TabsList className="grid h-auto w-full grid-cols-4 gap-2 rounded-[1.25rem] bg-slate-100 p-2">
-            <TabsTrigger value="hero">Hero</TabsTrigger>
-            <TabsTrigger value="feature">Feature Section</TabsTrigger>
-            <TabsTrigger value="trust">Trust Badges</TabsTrigger>
-            <TabsTrigger value="cta">CTA Banner</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="hero" className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <section className="grid gap-6 xl:grid-cols-2">
-            <article className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-              <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                  <Palette className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-950">Media source</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
-                    Choose whether the hero uses an image or a video, then provide a public URL or stored path.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => updateMediaType("image")}
-                    className={`rounded-2xl border px-4 py-4 text-left transition ${
-                      form.mediaType === "image"
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 font-medium">
-                      <ImageIcon className="h-4 w-4" />
-                      Image
-                    </div>
-                    <p className="mt-2 text-sm leading-6 opacity-80">Best for a static hero banner or photo.</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateMediaType("video")}
-                    className={`rounded-2xl border px-4 py-4 text-left transition ${
-                      form.mediaType === "video"
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-900"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 font-medium">
-                      <Clapperboard className="h-4 w-4" />
-                      Video
-                    </div>
-                    <p className="mt-2 text-sm leading-6 opacity-80">Best for your current looping olive video.</p>
-                  </button>
-                </div>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-medium text-slate-700">Media URL or path</span>
-                  <input
-                    value={form.mediaUrl}
-                    onChange={(event) => setForm((current) => ({ ...current, mediaUrl: event.target.value }))}
-                    className="admin-input"
-                    placeholder={form.mediaType === "video" ? "/video/olive.mp4" : "https://example.com/hero.jpg"}
-                  />
-                </label>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-medium text-slate-700">Preview note</p>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
-                    If you store a video, make sure it is muted, loopable, and publicly reachable. Images can be any public URL or app asset path.
-                  </p>
-                </div>
-              </div>
-            </article>
-
-            <article className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-              <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                  <Type className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-950">Localized copy</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
-                    Edit the subtitle, headline, description, CTA, and scroll label for each language.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-6">
-                {(["en", "fr", "ar"] as const).map((locale) => (
-                  <div key={locale} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{localeLabels[locale]}</p>
-                    <div className="mt-4 grid gap-4">
-                      <Field label="Subtitle" value={form.subtitle[locale]} onChange={updateCopy("subtitle", locale)} />
-                      <Field label="Title line 1" value={form.title1[locale]} onChange={updateCopy("title1", locale)} />
-                      <Field label="Title line 2" value={form.title2[locale]} onChange={updateCopy("title2", locale)} />
-                      <Field
-                        label="Description"
-                        value={form.description[locale]}
-                        onChange={updateCopy("description", locale)}
-                        textarea
-                      />
-                      <Field label="CTA label" value={form.cta[locale]} onChange={updateCopy("cta", locale)} />
-                      <Field label="Scroll label" value={form.scroll[locale]} onChange={updateCopy("scroll", locale)} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </section>
-
-          <section className="rounded-[2rem] border border-dashed border-slate-300 bg-white/70 p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                  <Save className="h-4 w-4" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-950">Save theme changes</h3>
-                  <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-500">
-                    Saving updates the singleton `theme_hero` row in Supabase so the homepage can read the latest hero content immediately.
-                  </p>
-                </div>
-              </div>
-              <Button type="submit" className="gap-2" disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {saving ? "Saving..." : "Save theme"}
-              </Button>
-            </div>
-
-              {message ? <Notice type={message.type} text={message.text} /> : null}
-              </section>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="feature" className="space-y-6">
-            <form onSubmit={handleFeatureSubmit} className="space-y-6">
-              <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                <Palette className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-slate-950">Feature Section</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Update the image tiles and the localized copy used in the feature section.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <Field label="Left image" value={featureForm.leftImageUrl} onChange={(e) => setFeatureForm((current) => ({ ...current, leftImageUrl: e.target.value }))} />
-              <Field label="Top image" value={featureForm.topImageUrl} onChange={(e) => setFeatureForm((current) => ({ ...current, topImageUrl: e.target.value }))} />
-              <Field label="Bottom image" value={featureForm.bottomImageUrl} onChange={(e) => setFeatureForm((current) => ({ ...current, bottomImageUrl: e.target.value }))} />
-              <Field label="Video image" value={featureForm.videoImageUrl} onChange={(e) => setFeatureForm((current) => ({ ...current, videoImageUrl: e.target.value }))} />
-            </div>
-
-            <div className="mt-6 space-y-6">
-              {locales.map((locale) => (
-                <div key={locale} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{localeLabels[locale]}</p>
-                  <div className="mt-4 grid gap-4">
-                    <Field label="Overlay title" value={featureForm.overlayTitle[locale]} onChange={updateFeatureText("overlayTitle", locale)} />
-                    <Field label="Overlay description" value={featureForm.overlayDescription[locale]} onChange={updateFeatureText("overlayDescription", locale)} textarea />
-                    <Field label="Top title" value={featureForm.topTitle[locale]} onChange={updateFeatureText("topTitle", locale)} />
-                    <Field label="Top subtitle" value={featureForm.topSubtitle[locale]} onChange={updateFeatureText("topSubtitle", locale)} />
-                    <Field label="Top bullet 1" value={featureForm.topBullet1[locale]} onChange={updateFeatureText("topBullet1", locale)} />
-                    <Field label="Top bullet 2" value={featureForm.topBullet2[locale]} onChange={updateFeatureText("topBullet2", locale)} />
-                    <Field label="Top bullet 3" value={featureForm.topBullet3[locale]} onChange={updateFeatureText("topBullet3", locale)} />
-                    <Field label="Section eyebrow" value={featureForm.sectionEyebrow[locale]} onChange={updateFeatureText("sectionEyebrow", locale)} />
-                    <Field label="Section title" value={featureForm.sectionTitle[locale]} onChange={updateFeatureText("sectionTitle", locale)} />
-                    <Field label="Section description" value={featureForm.sectionDescription[locale]} onChange={updateFeatureText("sectionDescription", locale)} textarea />
-                    <Field label="Bottom eyebrow" value={featureForm.bottomEyebrow[locale]} onChange={updateFeatureText("bottomEyebrow", locale)} />
-                    <Field label="Bottom title" value={featureForm.bottomTitle[locale]} onChange={updateFeatureText("bottomTitle", locale)} />
-                  </div>
-                </div>
-              ))}
-
-              <div className="space-y-4">
-                {featureForm.cards.map((card, index) => (
-                  <div key={`${card.title.en}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{featureCardLabels[index]}</p>
-                    <div className="mt-4 grid gap-4">
-                      {locales.map((locale) => (
-                        <div key={`${index}-${locale}`} className="grid gap-4 md:grid-cols-2">
-                          <Field label={`${localeLabels[locale]} title`} value={card.title[locale]} onChange={updateFeatureCardText(index, "title", locale)} />
-                          <Field
-                            label={`${localeLabels[locale]} description`}
-                            value={card.description[locale]}
-                            onChange={updateFeatureCardText(index, "description", locale)}
-                            textarea
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-4 rounded-[1.75rem] border border-dashed border-slate-300 bg-white/70 p-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h4 className="text-base font-semibold text-slate-950">Save feature section</h4>
-                <p className="mt-1 text-sm text-slate-500">Stores the feature section in the `theme_feature_section` table.</p>
-              </div>
-              <Button type="submit" className="gap-2" disabled={savingFeature}>
-                {savingFeature ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {savingFeature ? "Saving..." : "Save feature section"}
-              </Button>
-            </div>
-
-            {featureMessage ? <Notice type={featureMessage.type} text={featureMessage.text} /> : null}
-              </section>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="trust" className="space-y-6">
-            <form onSubmit={handleTrustSubmit} className="space-y-6">
-              <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
-                <Type className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-slate-950">Trust Badges</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Update the trust badge titles and descriptions used beneath the hero.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {trustForm.badges.map((badge, index) => {
-                const Icon = trustBadgeIconMap[badge.icon] ?? Leaf
-
-                return (
-                <div key={`${badge.title.en}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Badge {index + 1}</p>
-                      <div className="mt-3 flex items-center gap-3 text-slate-700">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <span className="text-sm font-medium">{badge.title.en || "Trust badge"}</span>
-                      </div>
-                    </div>
-                    <label className="block w-full space-y-2 sm:max-w-xs">
-                      <span className="text-sm font-medium text-slate-700">Icon</span>
-                      <select value={badge.icon} onChange={updateTrustBadgeIcon(index)} className="admin-input">
-                        {TRUST_BADGE_ICON_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <div className="mt-4 space-y-6">
-                    {locales.map((locale) => (
-                      <div key={`${index}-${locale}`} className="grid gap-4 md:grid-cols-2">
-                        <Field label={`${localeLabels[locale]} title`} value={badge.title[locale]} onChange={updateTrustBadgeText(index, "title", locale)} />
-                        <Field
-                          label={`${localeLabels[locale]} description`}
-                          value={badge.description[locale]}
-                          onChange={updateTrustBadgeText(index, "description", locale)}
-                          textarea
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                )
-              })}
-            </div>
-
-            <div className="mt-6 flex flex-col gap-4 rounded-[1.75rem] border border-dashed border-slate-300 bg-white/70 p-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h4 className="text-base font-semibold text-slate-950">Save trust badges</h4>
-                <p className="mt-1 text-sm text-slate-500">Stores the trust badge array in the `theme_trust_badges` table.</p>
-              </div>
-              <Button type="submit" className="gap-2" disabled={savingTrust}>
-                {savingTrust ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {savingTrust ? "Saving..." : "Save trust badges"}
-              </Button>
-            </div>
-
-            {trustMessage ? <Notice type={trustMessage.type} text={trustMessage.text} /> : null}
-              </section>
-            </form>
-          </TabsContent>
-
-          <TabsContent value="cta" className="space-y-6">
-            <form onSubmit={handleCtaSubmit} className="space-y-6">
-              <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
-            <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                <Save className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-slate-950">CTA Banner</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Edit the banner background image and the callout text near the bottom of the home page.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <Field label="Background image" value={ctaForm.backgroundImageUrl} onChange={(e) => setCtaForm((current) => ({ ...current, backgroundImageUrl: e.target.value }))} />
-            </div>
-
-            <div className="mt-6 space-y-6">
-              {locales.map((locale) => (
-                <div key={locale} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{localeLabels[locale]}</p>
-                  <div className="mt-4 grid gap-4">
-                    <Field label="Title line 1" value={ctaForm.title1[locale]} onChange={updateCtaText("title1", locale)} />
-                    <Field label="Title line 2" value={ctaForm.title2[locale]} onChange={updateCtaText("title2", locale)} />
-                    <Field label="Leaf line" value={ctaForm.leaf[locale]} onChange={updateCtaText("leaf", locale)} />
-                    <Field label="Flower line" value={ctaForm.flower[locale]} onChange={updateCtaText("flower", locale)} />
-                    <Field label="Globe line" value={ctaForm.globe[locale]} onChange={updateCtaText("globe", locale)} />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 flex flex-col gap-4 rounded-[1.75rem] border border-dashed border-slate-300 bg-white/70 p-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h4 className="text-base font-semibold text-slate-950">Save CTA banner</h4>
-                <p className="mt-1 text-sm text-slate-500">Stores the CTA banner in the `theme_cta_banner` table.</p>
-              </div>
-              <Button type="submit" className="gap-2" disabled={savingCta}>
-                {savingCta ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                {savingCta ? "Saving..." : "Save CTA banner"}
-              </Button>
-            </div>
-
-            {ctaMessage ? <Notice type={ctaMessage.type} text={ctaMessage.text} /> : null}
-              </section>
-            </form>
-          </TabsContent>
-        </Tabs>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Éditeur de page d'accueil</h2>
+          <p className="text-sm text-slate-500">
+            Modifiez les sections de la page d'accueil comme dans un constructeur de page.
+          </p>
+        </div>
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+        >
+          <Eye className="h-4 w-4" />
+          Aperçu du site
+        </a>
       </div>
-    </AdminShell>
-  )
-}
 
-function Field({
-  label,
-  value,
-  onChange,
-  textarea = false,
-}: {
-  label: string
-  value: string
-  onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void
-  textarea?: boolean
-}) {
-  return (
-    <label className="block space-y-2">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      {textarea ? (
-        <textarea value={value} onChange={onChange} className="admin-input min-h-24 resize-y" />
-      ) : (
-        <input value={value} onChange={onChange} className="admin-input" />
-      )}
-    </label>
-  )
-}
+      {/* Canvas */}
+      <div className="space-y-4">
+        <SectionCard
+          index={1}
+          title="Hero"
+          description="Bannière principale avec vidéo ou image"
+          loading={loading}
+          active={activePanel === "hero"}
+          onEdit={() => setActivePanel("hero")}
+          preview={
+            <HeroPreview data={hero} />
+          }
+        />
 
-function SettingPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-white/5 px-4 py-4">
-      <p className="text-xs uppercase tracking-[0.18em] text-white/50">{label}</p>
-      <p className="mt-2 text-lg font-semibold text-white">{value}</p>
+        <SectionCard
+          index={2}
+          title="Section Fonctionnalités"
+          description="Grille bento et cartes de présentation"
+          loading={loading}
+          active={activePanel === "feature"}
+          onEdit={() => setActivePanel("feature")}
+          preview={<FeaturePreview data={feature} />}
+        />
+
+        <SectionCard
+          index={3}
+          title="Badges de confiance"
+          description="Icônes et avantages sous le hero"
+          loading={loading}
+          active={activePanel === "trust"}
+          onEdit={() => setActivePanel("trust")}
+          preview={<TrustPreview data={trust} />}
+        />
+
+        <SectionCard
+          index={4}
+          title="Bannière CTA"
+          description="Appel à l'action en bas de page"
+          loading={loading}
+          active={activePanel === "cta"}
+          onEdit={() => setActivePanel("cta")}
+          preview={<CtaPreview data={cta} />}
+        />
+      </div>
+
+      {/* Edit Panels */}
+      <EditPanel open={activePanel === "hero"} onClose={() => setActivePanel(null)} title="Modifier le Hero" icon={ImageIcon}>
+        <HeroForm
+          data={hero}
+          setData={setHero}
+          onSave={() => {
+            if (!hero.mediaUrl.trim()) {
+              setMessage("hero", { type: "error", text: "Ajoutez une URL ou un chemin média." })
+              return
+            }
+            const required = [hero.subtitle.en, hero.title1.en, hero.title2.en, hero.description.en, hero.cta.en, hero.scroll.en]
+            if (required.some((v) => !isValidThemeHeroText(v))) {
+              setMessage("hero", { type: "error", text: "Remplissez tous les champs en anglais." })
+              return
+            }
+            void handleSave("hero", "/api/admin/theme-hero", hero)
+          }}
+          saving={isSaving("hero")}
+          message={messages.hero ?? null}
+        />
+      </EditPanel>
+
+      <EditPanel open={activePanel === "feature"} onClose={() => setActivePanel(null)} title="Modifier la section Fonctionnalités" icon={Maximize2}>
+        <FeatureForm
+          data={feature}
+          setData={setFeature}
+          onSave={() => void handleSave("feature", "/api/admin/theme-feature-section", feature)}
+          saving={isSaving("feature")}
+          message={messages.feature ?? null}
+        />
+      </EditPanel>
+
+      <EditPanel open={activePanel === "trust"} onClose={() => setActivePanel(null)} title="Modifier les Badges de confiance" icon={ShieldCheck}>
+        <TrustForm
+          data={trust}
+          setData={setTrust}
+          onSave={() => void handleSave("trust", "/api/admin/theme-trust-badges", trust)}
+          saving={isSaving("trust")}
+          message={messages.trust ?? null}
+        />
+      </EditPanel>
+
+      <EditPanel open={activePanel === "cta"} onClose={() => setActivePanel(null)} title="Modifier la Bannière CTA" icon={Sparkles}>
+        <CtaForm
+          data={cta}
+          setData={setCta}
+          onSave={() => void handleSave("cta", "/api/admin/theme-cta-banner", cta)}
+          saving={isSaving("cta")}
+          message={messages.cta ?? null}
+        />
+      </EditPanel>
     </div>
   )
 }
 
-function Notice({ type, text }: MessageState) {
+/* ───────────────────── Section Card ───────────────────── */
+
+function SectionCard({
+  index,
+  title,
+  description,
+  loading,
+  active,
+  onEdit,
+  preview,
+}: {
+  index: number
+  title: string
+  description: string
+  loading: boolean
+  active: boolean
+  onEdit: () => void
+  preview: React.ReactNode
+}) {
   return (
     <div
-      className={`mt-4 rounded-2xl border px-4 py-3 text-sm leading-6 ${
-        type === "success"
-          ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-          : "border-red-200 bg-red-50 text-red-700"
+      className={`group relative overflow-hidden rounded-lg border bg-white shadow-sm transition ${
+        active ? "border-[#2271b1] ring-1 ring-[#2271b1]" : "border-slate-200 hover:border-slate-300"
       }`}
     >
-      {text}
+      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+          {index}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-slate-900">{title}</p>
+          <p className="text-xs text-slate-500">{description}</p>
+        </div>
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={onEdit}>
+          <Pencil className="h-3.5 w-3.5" />
+          Modifier
+        </Button>
+      </div>
+      <div className="relative bg-slate-50 p-4">
+        {loading ? (
+          <div className="flex h-32 items-center justify-center text-sm text-slate-400">Chargement...</div>
+        ) : (
+          <div className="pointer-events-none select-none opacity-80">{preview}</div>
+        )}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+          <Button size="sm" className="gap-1.5 shadow-lg" onClick={onEdit}>
+            <Pencil className="h-3.5 w-3.5" />
+            Modifier cette section
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ───────────────────── Edit Panel Shell ───────────────────── */
+
+function EditPanel({
+  open,
+  onClose,
+  title,
+  icon: Icon,
+  children,
+}: {
+  open: boolean
+  onClose: () => void
+  title: string
+  icon: typeof ImageIcon
+  children: React.ReactNode
+}) {
+  return (
+    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
+        <SheetHeader className="border-b border-slate-200 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#2271b1]/10 text-[#2271b1]">
+              <Icon className="h-4 w-4" />
+            </div>
+            <SheetTitle className="text-base font-semibold">{title}</SheetTitle>
+          </div>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto p-5">{children}</div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+/* ───────────────────── Previews ───────────────────── */
+
+function HeroPreview({ data }: { data: ThemeHeroData }) {
+  const text = data.title1.en || data.title2.en || "Titre du hero"
+  return (
+    <div className="relative overflow-hidden rounded-md bg-slate-900 text-white">
+      <div className="flex h-32 items-center justify-center">
+        {data.mediaType === "video" ? (
+          <Clapperboard className="h-8 w-8 text-white/30" />
+        ) : (
+          <ImageIcon className="h-8 w-8 text-white/30" />
+        )}
+      </div>
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+        <p className="text-xs font-medium uppercase tracking-wider text-white/60">{data.subtitle.en || "Sous-titre"}</p>
+        <p className="mt-1 text-sm font-semibold">{text}</p>
+        <div className="mt-2 inline-flex rounded bg-white/20 px-2 py-1 text-[10px] font-medium">{data.cta.en || "CTA"}</div>
+      </div>
+    </div>
+  )
+}
+
+function FeaturePreview({ data }: { data: ThemeFeatureSectionData }) {
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2">
+        <div className="col-span-2 row-span-2 flex h-20 items-center justify-center rounded-md bg-slate-200 text-xs text-slate-500">Image gauche</div>
+        <div className="flex h-9 items-center justify-center rounded-md bg-slate-200 text-[10px] text-slate-500">Image haut</div>
+        <div className="flex h-9 items-center justify-center rounded-md bg-slate-200 text-[10px] text-slate-500">Image bas</div>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {data.cards.map((card, i) => (
+          <div key={i} className="rounded-md bg-white p-2 text-center shadow-sm">
+            <p className="truncate text-[10px] font-medium text-slate-700">{card.title.en || `Carte ${i + 1}`}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function TrustPreview({ data }: { data: ThemeTrustBadgesData }) {
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {data.badges.map((badge, i) => {
+        const Icon = trustIconMap[badge.icon] ?? Leaf
+        return (
+          <div key={i} className="rounded-md bg-white p-3 text-center shadow-sm">
+            <Icon className="mx-auto h-5 w-5 text-slate-400" />
+            <p className="mt-1 truncate text-[10px] font-medium text-slate-700">{badge.title.en || `Badge ${i + 1}`}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function CtaPreview({ data }: { data: ThemeCtaBannerData }) {
+  return (
+    <div className="relative overflow-hidden rounded-md bg-slate-800 text-white">
+      <div className="flex h-28 items-center justify-center">
+        <ImageIcon className="h-8 w-8 text-white/20" />
+      </div>
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+        <p className="text-sm font-semibold">{data.title1.en || "Titre CTA"}</p>
+        <p className="text-xs text-white/70">{data.title2.en || "Sous-titre"}</p>
+      </div>
+    </div>
+  )
+}
+
+/* ───────────────────── Hero Form ───────────────────── */
+
+function HeroForm({
+  data,
+  setData,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeHeroData
+  setData: React.Dispatch<React.SetStateAction<ThemeHeroData>>
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  const update = (field: keyof Omit<ThemeHeroData, "mediaType" | "mediaUrl">, locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({ ...prev, [field]: { ...prev[field], [locale]: e.target.value } }))
+
+  return (
+    <div className="space-y-6">
+      <Collapsible title="Média" defaultOpen>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setData((p) => ({ ...p, mediaType: "image" }))}
+            className={`flex flex-col items-center gap-2 rounded-lg border p-4 transition ${
+              data.mediaType === "image" ? "border-[#2271b1] bg-[#2271b1]/5 text-[#2271b1]" : "border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            <ImageIcon className="h-6 w-6" />
+            <span className="text-sm font-medium">Image</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setData((p) => ({ ...p, mediaType: "video" }))}
+            className={`flex flex-col items-center gap-2 rounded-lg border p-4 transition ${
+              data.mediaType === "video" ? "border-[#2271b1] bg-[#2271b1]/5 text-[#2271b1]" : "border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            <Clapperboard className="h-6 w-6" />
+            <span className="text-sm font-medium">Vidéo</span>
+          </button>
+        </div>
+        <ThemeMediaUpload
+          value={data.mediaUrl}
+          onChange={(url) => setData((p) => ({ ...p, mediaUrl: url }))}
+          folder="hero"
+          label={data.mediaType === "video" ? "Vidéo du hero" : "Image du hero"}
+        />
+      </Collapsible>
+
+      <Collapsible title="Textes localisés" defaultOpen>
+        {locales.map((locale) => (
+          <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+            <div className="space-y-3">
+              <Input label="Sous-titre" value={data.subtitle[locale]} onChange={update("subtitle", locale)} />
+              <Input label="Titre ligne 1" value={data.title1[locale]} onChange={update("title1", locale)} />
+              <Input label="Titre ligne 2" value={data.title2[locale]} onChange={update("title2", locale)} />
+              <Textarea label="Description" value={data.description[locale]} onChange={update("description", locale)} />
+              <Input label="Bouton CTA" value={data.cta[locale]} onChange={update("cta", locale)} />
+              <Input label="Label scroll" value={data.scroll[locale]} onChange={update("scroll", locale)} />
+            </div>
+          </div>
+        ))}
+      </Collapsible>
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
+/* ───────────────────── Feature Form ───────────────────── */
+
+function FeatureForm({
+  data,
+  setData,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeFeatureSectionData
+  setData: React.Dispatch<React.SetStateAction<ThemeFeatureSectionData>>
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  const update = (field: keyof ThemeFeatureSectionData, locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({ ...prev, [field]: { ...prev[field], [locale]: e.target.value } } as ThemeFeatureSectionData))
+
+  const updateCard = (index: number, field: "title" | "description", locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        cards: prev.cards.map((c, i) => (i === index ? { ...c, [field]: { ...c[field], [locale]: e.target.value } } : c)),
+      }))
+
+  return (
+    <div className="space-y-6">
+      <Collapsible title="Images" defaultOpen>
+        <div className="grid gap-4">
+          <ThemeMediaUpload value={data.leftImageUrl} onChange={(url) => setData((p) => ({ ...p, leftImageUrl: url }))} folder="features" label="Image gauche (bento)" />
+          <ThemeMediaUpload value={data.topImageUrl} onChange={(url) => setData((p) => ({ ...p, topImageUrl: url }))} folder="features" label="Image haut (bento)" />
+          <ThemeMediaUpload value={data.bottomImageUrl} onChange={(url) => setData((p) => ({ ...p, bottomImageUrl: url }))} folder="features" label="Image bas (bento)" />
+          <ThemeMediaUpload value={data.videoImageUrl} onChange={(url) => setData((p) => ({ ...p, videoImageUrl: url }))} folder="features" label="Image vidéo" />
+        </div>
+      </Collapsible>
+
+      <Collapsible title="Textes bento" defaultOpen>
+        {locales.map((locale) => (
+          <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+            <div className="space-y-3">
+              <Input label="Titre overlay" value={data.overlayTitle[locale]} onChange={update("overlayTitle", locale)} />
+              <Textarea label="Description overlay" value={data.overlayDescription[locale]} onChange={update("overlayDescription", locale)} />
+              <Input label="Titre haut" value={data.topTitle[locale]} onChange={update("topTitle", locale)} />
+              <Input label="Sous-titre haut" value={data.topSubtitle[locale]} onChange={update("topSubtitle", locale)} />
+              <Input label="Puce 1" value={data.topBullet1[locale]} onChange={update("topBullet1", locale)} />
+              <Input label="Puce 2" value={data.topBullet2[locale]} onChange={update("topBullet2", locale)} />
+              <Input label="Puce 3" value={data.topBullet3[locale]} onChange={update("topBullet3", locale)} />
+              <Input label="Eyebrow bas" value={data.bottomEyebrow[locale]} onChange={update("bottomEyebrow", locale)} />
+              <Input label="Titre bas" value={data.bottomTitle[locale]} onChange={update("bottomTitle", locale)} />
+            </div>
+          </div>
+        ))}
+      </Collapsible>
+
+      <Collapsible title="Textes section" defaultOpen>
+        {locales.map((locale) => (
+          <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+            <div className="space-y-3">
+              <Input label="Eyebrow" value={data.sectionEyebrow[locale]} onChange={update("sectionEyebrow", locale)} />
+              <Input label="Titre" value={data.sectionTitle[locale]} onChange={update("sectionTitle", locale)} />
+              <Textarea label="Description" value={data.sectionDescription[locale]} onChange={update("sectionDescription", locale)} />
+            </div>
+          </div>
+        ))}
+      </Collapsible>
+
+      <Collapsible title="Cartes" defaultOpen>
+        {data.cards.map((card, idx) => (
+          <div key={idx} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Carte {idx + 1}</p>
+            <div className="space-y-3">
+              {locales.map((locale) => (
+                <div key={locale} className="space-y-2">
+                  <Input label={`Titre ${localeLabels[locale]}`} value={card.title[locale]} onChange={updateCard(idx, "title", locale)} />
+                  <Textarea label={`Description ${localeLabels[locale]}`} value={card.description[locale]} onChange={updateCard(idx, "description", locale)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </Collapsible>
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
+/* ───────────────────── Trust Form ───────────────────── */
+
+function TrustForm({
+  data,
+  setData,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeTrustBadgesData
+  setData: React.Dispatch<React.SetStateAction<ThemeTrustBadgesData>>
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  const updateBadge = (index: number, field: "title" | "description", locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        badges: prev.badges.map((b, i) => (i === index ? { ...b, [field]: { ...b[field], [locale]: e.target.value } } : b)),
+      }))
+
+  const updateIcon = (index: number) => (e: ChangeEvent<HTMLSelectElement>) =>
+    setData((prev) => ({
+      ...prev,
+      badges: prev.badges.map((b, i) => (i === index ? { ...b, icon: e.target.value as ThemeTrustBadgeIcon } : b)),
+    }))
+
+  return (
+    <div className="space-y-6">
+      {data.badges.map((badge, idx) => {
+        const Icon = trustIconMap[badge.icon] ?? Leaf
+        return (
+          <div key={idx} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-white text-slate-500 shadow-sm">
+                <Icon className="h-3.5 w-3.5" />
+              </span>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Badge {idx + 1}</p>
+            </div>
+            <div className="space-y-3">
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-slate-600">Icône</span>
+                <select value={badge.icon} onChange={updateIcon(idx)} className="admin-input">
+                  {TRUST_BADGE_ICON_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {locales.map((locale) => (
+                <div key={locale} className="space-y-2">
+                  <Input label={`Titre ${localeLabels[locale]}`} value={badge.title[locale]} onChange={updateBadge(idx, "title", locale)} />
+                  <Textarea label={`Description ${localeLabels[locale]}`} value={badge.description[locale]} onChange={updateBadge(idx, "description", locale)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
+/* ───────────────────── CTA Form ───────────────────── */
+
+function CtaForm({
+  data,
+  setData,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeCtaBannerData
+  setData: React.Dispatch<React.SetStateAction<ThemeCtaBannerData>>
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  const update = (field: keyof ThemeCtaBannerData, locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({ ...prev, [field]: { ...prev[field], [locale]: e.target.value } } as ThemeCtaBannerData))
+
+  return (
+    <div className="space-y-6">
+      <Collapsible title="Image de fond" defaultOpen>
+        <ThemeMediaUpload value={data.backgroundImageUrl} onChange={(url) => setData((p) => ({ ...p, backgroundImageUrl: url }))} folder="cta" label="Image de fond" />
+      </Collapsible>
+
+      <Collapsible title="Textes localisés" defaultOpen>
+        {locales.map((locale) => (
+          <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+            <div className="space-y-3">
+              <Input label="Titre ligne 1" value={data.title1[locale]} onChange={update("title1", locale)} />
+              <Input label="Titre ligne 2" value={data.title2[locale]} onChange={update("title2", locale)} />
+              <Input label="Ligne feuille" value={data.leaf[locale]} onChange={update("leaf", locale)} />
+              <Input label="Ligne fleur" value={data.flower[locale]} onChange={update("flower", locale)} />
+              <Input label="Ligne globe" value={data.globe[locale]} onChange={update("globe", locale)} />
+            </div>
+          </div>
+        ))}
+      </Collapsible>
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
+/* ───────────────────── Reusable UI ───────────────────── */
+
+function Collapsible({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string
+  children: React.ReactNode
+  defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="rounded-lg border border-slate-200">
+      <button
+        type="button"
+        onClick={() => setOpen((p) => !p)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-slate-800 hover:bg-slate-50"
+      >
+        {title}
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="border-t border-slate-100 px-4 py-4">{children}</div>}
+    </div>
+  )
+}
+
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-slate-600">{label}</span>
+      <input value={value} onChange={onChange} className="admin-input" />
+    </label>
+  )
+}
+
+function Textarea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (e: ChangeEvent<HTMLTextAreaElement>) => void
+}) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-slate-600">{label}</span>
+      <textarea value={value} onChange={onChange} className="admin-input min-h-20 resize-y" />
+    </label>
+  )
+}
+
+function SaveBar({
+  onSave,
+  saving,
+  message,
+}: {
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  return (
+    <div className="space-y-3 pt-2">
+      <div className="flex items-center justify-between rounded-lg border border-dashed border-slate-300 bg-white p-4">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Enregistrer les modifications</p>
+          <p className="text-xs text-slate-500">Les changements seront visibles immédiatement sur le site.</p>
+        </div>
+        <Button onClick={onSave} disabled={saving} className="gap-2">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {saving ? "Enregistrement..." : "Enregistrer"}
+        </Button>
+      </div>
+      {message ? (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            message.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          {message.text}
+        </div>
+      ) : null}
     </div>
   )
 }
