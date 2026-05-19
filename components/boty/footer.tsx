@@ -5,7 +5,7 @@ import { Instagram, Facebook, Twitter } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import type { Locale } from "@/i18n.config"
 
-const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; about: Array<{name: string; href: string}>; support: Array<{name: string; href: string}> }> = {
+const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; links: Array<{name: string; href: string}>; support: Array<{name: string; href: string}> }> = {
   en: {
     shop: [
       { name: "All Products", href: "/shop" },
@@ -14,11 +14,12 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; a
       { name: "Gift Sets", href: "/shop" },
       { name: "New Arrivals", href: "/shop" }
     ],
-    about: [
-      { name: "Our Story", href: "/" },
-      { name: "About Morocco", href: "/" },
-      { name: "Sustainability", href: "/" },
-      { name: "Press", href: "/" }
+    links: [
+      { name: "Home", href: "/" },
+      { name: "Shop", href: "/shop" },
+      { name: "Contact", href: "/contact" },
+      { name: "FAQ", href: "/faq" },
+      { name: "Shipping", href: "/shipping" }
     ],
     support: [
       { name: "Contact Us", href: "/contact" },
@@ -35,11 +36,12 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; a
       { name: "Coffrets cadeaux", href: "/shop" },
       { name: "Nouveautés", href: "/shop" }
     ],
-    about: [
-      { name: "Notre histoire", href: "/" },
-      { name: "À propos du Maroc", href: "/" },
-      { name: "Développement durable", href: "/" },
-      { name: "Presse", href: "/" }
+    links: [
+      { name: "Accueil", href: "/" },
+      { name: "Boutique", href: "/shop" },
+      { name: "Contact", href: "/contact" },
+      { name: "FAQ", href: "/faq" },
+      { name: "Livraison", href: "/shipping" }
     ],
     support: [
       { name: "Nous contacter", href: "/contact" },
@@ -56,11 +58,12 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; a
       { name: "مجموعات هدايا", href: "/shop" },
       { name: "الوصول الجديد", href: "/shop" }
     ],
-    about: [
-      { name: "قصتنا", href: "/" },
-      { name: "عن المغرب", href: "/" },
-      { name: "الاستدامة", href: "/" },
-      { name: "صحافة", href: "/" }
+    links: [
+      { name: "الرئيسية", href: "/" },
+      { name: "المتجر", href: "/shop" },
+      { name: "اتصل بنا", href: "/contact" },
+      { name: "الأسئلة الشائعة", href: "/faq" },
+      { name: "التوصيل", href: "/shipping" }
     ],
     support: [
       { name: "اتصل بنا", href: "/contact" },
@@ -71,10 +74,10 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; a
   }
 }
 
-const footerTexts: Record<Locale, { shop: string; about: string; support: string; copyright: string; privacy: string; terms: string; description: string }> = {
+const footerTexts: Record<Locale, { shop: string; links: string; support: string; copyright: string; privacy: string; terms: string; description: string }> = {
   en: {
     shop: 'Shop',
-    about: 'About',
+    links: 'Links',
     support: 'Support',
     copyright: 'All rights reserved',
     privacy: 'Privacy Policy',
@@ -83,7 +86,7 @@ const footerTexts: Record<Locale, { shop: string; about: string; support: string
   },
   fr: {
     shop: 'Boutique',
-    about: 'À propos',
+    links: 'Liens',
     support: 'Support',
     copyright: 'Tous droits réservés',
     privacy: 'Politique de confidentialité',
@@ -92,7 +95,7 @@ const footerTexts: Record<Locale, { shop: string; about: string; support: string
   },
   ar: {
     shop: 'متجر',
-    about: 'عن',
+    links: 'روابط',
     support: 'دعم',
     copyright: 'جميع الحقوق محفوظة',
     privacy: 'سياسة الخصوصية',
@@ -171,11 +174,11 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* About Links */}
+          {/* Useful Links */}
           <div>
-            <h3 className="font-medium text-foreground mb-4">{texts.about}</h3>
+            <h3 className="font-medium text-foreground mb-4">{texts.links}</h3>
             <ul className="space-y-3">
-              {links.about.map((link) => (
+              {links.links.map((link) => (
                 <li key={link.name}>
                   <Link
                     href={link.href}
