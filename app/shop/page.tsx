@@ -254,7 +254,7 @@ export default function ShopPage() {
             </div>
           ) : null}
 
-          <div ref={gridRef} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+          <div ref={gridRef} className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 lg:gap-6">
             {loading ? (
               Array.from({ length: 6 }).map((_, index) => (
                 <div key={index} className="rounded-3xl bg-card p-4 shadow-sm">
