@@ -11,24 +11,17 @@ import type { Locale } from '@/i18n.config'
 const translations = {
   en: {
     checkout: 'Checkout',
-    paymentMethod: 'Payment Method',
-    cod: 'Cash on Delivery (COD)',
-    whatsapp: 'WhatsApp',
     personalInfo: 'Personal Information',
     fullName: 'Full Name',
     email: 'Email',
     phone: 'Phone Number',
     address: 'Delivery Address',
     city: 'City',
-    postalCode: 'Postal Code',
-    country: 'Country',
     orderSummary: 'Order Summary',
     shipping: 'Shipping',
     free: 'Calculated at checkout',
     total: 'Total',
-    placeOrder: 'Place Order',
     sendViaWhatsApp: 'Send Order via WhatsApp',
-    contactViaWhatsApp: 'Contact via WhatsApp',
     required: 'This field is required',
     successMessage: 'Order placed successfully! We will contact you shortly.',
     orderDetails: 'Order Details',
@@ -36,24 +29,17 @@ const translations = {
   },
   fr: {
     checkout: 'Paiement',
-    paymentMethod: 'Mode de paiement',
-    cod: 'Paiement à la livraison',
-    whatsapp: 'WhatsApp',
     personalInfo: 'Informations personnelles',
     fullName: 'Nom complet',
     email: 'E-mail',
     phone: 'Numéro de téléphone',
     address: 'Adresse de livraison',
     city: 'Ville',
-    postalCode: 'Code postal',
-    country: 'Pays',
     orderSummary: 'Résumé de la commande',
     shipping: 'Livraison',
     free: 'Calculé au paiement',
     total: 'Total',
-    placeOrder: 'Passer la commande',
     sendViaWhatsApp: 'Envoyer la commande via WhatsApp',
-    contactViaWhatsApp: 'Contacter via WhatsApp',
     required: 'Ce champ est obligatoire',
     successMessage: 'Commande passée avec succès! Nous vous contacterons bientôt.',
     orderDetails: 'Détails de la commande',
@@ -61,24 +47,17 @@ const translations = {
   },
   ar: {
     checkout: 'الدفع',
-    paymentMethod: 'طريقة الدفع',
-    cod: 'الدفع عند الاستلام',
-    whatsapp: 'واتس آب',
     personalInfo: 'المعلومات الشخصية',
     fullName: 'الاسم الكامل',
     email: 'البريد الإلكتروني',
     phone: 'رقم الهاتف',
     address: 'عنوان التوصيل',
     city: 'المدينة',
-    postalCode: 'الرمز البريدي',
-    country: 'الدولة',
     orderSummary: 'ملخص الطلب',
     shipping: 'التوصيل',
     free: 'يُحسب عند الدفع',
     total: 'الإجمالي',
-    placeOrder: 'تقديم الطلب',
     sendViaWhatsApp: 'إرسال الطلب عبر واتس آب',
-    contactViaWhatsApp: 'تواصل عبر واتس آب',
     required: 'هذا الحقل مطلوب',
     successMessage: 'تم تقديم الطلب بنجاح! سنتصل بك قريبًا.',
     orderDetails: 'تفاصيل الطلب',
@@ -94,9 +73,9 @@ interface CheckoutModalProps {
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { locale } = useLanguage()
   const { items, subtotal, clearCart } = useCart()
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'whatsapp'>('cod')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [whatsappNumber, setWhatsappNumber] = useState('')
+  const [deliveryCities, setDeliveryCities] = useState<Array<{ city: string; price: number }>>([])
   const t = translations[locale as Locale]
 
   const [formData, setFormData] = useState({
@@ -105,8 +84,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     phone: '',
     address: '',
     city: '',
-    postalCode: '',
-    country: ''
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -115,6 +92,8 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     const loadSettings = async () => {
       const settings = await fetchSiteSettings()
       setWhatsappNumber(settings.whatsappNumber ?? '')
+      const activeDeliveryMethod = settings.deliveryMethods?.find((method) => method.active) ?? null
+      setDeliveryCities(activeDeliveryMethod?.rates ?? [])
     }
 
     void loadSettings()
@@ -135,7 +114,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     if (!formData.phone) newErrors.phone = t.required
     if (!formData.address) newErrors.address = t.required
     if (!formData.city) newErrors.city = t.required
-    if (!formData.country) newErrors.country = t.required
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -153,40 +131,29 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       price: item.price
     }))
 
-    if (paymentMethod === 'cod') {
-      // For COD, simulate order processing
-      setTimeout(() => {
-        alert(t.successMessage)
-        clearCart()
-        onClose()
-        setIsSubmitting(false)
-      }, 1000)
-    } else {
-      // For WhatsApp
-      if (!whatsappNumber) {
-        setIsSubmitting(false)
-        alert('WhatsApp is not configured yet.')
-        return
-      }
-
-      const orderDetails = {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        country: formData.country,
-        items: orderItems,
-        total: subtotal
-      }
-
-      const message = generateWhatsAppMessage(orderDetails, locale as Locale)
-      const whatsappUrl = getWhatsAppMessageUrl(message, whatsappNumber)
-      window.open(whatsappUrl, '_blank')
-      clearCart()
-      onClose()
+    if (!whatsappNumber) {
       setIsSubmitting(false)
+      alert('WhatsApp is not configured yet.')
+      return
     }
+
+    const orderDetails = {
+      fullName: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      city: formData.city,
+      country: '',
+      items: orderItems,
+      total: subtotal
+    }
+
+    const message = generateWhatsAppMessage(orderDetails, locale as Locale)
+    const whatsappUrl = getWhatsAppMessageUrl(message, whatsappNumber)
+    window.open(whatsappUrl, '_blank')
+    clearCart()
+    onClose()
+    setIsSubmitting(false)
   }
 
   if (!isOpen) return null
@@ -206,36 +173,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         </div>
 
         <div className="p-6 space-y-8">
-          {/* Payment Method Selection */}
-          <div>
-            <h3 className="font-semibold mb-4">{t.paymentMethod}</h3>
-            <div className="space-y-3">
-              <label className={`flex items-center p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="cod"
-                  checked={paymentMethod === 'cod'}
-                  onChange={(e) => setPaymentMethod(e.target.value as 'cod')}
-                  className={locale === 'ar' ? 'ml-3' : 'mr-3'}
-                />
-                <span className="font-medium">{t.cod}</span>
-              </label>
-              <label className={`flex items-center p-4 border border-border rounded-lg cursor-pointer hover:bg-muted/50 transition ${locale === 'ar' ? 'flex-row-reverse' : ''}`}>
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="whatsapp"
-                  checked={paymentMethod === 'whatsapp'}
-                  onChange={(e) => setPaymentMethod(e.target.value as 'whatsapp')}
-                  className={locale === 'ar' ? 'ml-3' : 'mr-3'}
-                />
-                <span className="font-medium">{t.whatsapp}</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Personal Information */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <h3 className="font-semibold mb-4">{t.personalInfo}</h3>
@@ -245,9 +182,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                   { name: 'email', label: t.email, type: 'email' },
                   { name: 'phone', label: t.phone, type: 'tel' },
                   { name: 'address', label: t.address, type: 'text' },
-                  { name: 'city', label: t.city, type: 'text' },
-                  { name: 'postalCode', label: t.postalCode, type: 'text' },
-                  { name: 'country', label: t.country, type: 'text' }
                 ].map(field => (
                   <div key={field.name}>
                     <label className="block text-sm font-medium mb-2">{field.label}</label>
@@ -265,6 +199,29 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     )}
                   </div>
                 ))}
+                <div>
+                  <label className="block text-sm font-medium mb-2">{t.city}</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    list="checkout-city-suggestions"
+                    placeholder={t.city}
+                    autoComplete="off"
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary ${
+                      errors.city ? 'border-red-500' : 'border-border'
+                    }`}
+                  />
+                  <datalist id="checkout-city-suggestions">
+                    {deliveryCities.map((rate) => (
+                      <option key={rate.city} value={rate.city} />
+                    ))}
+                  </datalist>
+                  {errors.city && (
+                    <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -303,13 +260,9 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`w-full py-4 rounded-full font-medium transition ${
-                paymentMethod === 'cod'
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              } disabled:opacity-50`}
+              className="w-full py-4 rounded-full font-medium transition bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
             >
-              {isSubmitting ? t.processing : (paymentMethod === 'cod' ? t.placeOrder : t.sendViaWhatsApp)}
+              {isSubmitting ? t.processing : t.sendViaWhatsApp}
             </button>
           </form>
         </div>

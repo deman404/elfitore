@@ -11,7 +11,6 @@ import { useLanguage } from "@/components/language-context"
 import { fetchSiteSettings } from "@/lib/site-settings"
 import { generateWhatsAppMessage, getWhatsAppMessageUrl } from "@/lib/whatsapp"
 import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
-import type { DeliveryMethod } from "@/lib/site-settings"
 import { YouMayLikeSection } from "@/components/boty/you-may-like-section"
 import type { Locale } from "@/i18n.config"
 
@@ -26,21 +25,12 @@ const translations = {
     shipping: "Shipping",
     free: "Calculated at checkout",
     total: "Total",
-    deliveryMethod: "Delivery method",
-    deliveryCity: "Delivery city",
-    selectDeliveryMethod: "Select delivery method",
-    selectDeliveryCity: "Select city",
-    paymentMethod: "Payment Method",
-    cod: "Cash on Delivery (COD)",
-    whatsapp: "WhatsApp",
     personalInfo: "Personal Information",
     fullName: "Full Name",
     email: "Email",
     phone: "Phone Number",
     address: "Delivery Address",
     city: "City",
-    postalCode: "Postal Code",
-    country: "Country",
     orderSummary: "Order Summary",
     placeOrder: "Place Order",
     sendViaWhatsApp: "Send via WhatsApp",
@@ -61,21 +51,12 @@ const translations = {
     shipping: "Livraison",
     free: "Calculé au paiement",
     total: "Total",
-    deliveryMethod: "Mode de livraison",
-    deliveryCity: "Ville de livraison",
-    selectDeliveryMethod: "Choisir le mode de livraison",
-    selectDeliveryCity: "Choisir une ville",
-    paymentMethod: "Mode de paiement",
-    cod: "Paiement à la livraison",
-    whatsapp: "WhatsApp",
     personalInfo: "Informations personnelles",
     fullName: "Nom complet",
     email: "E-mail",
     phone: "Numéro de téléphone",
     address: "Adresse de livraison",
     city: "Ville",
-    postalCode: "Code postal",
-    country: "Pays",
     orderSummary: "Résumé de la commande",
     placeOrder: "Passer la commande",
     sendViaWhatsApp: "Envoyer via WhatsApp",
@@ -97,21 +78,12 @@ const translations = {
     shipping: "التوصيل",
     free: "يُحسب عند الدفع",
     total: "الإجمالي",
-    deliveryMethod: "طريقة التوصيل",
-    deliveryCity: "مدينة التوصيل",
-    selectDeliveryMethod: "اختر طريقة التوصيل",
-    selectDeliveryCity: "اختر مدينة",
-    paymentMethod: "طريقة الدفع",
-    cod: "الدفع عند الاستلام",
-    whatsapp: "واتس آب",
     personalInfo: "المعلومات الشخصية",
     fullName: "الاسم الكامل",
     email: "البريد الإلكتروني",
     phone: "رقم الهاتف",
     address: "عنوان التوصيل",
     city: "المدينة",
-    postalCode: "الرمز البريدي",
-    country: "الدولة",
     orderSummary: "ملخص الطلب",
     placeOrder: "تقديم الطلب",
     sendViaWhatsApp: "إرسال عبر واتس آب",
@@ -129,37 +101,26 @@ export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart()
   const { locale, isRTL } = useLanguage()
   const t = translations[locale as Locale]
-  const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>([])
-  const [deliveryMethodId, setDeliveryMethodId] = useState("")
-  const [deliveryCity, setDeliveryCity] = useState("")
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "whatsapp">("cod")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [whatsappNumber, setWhatsappNumber] = useState("")
   const [lastOrderReference, setLastOrderReference] = useState("")
-  const activeDeliveryMethods = useMemo(
-    () => deliveryMethods.filter((method) => method.active),
-    [deliveryMethods]
-  )
-  const selectedDeliveryMethod = useMemo(
-    () => activeDeliveryMethods.find((method) => method.id === deliveryMethodId) ?? activeDeliveryMethods[0] ?? null,
-    [activeDeliveryMethods, deliveryMethodId]
-  )
-  const deliveryCities = selectedDeliveryMethod?.rates ?? []
-  const selectedDeliveryRate = deliveryCities.find((rate) => rate.city === deliveryCity) ?? deliveryCities[0] ?? null
-  const shipping = selectedDeliveryRate ? selectedDeliveryRate.price : null
-  const total = subtotal + (shipping ?? 0)
-
+  const [deliveryCities, setDeliveryCities] = useState<Array<{ city: string; price: number }>>([])
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
     address: "",
     city: "",
-    postalCode: "",
-    country: "",
   })
+  const selectedDeliveryRate = useMemo(
+    () => deliveryCities.find((rate) => rate.city.trim().toLowerCase() === formData.city.trim().toLowerCase()) ?? null,
+    [deliveryCities, formData.city]
+  )
+  const shipping = selectedDeliveryRate ? selectedDeliveryRate.price : null
+  const total = subtotal + (shipping ?? 0)
+  const paymentMethod = "whatsapp" as const
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -169,38 +130,14 @@ export default function CheckoutPage() {
     const loadSettings = async () => {
       const settings = await fetchSiteSettings()
       setWhatsappNumber(settings.whatsappNumber ?? "")
-      setDeliveryMethods(settings.deliveryMethods ?? [])
+      const activeDeliveryMethod = settings.deliveryMethods?.find((method) => method.active) ?? null
+      setDeliveryCities(activeDeliveryMethod?.rates ?? [])
     }
 
     void loadSettings()
   }, [])
 
-  useEffect(() => {
-    if (!activeDeliveryMethods.length) return
-
-    const nextMethod = activeDeliveryMethods.find((method) => method.id === deliveryMethodId) ?? activeDeliveryMethods[0]
-    if (nextMethod.id !== deliveryMethodId) {
-      setDeliveryMethodId(nextMethod.id)
-    }
-  }, [activeDeliveryMethods, deliveryMethodId])
-
-  useEffect(() => {
-    if (!selectedDeliveryMethod) return
-
-    const nextCity = selectedDeliveryMethod.rates[0]?.city ?? ""
-    if (nextCity && nextCity !== deliveryCity) {
-      setDeliveryCity(nextCity)
-      setFormData((current) => ({ ...current, city: nextCity }))
-      return
-    }
-
-    if (!nextCity && deliveryCity) {
-      setDeliveryCity("")
-      setFormData((current) => ({ ...current, city: "" }))
-    }
-  }, [deliveryCity, selectedDeliveryMethod])
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     if (errors[name]) {
@@ -215,9 +152,7 @@ export default function CheckoutPage() {
     if (!formData.phone) nextErrors.phone = t.required
     if (!formData.address) nextErrors.address = t.required
     if (!formData.city) nextErrors.city = t.required
-    if (!formData.country) nextErrors.country = t.required
-    if (!selectedDeliveryMethod) nextErrors.deliveryMethod = t.required
-    if (!selectedDeliveryRate) nextErrors.deliveryCity = t.required
+    if (!selectedDeliveryRate) nextErrors.city = t.required
     setErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
   }
@@ -226,10 +161,7 @@ export default function CheckoutPage() {
     e.preventDefault()
     if (!validateForm()) return
 
-    const whatsappWindow =
-      paymentMethod === "whatsapp" && typeof window !== "undefined"
-        ? window.open("about:blank", "_blank", "noopener,noreferrer")
-        : null
+    const whatsappWindow = typeof window !== "undefined" ? window.open("about:blank", "_blank", "noopener,noreferrer") : null
 
     setIsSubmitting(true)
     setLastOrderReference("")
@@ -259,10 +191,10 @@ export default function CheckoutPage() {
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
-          postalCode: formData.postalCode,
-          country: formData.country,
+          postalCode: "",
+          country: "",
         },
-        deliveryMethod: selectedDeliveryMethod?.name ?? "",
+        deliveryMethod: "WhatsApp",
         deliveryCity: selectedDeliveryRate?.city ?? "",
         shipping: shipping ?? 0,
         items: orderItems,
@@ -286,7 +218,7 @@ export default function CheckoutPage() {
 
     if (!response.ok) {
       whatsappWindow?.close()
-      setErrors((current) => ({ ...current, paymentMethod: data.error ?? "Could not save the order." }))
+      setErrors((current) => ({ ...current, submit: data.error ?? "Could not save the order." }))
       setIsSubmitting(false)
       return
     }
@@ -296,7 +228,7 @@ export default function CheckoutPage() {
       reference: data.reference ?? `WEB-${Date.now()}`,
       channel: data.channel ?? "checkout",
       paymentMethod: data.paymentMethod ?? paymentMethod,
-      deliveryMethod: data.deliveryMethod ?? selectedDeliveryMethod?.name ?? "",
+      deliveryMethod: data.deliveryMethod ?? "WhatsApp",
       deliveryCity: data.deliveryCity ?? selectedDeliveryRate?.city ?? "",
       shipping: data.shipping ?? shipping ?? 0,
       status: data.status ?? "pending",
@@ -309,8 +241,8 @@ export default function CheckoutPage() {
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
-        postalCode: formData.postalCode,
-        country: formData.country,
+        postalCode: "",
+        country: "",
       },
       items: orderItems.map((item) => ({
         productId: item.productId,
@@ -324,42 +256,40 @@ export default function CheckoutPage() {
     saveBrowserStorefrontOrder(savedOrder)
     setLastOrderReference(savedOrder.reference)
 
-    if (paymentMethod === "whatsapp") {
-      if (!whatsappNumber) {
-        whatsappWindow?.close()
-        clearCart()
-        setIsSuccess(true)
-        setIsSubmitting(false)
-        return
-      }
+    if (!whatsappNumber) {
+      whatsappWindow?.close()
+      clearCart()
+      setIsSuccess(true)
+      setIsSubmitting(false)
+      return
+    }
 
-      const message = generateWhatsAppMessage(
-        {
-          fullName: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          address: formData.address,
-          city: formData.city,
-          country: formData.country,
-          deliveryMethod: selectedDeliveryMethod?.name,
-          deliveryCity: selectedDeliveryRate?.city,
-          shipping: shipping ?? undefined,
-          items: orderItems.map((item) => ({
-            name: item.productName,
-            quantity: item.quantity,
-            price: item.unitPrice ?? 0,
-          })),
-          total,
-        },
-        locale as Locale
-      )
+    const message = generateWhatsAppMessage(
+      {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        country: "",
+        deliveryMethod: "WhatsApp",
+        deliveryCity: selectedDeliveryRate?.city,
+        shipping: shipping ?? undefined,
+        items: orderItems.map((item) => ({
+          name: item.productName,
+          quantity: item.quantity,
+          price: item.unitPrice ?? 0,
+        })),
+        total,
+      },
+      locale as Locale
+    )
 
-      const whatsappUrl = getWhatsAppMessageUrl(message, whatsappNumber)
-      if (whatsappWindow) {
-        whatsappWindow.location.href = whatsappUrl
-      } else {
-        window.open(whatsappUrl, "_blank")
-      }
+    const whatsappUrl = getWhatsAppMessageUrl(message, whatsappNumber)
+    if (whatsappWindow) {
+      whatsappWindow.location.href = whatsappUrl
+    } else {
+      window.open(whatsappUrl, "_blank")
     }
 
     clearCart()
@@ -453,93 +383,12 @@ export default function CheckoutPage() {
             <section className="rounded-3xl border bg-card p-6 md:p-8 shadow-sm">
               <h2 className="font-serif text-2xl text-foreground mb-6">{t.personalInfo}</h2>
               <form onSubmit={handleSubmit} className="space-y-8">
-                <div>
-                  <h3 className="font-semibold mb-4">{t.deliveryMethod}</h3>
-                  <div className="space-y-3">
-                    <select
-                      value={deliveryMethodId}
-                      onChange={(event) => setDeliveryMethodId(event.target.value)}
-                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30"
-                    >
-                      {activeDeliveryMethods.length === 0 ? (
-                        <option value="">{t.selectDeliveryMethod}</option>
-                      ) : null}
-                      {activeDeliveryMethods.map((method) => (
-                        <option key={method.id} value={method.id}>
-                          {method.name}
-                        </option>
-                      ))}
-                    </select>
-                    {selectedDeliveryMethod?.description ? (
-                      <p className="text-sm text-muted-foreground">{selectedDeliveryMethod.description}</p>
-                    ) : null}
-                  </div>
-                  {errors.deliveryMethod ? <p className="mt-3 text-sm text-red-600">{errors.deliveryMethod}</p> : null}
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-4">{t.deliveryCity}</h3>
-                  <select
-                    value={deliveryCity}
-                    onChange={(event) => {
-                      const nextCity = event.target.value
-                      setDeliveryCity(nextCity)
-                      setFormData((current) => ({ ...current, city: nextCity }))
-                    }}
-                    disabled={deliveryCities.length === 0}
-                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {deliveryCities.length === 0 ? (
-                      <option value="">{t.selectDeliveryCity}</option>
-                    ) : null}
-                    {deliveryCities.map((rate) => (
-                      <option key={rate.city} value={rate.city}>
-                        {rate.city} - DH {rate.price.toFixed(2)}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.deliveryCity ? <p className="mt-3 text-sm text-red-600">{errors.deliveryCity}</p> : null}
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-4">{t.paymentMethod}</h3>
-                  <div className="space-y-3">
-                    <label className={`flex items-center gap-3 rounded-2xl border p-4 cursor-pointer transition hover:bg-muted/50 ${isRTL ? "flex-row-reverse" : ""}`}>
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="cod"
-                        checked={paymentMethod === "cod"}
-                        onChange={(e) => setPaymentMethod(e.target.value as "cod")}
-                        className="accent-primary"
-                      />
-                      <span className="font-medium">{t.cod}</span>
-                    </label>
-                    <label className={`flex items-center gap-3 rounded-2xl border p-4 cursor-pointer transition hover:bg-muted/50 ${isRTL ? "flex-row-reverse" : ""}`}>
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="whatsapp"
-                        checked={paymentMethod === "whatsapp"}
-                        onChange={(e) => setPaymentMethod(e.target.value as "whatsapp")}
-                        className="accent-primary"
-                      />
-                      <span className="font-medium">{t.whatsapp}</span>
-                    </label>
-                  </div>
-                  {errors.paymentMethod ? (
-                    <p className="mt-3 text-sm text-red-600">{errors.paymentMethod}</p>
-                  ) : null}
-                </div>
-
                 <div className="grid md:grid-cols-2 gap-4">
                   {[
                     { name: "fullName", label: t.fullName, type: "text" },
                     { name: "email", label: t.email, type: "email" },
                     { name: "phone", label: t.phone, type: "tel" },
                     { name: "address", label: t.address, type: "text" },
-                    { name: "postalCode", label: t.postalCode, type: "text" },
-                    { name: "country", label: t.country, type: "text" },
                   ].map(field => (
                     <div key={field.name} className={field.name === "address" ? "md:col-span-2" : ""}>
                       <label className="block text-sm font-medium mb-2">{field.label}</label>
@@ -555,12 +404,31 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium mb-2">{t.city}</label>
+                  <input
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    list="delivery-city-suggestions"
+                    placeholder={`${t.city}...`}
+                    autoComplete="off"
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <datalist id="delivery-city-suggestions">
+                    {deliveryCities.map((rate) => (
+                      <option key={rate.city} value={rate.city} />
+                    ))}
+                  </datalist>
+                  {errors.city ? <p className="mt-1 text-xs text-red-500">{errors.city}</p> : null}
+                </div>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {isSubmitting ? t.processing : (paymentMethod === "cod" ? t.placeOrder : t.sendViaWhatsApp)}
+                  {isSubmitting ? t.processing : t.sendViaWhatsApp}
                 </button>
               </form>
             </section>
@@ -593,7 +461,7 @@ export default function CheckoutPage() {
                 <div className="mt-6 border-t border-border/50 pt-4 space-y-2">
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <span>{t.shipping}</span>
-                    <span>{shipping === null ? t.selectDeliveryCity : `DH ${shipping.toFixed(2)}`}</span>
+                    <span>{selectedDeliveryRate ? `DH ${selectedDeliveryRate.price.toFixed(2)}` : t.free}</span>
                   </div>
                   <div className="flex items-center justify-between text-base font-medium text-foreground">
                     <span>{t.total}</span>

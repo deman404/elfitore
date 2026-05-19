@@ -10,9 +10,6 @@ import { Footer } from "@/components/boty/footer"
 import { useCart } from "@/components/boty/cart-context"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import { fetchSiteSettings } from "@/lib/site-settings"
-import { generateWhatsAppMessage, getWhatsAppChatUrl, openWhatsAppMessage } from "@/lib/whatsapp"
-import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
 import { YouMayLikeSection } from "@/components/boty/you-may-like-section"
 import type { Locale } from "@/i18n.config"
@@ -23,8 +20,7 @@ const translations = {
     size: "Size",
     quantity: "Quantity",
     addToCart: "Add to Cart",
-    orderViaWhatsApp: "Order via WhatsApp",
-    contactViaWhatsApp: "Contact via WhatsApp",
+    inCart: "Added to Cart",
     loading: "Loading product...",
     notFound: "Product not found",
     noProducts: "No product data is available from Supabase yet.",
@@ -34,8 +30,7 @@ const translations = {
     size: "Taille",
     quantity: "Quantité",
     addToCart: "Ajouter au panier",
-    orderViaWhatsApp: "Commander via WhatsApp",
-    contactViaWhatsApp: "Contacter via WhatsApp",
+    inCart: "Ajouté au panier",
     loading: "Chargement du produit...",
     notFound: "Produit introuvable",
     noProducts: "Aucune donnée produit n’est encore disponible dans Supabase.",
@@ -45,8 +40,7 @@ const translations = {
     size: "الحجم",
     quantity: "الكمية",
     addToCart: "إضافة إلى السلة",
-    orderViaWhatsApp: "اطلب عبر واتس آب",
-    contactViaWhatsApp: "تواصل عبر واتس آب",
+    inCart: "تمت الإضافة إلى السلة",
     loading: "جاري تحميل المنتج...",
     notFound: "المنتج غير موجود",
     noProducts: "لا توجد بيانات للمنتج في Supabase حتى الآن.",
@@ -62,14 +56,13 @@ export default function ProductPage() {
   const params = useParams()
   const productId = params.id as string
   const { locale, isRTL } = useLanguage()
-  const { addItem } = useCart()
+  const { addItem, items } = useCart()
   const t = translations[locale as Locale]
   const [productState, setProductState] = useState<ProductState>({ normalized: null })
   const [loading, setLoading] = useState(true)
   const [selectedSize, setSelectedSize] = useState("")
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState("")
-  const [whatsappNumber, setWhatsappNumber] = useState("")
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -104,24 +97,17 @@ export default function ProductPage() {
     window.scrollTo(0, 0)
   }, [productId])
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await fetchSiteSettings()
-      setWhatsappNumber(settings.whatsappNumber ?? "")
-    }
-
-    void loadSettings()
-  }, [])
-
   const product = productState.normalized
 
   const activeSize = product?.sizes.find((size) => size.label === selectedSize) ?? product?.sizes[0]
   const unitPrice = activeSize?.price ?? product?.price ?? 0
   const totalPrice = unitPrice * quantity
   const availableStock = product?.stock ?? 0
+  const cartItemId = product ? `${product.id}-${selectedSize || "standard"}` : ""
+  const isAlreadyInCart = cartItemId ? items.some((item) => item.id === cartItemId) : false
 
   const handleAddToCart = () => {
-    if (!product) return
+    if (!product || isAlreadyInCart) return
 
     Array.from({ length: quantity }).forEach(() => {
       addItem({
@@ -134,80 +120,6 @@ export default function ProductPage() {
         stock: availableStock,
       })
     })
-  }
-
-  const handleOrderViaWhatsApp = () => {
-    if (!product || !whatsappNumber) return
-
-    const orderItems = [
-      {
-        productId: product.dbId,
-        productName: product.name[locale as Locale],
-        quantity,
-        unitPrice: unitPrice,
-        image: selectedImage || product.image,
-      },
-    ]
-
-    const savedOrder: StorefrontOrderRecord = {
-      id: Date.now(),
-      reference: `WEB-${Date.now()}`,
-      channel: "product-page",
-      paymentMethod: "whatsapp",
-      deliveryMethod: "",
-      deliveryCity: "",
-      shipping: 0,
-      status: "pending",
-      subtotal: totalPrice,
-      total: totalPrice,
-      createdAt: new Date().toISOString(),
-      customer: {
-        fullName: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        postalCode: "",
-        country: "",
-      },
-      items: orderItems.map((item) => ({
-        productId: item.productId,
-        name: item.productName,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        image: item.image,
-      })),
-    }
-
-    saveBrowserStorefrontOrder(savedOrder)
-
-    const message = generateWhatsAppMessage(
-      {
-        fullName: "",
-        email: "",
-        phone: "",
-        address: "",
-        city: "",
-        country: "",
-        items: orderItems.map((item) => ({
-          name: item.productName,
-          quantity: item.quantity,
-          price: item.unitPrice,
-        })),
-        total: totalPrice,
-      },
-      locale as Locale
-    )
-
-    openWhatsAppMessage(message, whatsappNumber)
-  }
-
-  const handleContactViaWhatsApp = () => {
-    if (!whatsappNumber) {
-      return
-    }
-
-    window.open(getWhatsAppChatUrl(whatsappNumber), "_blank")
   }
 
   if (loading) {
@@ -366,27 +278,11 @@ export default function ProductPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  disabled={availableStock <= 0}
+                  disabled={availableStock <= 0 || isAlreadyInCart}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ShoppingBag className="h-4 w-4" />
-                  {t.addToCart}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOrderViaWhatsApp}
-                  disabled={!whatsappNumber || availableStock <= 0}
-                  className="inline-flex items-center justify-center rounded-full border border-border px-8 py-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {t.orderViaWhatsApp}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleContactViaWhatsApp}
-                  disabled={!whatsappNumber || availableStock <= 0}
-                  className="inline-flex items-center justify-center rounded-full border border-border px-8 py-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {t.contactViaWhatsApp}
+                  {isAlreadyInCart ? t.inCart : t.addToCart}
                 </button>
               </div>
             </div>
