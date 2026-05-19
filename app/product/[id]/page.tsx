@@ -296,6 +296,7 @@ export default function ProductPage() {
             focusCategory={product.category}
             excludeProductIds={[product.id]}
             limit={4}
+            mobileColumns={2}
           />
         </div>
       </div>

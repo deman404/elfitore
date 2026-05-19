@@ -17,6 +17,7 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; l
     links: [
       { name: "Home", href: "/" },
       { name: "Shop", href: "/shop" },
+      { name: "Blog", href: "/blog" },
       { name: "Contact", href: "/contact" },
       { name: "FAQ", href: "/faq" },
       { name: "Shipping", href: "/shipping" }
@@ -39,6 +40,7 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; l
     links: [
       { name: "Accueil", href: "/" },
       { name: "Boutique", href: "/shop" },
+      { name: "Blog", href: "/blog" },
       { name: "Contact", href: "/contact" },
       { name: "FAQ", href: "/faq" },
       { name: "Livraison", href: "/shipping" }
@@ -61,6 +63,7 @@ const footerLinks: Record<Locale, { shop: Array<{name: string; href: string}>; l
     links: [
       { name: "الرئيسية", href: "/" },
       { name: "المتجر", href: "/shop" },
+      { name: "المدونة", href: "/blog" },
       { name: "اتصل بنا", href: "/contact" },
       { name: "الأسئلة الشائعة", href: "/faq" },
       { name: "التوصيل", href: "/shipping" }

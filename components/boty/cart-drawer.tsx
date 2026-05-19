@@ -210,6 +210,7 @@ export function CartDrawer() {
               {/* Checkout Button */}
               <Link
                 href="/checkout"
+                onClick={() => setIsOpen(false)}
                 className="w-full bg-primary text-primary-foreground py-4 rounded-full font-medium hover:bg-primary/90 boty-transition text-center"
               >
                 {t.checkout}

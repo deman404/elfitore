@@ -111,6 +111,7 @@ export default function AdminPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <QuickLink href="/admin/addProduct" label="Produit" icon={Package} />
+            <QuickLink href="/admin/blogs" label="Blog" icon={Sparkles} />
             <QuickLink href="/admin/sell-point" label="Vente" icon={BadgeDollarSign} />
             <QuickLink href="/admin/orders" label="Commandes" icon={ReceiptText} />
           </div>

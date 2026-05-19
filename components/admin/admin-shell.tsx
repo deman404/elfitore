@@ -71,7 +71,10 @@ const navGroups: NavGroup[] = [
   {
     label: "Apparence",
     icon: Palette,
-    items: [{ href: "/admin/theme", label: "Thème", section: "theme" }],
+    items: [
+      { href: "/admin/blogs", label: "Blog", section: "blog" },
+      { href: "/admin/theme", label: "Thème", section: "theme" },
+    ],
   },
   {
     label: "Administration",
@@ -88,6 +91,7 @@ const sectionMeta: Record<
   { title: string; description: string }
 > = {
   dashboard: { title: "Tableau de bord", description: "Vue d'ensemble de votre boutique en temps réel." },
+  blog: { title: "Blog", description: "Publiez et gérez les articles du site." },
   "sell-point": { title: "Point de vente", description: "Encaissement rapide en magasin." },
   "last-sell": { title: "Dernières ventes", description: "Historique des transactions et reçus." },
   orders: { title: "Commandes web", description: "Gérez les commandes en ligne et leur statut." },
@@ -117,6 +121,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     if (pathname.startsWith("/admin/orders")) return "orders"
     if (pathname.startsWith("/admin/addProduct")) return "products"
     if (pathname.startsWith("/admin/categories")) return "categories"
+    if (pathname.startsWith("/admin/blogs")) return "blog"
     if (pathname.startsWith("/admin/theme")) return "theme"
     if (pathname.startsWith("/admin/users")) return "users"
     if (pathname.startsWith("/admin/settings")) return "settings"
@@ -125,6 +130,9 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }, [pathname])
 
   const meta = sectionMeta[currentSection]
+  const roleLabel = access?.user?.role && access.user.role in ADMIN_ROLE_LABELS
+    ? ADMIN_ROLE_LABELS[access.user.role as keyof typeof ADMIN_ROLE_LABELS]
+    : "Utilisateur"
 
   // Load sidebar state
   useEffect(() => {
@@ -221,6 +229,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             groups={visibleGroups}
             currentSection={currentSection}
             access={access}
+            roleLabel={roleLabel}
             collapsed={false}
             expandedGroups={expandedGroups}
             toggleGroup={toggleGroup}
@@ -240,6 +249,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           groups={visibleGroups}
           currentSection={currentSection}
           access={access}
+          roleLabel={roleLabel}
           collapsed={collapsed}
           expandedGroups={expandedGroups}
           toggleGroup={toggleGroup}
@@ -303,7 +313,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     {access?.user?.fullName || access?.user?.email || "Admin"}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {access?.user?.role ? ADMIN_ROLE_LABELS[access.user.role] : "Utilisateur"}
+                    {roleLabel}
                   </p>
                 </div>
                 <DropdownMenuSeparator />
@@ -382,6 +392,7 @@ function Sidebar({
   groups,
   currentSection,
   access,
+  roleLabel,
   collapsed,
   expandedGroups,
   toggleGroup,
@@ -391,6 +402,7 @@ function Sidebar({
   groups: NavGroup[]
   currentSection: AdminSection
   access: AdminAccessSnapshot | null
+  roleLabel: string
   collapsed: boolean
   expandedGroups: Set<string>
   toggleGroup: (label: string) => void
@@ -519,7 +531,7 @@ function Sidebar({
                   {access?.user?.fullName || access?.user?.email || "Admin"}
                 </p>
                 <p className="truncate text-xs text-slate-500">
-                  {access?.user?.role ? ADMIN_ROLE_LABELS[access.user.role] : "Utilisateur"}
+                  {roleLabel}
                 </p>
               </div>
             </div>

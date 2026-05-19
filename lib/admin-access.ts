@@ -3,6 +3,7 @@ import type { AdminUserSummary } from "@/lib/admin-users"
 export type AdminSection =
   | "dashboard"
   | "auth"
+  | "blog"
   | "products"
   | "categories"
   | "sell-point"
@@ -29,6 +30,7 @@ export function canAccessAdminSection(access: AdminAccessSnapshot | null, sectio
   switch (section) {
     case "dashboard":
     case "auth":
+    case "blog":
       return true
     case "users":
       return access.canManageUsers
@@ -50,7 +52,7 @@ export function canAccessAdminSection(access: AdminAccessSnapshot | null, sectio
 }
 
 export function buildAllowedAdminSections(access: AdminAccessSnapshot | null): AdminSection[] {
-  const sections: AdminSection[] = ["dashboard", "auth"]
+  const sections: AdminSection[] = ["dashboard", "auth", "blog"]
 
   if (!access) return sections
 

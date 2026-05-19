@@ -27,7 +27,7 @@ const translations = {
     total: "Total",
     personalInfo: "Personal Information",
     fullName: "Full Name",
-    email: "Email",
+    email: "Email (optional)",
     phone: "Phone Number",
     address: "Delivery Address",
     city: "City",
@@ -53,7 +53,7 @@ const translations = {
     total: "Total",
     personalInfo: "Informations personnelles",
     fullName: "Nom complet",
-    email: "E-mail",
+    email: "E-mail (facultatif)",
     phone: "Numéro de téléphone",
     address: "Adresse de livraison",
     city: "Ville",
@@ -80,7 +80,7 @@ const translations = {
     total: "الإجمالي",
     personalInfo: "المعلومات الشخصية",
     fullName: "الاسم الكامل",
-    email: "البريد الإلكتروني",
+    email: "البريد الإلكتروني (اختياري)",
     phone: "رقم الهاتف",
     address: "عنوان التوصيل",
     city: "المدينة",
@@ -148,7 +148,6 @@ export default function CheckoutPage() {
   const validateForm = () => {
     const nextErrors: Record<string, string> = {}
     if (!formData.fullName) nextErrors.fullName = t.required
-    if (!formData.email) nextErrors.email = t.required
     if (!formData.phone) nextErrors.phone = t.required
     if (!formData.address) nextErrors.address = t.required
     if (!formData.city) nextErrors.city = t.required

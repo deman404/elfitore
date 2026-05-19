@@ -43,10 +43,50 @@ import {
   fetchThemeCtaBanner,
   type ThemeCtaBannerData,
 } from "@/lib/theme-cta-banner"
+import {
+  DEFAULT_THEME_HOME_CATEGORIES,
+  fetchThemeHomeCategories,
+  type ThemeHomeCategoriesData,
+} from "@/lib/theme-home-categories"
+import {
+  DEFAULT_THEME_MARKETING_PAGES,
+  fetchThemeMarketingPages,
+  type ThemeMarketingPagesData,
+} from "@/lib/theme-marketing-pages"
 
 type MessageState = { type: "error" | "success"; text: string }
 type LocaleKey = "en" | "fr" | "ar"
-type SectionKey = "hero" | "feature" | "trust" | "cta"
+type SectionKey = "hero" | "feature" | "trust" | "cta" | "categories" | "marketing"
+type ProposLocalizedField =
+  | "eyebrow"
+  | "title"
+  | "subtitle"
+  | "intro"
+  | "missionTitle"
+  | "missionText"
+  | "cta"
+type OurStoryLocalizedField =
+  | "eyebrow"
+  | "title"
+  | "subtitle"
+  | "timelineTitle"
+  | "bottomTitle"
+  | "bottomText"
+  | "cta"
+type FeatureLocalizedField =
+  | "overlayTitle"
+  | "overlayDescription"
+  | "topTitle"
+  | "topSubtitle"
+  | "topBullet1"
+  | "topBullet2"
+  | "topBullet3"
+  | "sectionEyebrow"
+  | "sectionTitle"
+  | "sectionDescription"
+  | "bottomEyebrow"
+  | "bottomTitle"
+type CtaLocalizedField = "title1" | "title2" | "leaf" | "flower" | "globe"
 
 const localeLabels: Record<LocaleKey, string> = { en: "English", fr: "Français", ar: "العربية" }
 const locales: LocaleKey[] = ["en", "fr", "ar"]
@@ -76,6 +116,8 @@ export function AdminThemePage() {
   const [feature, setFeature] = useState<ThemeFeatureSectionData>(DEFAULT_THEME_FEATURE_SECTION)
   const [trust, setTrust] = useState<ThemeTrustBadgesData>(DEFAULT_THEME_TRUST_BADGES)
   const [cta, setCta] = useState<ThemeCtaBannerData>(DEFAULT_THEME_CTA_BANNER)
+  const [categories, setCategories] = useState<ThemeHomeCategoriesData>(DEFAULT_THEME_HOME_CATEGORIES)
+  const [marketingPages, setMarketingPages] = useState<ThemeMarketingPagesData>(DEFAULT_THEME_MARKETING_PAGES)
 
   const [loading, setLoading] = useState(true)
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null)
@@ -85,16 +127,20 @@ export function AdminThemePage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const [h, f, t, c] = await Promise.all([
+      const [h, f, t, c, categoriesData, marketingData] = await Promise.all([
         fetchThemeHero(),
         fetchThemeFeatureSection(),
         fetchThemeTrustBadges(),
         fetchThemeCtaBanner(),
+        fetchThemeHomeCategories(),
+        fetchThemeMarketingPages(),
       ])
       setHero(h)
       setFeature(f)
       setTrust(t)
       setCta(c)
+      setCategories(categoriesData)
+      setMarketingPages(marketingData)
       setLoading(false)
     }
     void load()
@@ -189,6 +235,26 @@ export function AdminThemePage() {
           onEdit={() => setActivePanel("cta")}
           preview={<CtaPreview data={cta} />}
         />
+
+        <SectionCard
+          index={5}
+          title="Catégories d'accueil"
+          description="4 cartes éditables entre best sellers et produits"
+          loading={loading}
+          active={activePanel === "categories"}
+          onEdit={() => setActivePanel("categories")}
+          preview={<HomeCategoriesPreview data={categories} />}
+        />
+
+        <SectionCard
+          index={6}
+          title="Pages éditables"
+          description="À propos et Notre histoire"
+          loading={loading}
+          active={activePanel === "marketing"}
+          onEdit={() => setActivePanel("marketing")}
+          preview={<MarketingPagesPreview data={marketingPages} />}
+        />
       </div>
 
       {/* Edit Panels */}
@@ -240,6 +306,26 @@ export function AdminThemePage() {
           onSave={() => void handleSave("cta", "/api/admin/theme-cta-banner", cta)}
           saving={isSaving("cta")}
           message={messages.cta ?? null}
+        />
+      </EditPanel>
+
+      <EditPanel open={activePanel === "categories"} onClose={() => setActivePanel(null)} title="Modifier les catégories d'accueil" icon={ImageIcon}>
+        <HomeCategoriesForm
+          data={categories}
+          setData={setCategories}
+          onSave={() => void handleSave("categories", "/api/admin/theme-home-categories", categories)}
+          saving={isSaving("categories")}
+          message={messages.categories ?? null}
+        />
+      </EditPanel>
+
+      <EditPanel open={activePanel === "marketing"} onClose={() => setActivePanel(null)} title="Modifier les pages éditables" icon={Type}>
+        <MarketingPagesForm
+          data={marketingPages}
+          setData={setMarketingPages}
+          onSave={() => void handleSave("marketing", "/api/admin/theme-marketing-pages", marketingPages)}
+          saving={isSaving("marketing")}
+          message={messages.marketing ?? null}
         />
       </EditPanel>
     </div>
@@ -404,6 +490,38 @@ function CtaPreview({ data }: { data: ThemeCtaBannerData }) {
   )
 }
 
+function HomeCategoriesPreview({ data }: { data: ThemeHomeCategoriesData }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {data.cards.map((card, index) => (
+        <div key={index} className="overflow-hidden rounded-md bg-white shadow-sm">
+          <div className="flex h-20 items-center justify-center bg-slate-200">
+            <ImageIcon className="h-5 w-5 text-slate-400" />
+          </div>
+          <div className="p-2">
+            <p className="truncate text-[10px] font-medium text-slate-700">{card.title.en || `Catégorie ${index + 1}`}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function MarketingPagesPreview({ data }: { data: ThemeMarketingPagesData }) {
+  return (
+    <div className="grid gap-2">
+      <div className="rounded-md bg-white p-3 shadow-sm">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">À propos</p>
+        <p className="mt-1 truncate text-xs font-medium text-slate-700">{data.propos.title.en || "About page"}</p>
+      </div>
+      <div className="rounded-md bg-white p-3 shadow-sm">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Our Story</p>
+        <p className="mt-1 truncate text-xs font-medium text-slate-700">{data.ourStory.title.en || "Story page"}</p>
+      </div>
+    </div>
+  )
+}
+
 /* ───────────────────── Hero Form ───────────────────── */
 
 function HeroForm({
@@ -492,9 +610,9 @@ function FeatureForm({
   saving: boolean
   message: MessageState | null
 }) {
-  const update = (field: keyof ThemeFeatureSectionData, locale: LocaleKey) =>
+  const update = (field: FeatureLocalizedField, locale: LocaleKey) =>
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setData((prev) => ({ ...prev, [field]: { ...prev[field], [locale]: e.target.value } } as ThemeFeatureSectionData))
+      setData((prev) => ({ ...prev, [field]: { ...prev[field], [locale]: e.target.value } }))
 
   const updateCard = (index: number, field: "title" | "description", locale: LocaleKey) =>
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -649,9 +767,9 @@ function CtaForm({
   saving: boolean
   message: MessageState | null
 }) {
-  const update = (field: keyof ThemeCtaBannerData, locale: LocaleKey) =>
+  const update = (field: CtaLocalizedField, locale: LocaleKey) =>
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setData((prev) => ({ ...prev, [field]: { ...prev[field], [locale]: e.target.value } } as ThemeCtaBannerData))
+      setData((prev) => ({ ...prev, [field]: { ...prev[field], [locale]: e.target.value } }))
 
   return (
     <div className="space-y-6">
@@ -672,6 +790,195 @@ function CtaForm({
             </div>
           </div>
         ))}
+      </Collapsible>
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
+function HomeCategoriesForm({
+  data,
+  setData,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeHomeCategoriesData
+  setData: React.Dispatch<React.SetStateAction<ThemeHomeCategoriesData>>
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  const update = (cardIndex: number, field: "title" | "description", locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        cards: prev.cards.map((card, index) =>
+          index === cardIndex ? { ...card, [field]: { ...card[field], [locale]: e.target.value } } : card
+        ),
+      }))
+
+  const updateImage = (cardIndex: number) => (url: string) =>
+    setData((prev) => ({
+      ...prev,
+      cards: prev.cards.map((card, index) => (index === cardIndex ? { ...card, imageUrl: url } : card)),
+    }))
+
+  return (
+    <div className="space-y-6">
+      <Collapsible title="Cartes de catégories" defaultOpen>
+        {data.cards.map((card, index) => (
+          <div key={index} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 last:mb-0">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Carte {index + 1}</p>
+            <div className="space-y-4">
+              <ThemeMediaUpload
+                value={card.imageUrl}
+                onChange={updateImage(index)}
+                folder="home-categories"
+                label="Image de la catégorie"
+              />
+              {locales.map((locale) => (
+                <div key={locale} className="space-y-3 rounded-lg border border-slate-100 bg-white p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+                  <Input label="Titre" value={card.title[locale]} onChange={update(index, "title", locale)} />
+                  <Textarea label="Description" value={card.description[locale]} onChange={update(index, "description", locale)} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </Collapsible>
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
+function MarketingPagesForm({
+  data,
+  setData,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeMarketingPagesData
+  setData: React.Dispatch<React.SetStateAction<ThemeMarketingPagesData>>
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  const updatePropos =
+    (field: ProposLocalizedField, locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        propos: {
+          ...prev.propos,
+          [field]: { ...prev.propos[field], [locale]: e.target.value },
+        },
+      }))
+
+  const updateOurStory =
+    (field: OurStoryLocalizedField, locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        ourStory: {
+          ...prev.ourStory,
+          [field]: { ...prev.ourStory[field], [locale]: e.target.value },
+        },
+      }))
+
+  const updateFeatureTitle =
+    (index: number, locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        propos: {
+          ...prev.propos,
+          featureTitles: prev.propos.featureTitles.map((item, featureIndex) =>
+            featureIndex === index ? { ...item, title: { ...item.title, [locale]: e.target.value } } : item
+          ),
+        },
+      }))
+
+  const updateStep =
+    (index: number, field: "title" | "body", locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        ourStory: {
+          ...prev.ourStory,
+          steps: prev.ourStory.steps.map((item, stepIndex) =>
+            stepIndex === index ? { ...item, [field]: { ...item[field], [locale]: e.target.value } } : item
+          ),
+        },
+      }))
+
+  return (
+    <div className="space-y-6">
+      <Collapsible title="Page À propos" defaultOpen>
+        {locales.map((locale) => (
+          <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+            <div className="space-y-3">
+              <Input label="Eyebrow" value={data.propos.eyebrow[locale]} onChange={updatePropos("eyebrow", locale)} />
+              <Textarea label="Titre" value={data.propos.title[locale]} onChange={updatePropos("title", locale)} />
+              <Textarea label="Sous-titre" value={data.propos.subtitle[locale]} onChange={updatePropos("subtitle", locale)} />
+              <Textarea label="Introduction" value={data.propos.intro[locale]} onChange={updatePropos("intro", locale)} />
+              <Input label="Titre mission" value={data.propos.missionTitle[locale]} onChange={updatePropos("missionTitle", locale)} />
+              <Textarea label="Texte mission" value={data.propos.missionText[locale]} onChange={updatePropos("missionText", locale)} />
+              <Input label="Bouton CTA" value={data.propos.cta[locale]} onChange={updatePropos("cta", locale)} />
+            </div>
+          </div>
+        ))}
+
+        <Collapsible title="Cartes de valeur" defaultOpen={false}>
+          {data.propos.featureTitles.map((feature, index) => (
+            <div key={index} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 last:mb-0">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Carte {index + 1}</p>
+              {locales.map((locale) => (
+                <div key={locale} className="mb-3 rounded-lg border border-slate-100 bg-white p-3 last:mb-0">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+                  <Input label="Titre" value={feature.title[locale]} onChange={updateFeatureTitle(index, locale)} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </Collapsible>
+      </Collapsible>
+
+      <Collapsible title="Page Notre histoire" defaultOpen>
+        {locales.map((locale) => (
+          <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+            <div className="space-y-3">
+              <Input label="Eyebrow" value={data.ourStory.eyebrow[locale]} onChange={updateOurStory("eyebrow", locale)} />
+              <Textarea label="Titre" value={data.ourStory.title[locale]} onChange={updateOurStory("title", locale)} />
+              <Textarea label="Sous-titre" value={data.ourStory.subtitle[locale]} onChange={updateOurStory("subtitle", locale)} />
+              <Input label="Titre section" value={data.ourStory.timelineTitle[locale]} onChange={updateOurStory("timelineTitle", locale)} />
+              <Input label="Titre bas" value={data.ourStory.bottomTitle[locale]} onChange={updateOurStory("bottomTitle", locale)} />
+              <Textarea label="Texte bas" value={data.ourStory.bottomText[locale]} onChange={updateOurStory("bottomText", locale)} />
+              <Input label="Bouton CTA" value={data.ourStory.cta[locale]} onChange={updateOurStory("cta", locale)} />
+            </div>
+          </div>
+        ))}
+
+        <Collapsible title="Étapes">
+          {data.ourStory.steps.map((step, index) => (
+            <div key={index} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 last:mb-0">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Étape {index + 1}</p>
+              {locales.map((locale) => (
+                <div key={locale} className="mb-3 rounded-lg border border-slate-100 bg-white p-3 last:mb-0">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+                  <Input label="Titre" value={step.title[locale]} onChange={updateStep(index, "title", locale)} />
+                  <Textarea label="Texte" value={step.body[locale]} onChange={updateStep(index, "body", locale)} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </Collapsible>
       </Collapsible>
 
       <SaveBar onSave={onSave} saving={saving} message={message} />

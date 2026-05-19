@@ -11,9 +11,9 @@ import { useLanguage } from "@/components/language-context"
 import type { Locale } from "@/i18n.config"
 
 const translations = {
-  en: { shop: 'Shop', about: 'About', contact: 'Contact', cart: 'Cart', menu: 'Toggle menu' },
-  fr: { shop: 'Boutique', about: 'À propos', contact: 'Contact', cart: 'Panier', menu: 'Basculer le menu' },
-  ar: { shop: 'المتجر', about: 'عن', contact: 'اتصل', cart: 'السلة', menu: 'تبديل القائمة' }
+  en: { shop: 'Shop', about: 'About', story: 'Our Story', blog: 'Blog', contact: 'Contact', cart: 'Cart', menu: 'Toggle menu' },
+  fr: { shop: 'Boutique', about: 'À propos', story: 'Notre histoire', blog: 'Blog', contact: 'Contact', cart: 'Panier', menu: 'Basculer le menu' },
+  ar: { shop: 'المتجر', about: 'عنّا', story: 'قصتنا', blog: 'المدونة', contact: 'اتصل', cart: 'السلة', menu: 'تبديل القائمة' }
 }
 
 export function Header() {
@@ -48,10 +48,22 @@ export function Header() {
               {t.shop}
             </Link>
             <Link
-              href="/"
+              href="/propos"
               className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
             >
               {t.about}
+            </Link>
+            <Link
+              href="/our-story"
+              className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
+            >
+              {t.story}
+            </Link>
+            <Link
+              href="/blog"
+              className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
+            >
+              {t.blog}
             </Link>
             <Link
               href="/contact"
@@ -110,10 +122,22 @@ export function Header() {
               {t.shop}
             </Link>
             <Link
-              href="/"
+              href="/propos"
               className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
             >
               {t.about}
+            </Link>
+            <Link
+              href="/our-story"
+              className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
+            >
+              {t.story}
+            </Link>
+            <Link
+              href="/blog"
+              className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition"
+            >
+              {t.blog}
             </Link>
             <Link
               href="/contact"

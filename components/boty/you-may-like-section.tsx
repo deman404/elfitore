@@ -16,6 +16,7 @@ type YouMayLikeSectionProps = {
   focusCategory?: string
   excludeProductIds?: Array<string | number>
   limit?: number
+  mobileColumns?: 1 | 2
   compact?: boolean
   className?: string
 }
@@ -53,6 +54,7 @@ export function YouMayLikeSection({
   focusCategory,
   excludeProductIds = [],
   limit = 4,
+  mobileColumns = 1,
   compact = false,
   className = "",
 }: YouMayLikeSectionProps) {
@@ -124,7 +126,11 @@ export function YouMayLikeSection({
       {loading ? (
         <div className="rounded-3xl border bg-card p-6 text-sm text-muted-foreground">{t.loading}</div>
       ) : (
-        <div className={`grid gap-4 ${compact ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
+        <div
+          className={`grid gap-4 ${
+            mobileColumns === 2 ? "grid-cols-2" : "grid-cols-1"
+          } ${compact ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-4"}`}
+        >
           {visibleProducts.map((product) => {
             const price = product.sizes[0]?.price ?? product.price
 
@@ -146,7 +152,7 @@ export function YouMayLikeSection({
                     <p className="line-clamp-2 font-medium text-foreground">{product.name[locale as Locale]}</p>
                     <p className="mt-1 text-sm text-muted-foreground">DH {price.toFixed(2)}</p>
                   </div>
-                  <div className={`flex gap-2 ${compact ? "flex-col" : "sm:flex-row"}`}>
+                  <div className={`flex gap-2 ${(compact || mobileColumns === 2) ? "flex-col" : "sm:flex-row"}`}>
                     <Link
                       href={`/product/${product.id}`}
                       className="inline-flex flex-1 items-center justify-center rounded-full border border-border px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
