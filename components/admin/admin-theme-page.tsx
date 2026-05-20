@@ -1042,7 +1042,12 @@ function Textarea({
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-slate-600">{label}</span>
-      <textarea value={value} onChange={onChange} className="admin-input min-h-20 resize-y" />
+      <textarea
+        value={value}
+        onChange={onChange}
+        className="admin-input min-h-32 resize-y leading-6"
+        placeholder="Write the content here..."
+      />
     </label>
   )
 }

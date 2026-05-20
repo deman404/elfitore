@@ -3,15 +3,23 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, Check, ShoppingBag } from "lucide-react"
+import { ArrowLeft, Check, LogIn, ShoppingBag, UserPlus } from "lucide-react"
 import { useCart } from "@/components/boty/cart-context"
 import { Header } from "@/components/boty/header"
 import { Footer } from "@/components/boty/footer"
 import { useLanguage } from "@/components/language-context"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { fetchSiteSettings } from "@/lib/site-settings"
 import { generateWhatsAppMessage, getWhatsAppMessageUrl } from "@/lib/whatsapp"
 import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
 import { YouMayLikeSection } from "@/components/boty/you-may-like-section"
+import { getSupabaseBrowserClient } from "@/lib/supabase"
 import type { Locale } from "@/i18n.config"
 
 const translations = {
@@ -22,12 +30,17 @@ const translations = {
     emptyDescription: "Add some products before heading to checkout.",
     continueShopping: "Continue Shopping",
     backToShop: "Back to Shop",
+    accountTitle: "Have an account?",
+    accountPrompt: "Sign in to continue or create a new account with Google.",
+    iHaveAccount: "I have an account",
+    createAccount: "Create a new one",
+    signInWithGoogle: "Continue with Google",
+    continueAsGuest: "Continue as guest",
     shipping: "Shipping",
     free: "Calculated at checkout",
     total: "Total",
     personalInfo: "Personal Information",
     fullName: "Full Name",
-    email: "Email (optional)",
     phone: "Phone Number",
     address: "Delivery Address",
     city: "City",
@@ -48,12 +61,17 @@ const translations = {
     emptyDescription: "Ajoutez quelques produits avant d’aller au paiement.",
     continueShopping: "Continuer vos achats",
     backToShop: "Retour à la boutique",
+    accountTitle: "Vous avez un compte ?",
+    accountPrompt: "Connectez-vous pour continuer ou créez un nouveau compte avec Google.",
+    iHaveAccount: "J’ai un compte",
+    createAccount: "Créer un compte",
+    signInWithGoogle: "Continuer avec Google",
+    continueAsGuest: "Continuer en invité",
     shipping: "Livraison",
     free: "Calculé au paiement",
     total: "Total",
     personalInfo: "Informations personnelles",
     fullName: "Nom complet",
-    email: "E-mail (facultatif)",
     phone: "Numéro de téléphone",
     address: "Adresse de livraison",
     city: "Ville",
@@ -75,12 +93,17 @@ const translations = {
     emptyDescription: "أضف بعض المنتجات قبل الانتقال إلى الدفع.",
     continueShopping: "متابعة التسوق",
     backToShop: "العودة إلى المتجر",
+    accountTitle: "هل لديك حساب؟",
+    accountPrompt: "سجّل الدخول للمتابعة أو أنشئ حسابًا جديدًا باستخدام Google.",
+    iHaveAccount: "لدي حساب",
+    createAccount: "إنشاء حساب جديد",
+    signInWithGoogle: "المتابعة مع Google",
+    continueAsGuest: "المتابعة كضيف",
     shipping: "التوصيل",
     free: "يُحسب عند الدفع",
     total: "الإجمالي",
     personalInfo: "المعلومات الشخصية",
     fullName: "الاسم الكامل",
-    email: "البريد الإلكتروني (اختياري)",
     phone: "رقم الهاتف",
     address: "عنوان التوصيل",
     city: "المدينة",
@@ -98,18 +121,20 @@ const translations = {
 } as const
 
 export default function CheckoutPage() {
+  const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const { items, subtotal, clearCart } = useCart()
   const { locale, isRTL } = useLanguage()
   const t = translations[locale as Locale]
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [accountPromptOpen, setAccountPromptOpen] = useState(false)
+  const [accountPromptMode, setAccountPromptMode] = useState<"existing" | "new" | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [whatsappNumber, setWhatsappNumber] = useState("")
   const [lastOrderReference, setLastOrderReference] = useState("")
   const [deliveryCities, setDeliveryCities] = useState<Array<{ city: string; price: number }>>([])
   const [formData, setFormData] = useState({
     fullName: "",
-    email: "",
     phone: "",
     address: "",
     city: "",
@@ -136,6 +161,24 @@ export default function CheckoutPage() {
 
     void loadSettings()
   }, [])
+
+  const openAccountPrompt = (mode: "existing" | "new") => {
+    setAccountPromptMode(mode)
+    setAccountPromptOpen(true)
+  }
+
+  const handleGoogleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+
+    if (error) {
+      setErrors((current) => ({ ...current, submit: error.message }))
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -186,7 +229,6 @@ export default function CheckoutPage() {
         paymentMethod,
         customer: {
           fullName: formData.fullName,
-          email: formData.email,
           phone: formData.phone,
           address: formData.address,
           city: formData.city,
@@ -236,7 +278,6 @@ export default function CheckoutPage() {
       createdAt: data.createdAt ?? new Date().toISOString(),
       customer: {
         fullName: formData.fullName,
-        email: formData.email,
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
@@ -266,7 +307,6 @@ export default function CheckoutPage() {
     const message = generateWhatsAppMessage(
       {
         fullName: formData.fullName,
-        email: formData.email,
         phone: formData.phone,
         address: formData.address,
         city: formData.city,
@@ -324,7 +364,7 @@ export default function CheckoutPage() {
             </div>
 
             <div className="mt-12 text-left">
-              <YouMayLikeSection limit={4} />
+              <YouMayLikeSection limit={4} mobileColumns={2} />
             </div>
           </div>
         </div>
@@ -381,11 +421,32 @@ export default function CheckoutPage() {
           <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8">
             <section className="rounded-3xl border bg-card p-6 md:p-8 shadow-sm">
               <h2 className="font-serif text-2xl text-foreground mb-6">{t.personalInfo}</h2>
+              <div className="mb-6 rounded-3xl border border-border/60 bg-muted/30 p-4">
+                <p className="text-sm font-medium text-foreground">{t.accountTitle}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t.accountPrompt}</p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => openAccountPrompt("existing")}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    {t.iHaveAccount}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openAccountPrompt("new")}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    {t.createAccount}
+                  </button>
+                </div>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="grid md:grid-cols-2 gap-4">
                   {[
                     { name: "fullName", label: t.fullName, type: "text" },
-                    { name: "email", label: t.email, type: "email" },
                     { name: "phone", label: t.phone, type: "tel" },
                     { name: "address", label: t.address, type: "text" },
                   ].map(field => (
@@ -482,11 +543,38 @@ export default function CheckoutPage() {
             <YouMayLikeSection
               excludeProductIds={items.map((item) => item.productId ?? item.id)}
               limit={4}
+              mobileColumns={2}
             />
           </div>
         </div>
       </div>
       <Footer />
+
+      <Dialog open={accountPromptOpen} onOpenChange={setAccountPromptOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{accountPromptMode === "new" ? t.createAccount : t.accountTitle}</DialogTitle>
+            <DialogDescription>{t.accountPrompt}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <button
+              type="button"
+              onClick={() => void handleGoogleSignIn()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+            >
+              <LogIn className="h-4 w-4" />
+              {t.signInWithGoogle}
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountPromptOpen(false)}
+              className="inline-flex w-full items-center justify-center rounded-full border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:bg-muted"
+            >
+              {t.continueAsGuest}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }

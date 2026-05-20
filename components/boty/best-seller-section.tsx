@@ -118,6 +118,11 @@ export function BestSellerSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const t = sectionText[locale as Locale]
   const featuredProducts = products.slice(0, 4)
+  const productPairs = featuredProducts.length > 0
+    ? Array.from({ length: Math.ceil(featuredProducts.length / 2) }, (_, index) =>
+        featuredProducts.slice(index * 2, index * 2 + 2)
+      )
+    : []
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -221,27 +226,29 @@ export function BestSellerSection() {
             </div>
           </>
         ) : (
-          <>
-            <div className="lg:hidden">
-              <Carousel opts={{ align: "start", loop: false, dragFree: true }} className="w-full">
-                <CarouselContent>
-                  {featuredProducts.map((product) => (
-                    <CarouselItem key={product.id} className="basis-[86%] sm:basis-1/2">
-                      <FeaturedProductCard product={product} onQuickAdd={handleQuickAdd} />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-            </div>
-
-            <div className="hidden lg:grid lg:grid-cols-4 lg:gap-6">
-              {featuredProducts.map((product) => (
-                <div key={product.id} className={`${isVisible ? "opacity-100" : "opacity-0"} transition-opacity duration-500`}>
-                  <FeaturedProductCard product={product} onQuickAdd={handleQuickAdd} />
-                </div>
+          <Carousel
+            opts={{ align: "start", loop: false, dragFree: true, direction: isRTL ? "rtl" : "ltr" }}
+            className="w-full"
+            dir={isRTL ? "rtl" : "ltr"}
+          >
+            <CarouselContent>
+              {productPairs.map((pair, slideIndex) => (
+                <CarouselItem key={slideIndex} className="basis-full">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+                    {pair.map((product, index) => (
+                      <div
+                        key={product.id}
+                        className={`${isVisible ? "opacity-100" : "opacity-0"} transition-all duration-500`}
+                        style={{ transitionDelay: `${(slideIndex * 2 + index) * 80}ms` }}
+                      >
+                        <FeaturedProductCard product={product} onQuickAdd={handleQuickAdd} />
+                      </div>
+                    ))}
+                  </div>
+                </CarouselItem>
               ))}
-            </div>
-          </>
+            </CarouselContent>
+          </Carousel>
         )}
       </div>
     </section>
