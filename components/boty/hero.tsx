@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { ArrowRight } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import type { Locale } from "@/i18n.config"
 import { fetchThemeHero, getThemeHeroText, DEFAULT_THEME_HERO, type ThemeHeroData } from "@/lib/theme-hero"
+import { ShopNowButton } from "@/components/boty/shop-now-button"
 
 export function Hero() {
   const { locale, isRTL } = useLanguage()
@@ -79,13 +78,10 @@ export function Hero() {
               {text.description}
             </p>
             <div className={`flex animate-blur-in flex-col gap-4 opacity-0 sm:flex-row ${isRTL ? 'justify-center lg:justify-end' : 'justify-center lg:justify-start'}`} style={{ animationDelay: '1s', animationFillMode: 'forwards' }}>
-              <Link
-                href="/shop"
-                className="group inline-flex items-center justify-center gap-3 rounded-full bg-primary px-7 py-4 text-sm tracking-wide text-primary-foreground boty-shadow boty-transition hover:bg-primary/90 sm:px-8"
-              >
-                {text.cta}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 boty-transition" />
-              </Link>
+              <ShopNowButton
+                label={text.cta}
+                className="boty-shadow boty-transition hover:bg-primary/90"
+              />
             </div>
           </div>
         </div>

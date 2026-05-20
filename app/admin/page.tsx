@@ -7,6 +7,7 @@ import {
   BadgeDollarSign,
   BarChart3,
   Box,
+  FileText,
   Layers,
   Package,
   Palette,
@@ -112,6 +113,7 @@ export default function AdminPage() {
           <div className="flex flex-wrap gap-2">
             <QuickLink href="/admin/addProduct" label="Produit" icon={Package} />
             <QuickLink href="/admin/blogs" label="Blog" icon={Sparkles} />
+            <QuickLink href="/admin/pages" label="Pages" icon={FileText} />
             <QuickLink href="/admin/sell-point" label="Vente" icon={BadgeDollarSign} />
             <QuickLink href="/admin/orders" label="Commandes" icon={ReceiptText} />
           </div>

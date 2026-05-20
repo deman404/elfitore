@@ -32,12 +32,18 @@ export default function ProposPage() {
             <div className="space-y-4">
               <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">{t.eyebrow[lang]}</p>
               <h1 className="font-serif text-4xl text-foreground sm:text-5xl">{t.title[lang]}</h1>
-              <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">{t.subtitle[lang]}</p>
+              <div
+                className="rich-text-content max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg"
+                dangerouslySetInnerHTML={{ __html: t.subtitle[lang] }}
+              />
             </div>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="space-y-5">
-                <p className="text-base leading-7 text-muted-foreground sm:text-lg">{t.intro[lang]}</p>
+                <div
+                  className="rich-text-content text-base leading-7 text-muted-foreground sm:text-lg"
+                  dangerouslySetInnerHTML={{ __html: t.intro[lang] }}
+                />
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FeatureCard icon={Leaf} title={t.featureTitles[0]?.title[lang] ?? ""} />
@@ -49,7 +55,10 @@ export default function ProposPage() {
 
               <aside className="rounded-[1.75rem] border border-border/60 bg-background p-5 sm:p-6">
                 <h2 className="font-serif text-2xl text-foreground">{t.missionTitle[lang]}</h2>
-                <p className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">{t.missionText[lang]}</p>
+                <div
+                  className="mt-3 rich-text-content text-sm leading-7 text-muted-foreground sm:text-base"
+                  dangerouslySetInnerHTML={{ __html: t.missionText[lang] }}
+                />
 
                 <ul className="mt-6 space-y-3">
                   {t.featureTitles.map((item) => (

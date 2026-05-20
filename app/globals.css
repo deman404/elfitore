@@ -165,6 +165,47 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
 }
 
+.rich-text-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+}
+
+.rich-text-content p {
+  margin: 0 0 0.75rem;
+}
+
+.rich-text-content p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-text-content h2 {
+  margin: 1rem 0 0.75rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.rich-text-content blockquote {
+  margin: 1rem 0;
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+  font-style: italic;
+  color: color-mix(in srgb, var(--foreground) 85%, #000 15%);
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+  margin: 0.75rem 0 0.75rem 1.25rem;
+  padding-left: 1rem;
+}
+
+.rich-text-content a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Blur in animation */
 @keyframes blur-in {
   0% {

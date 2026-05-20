@@ -4,6 +4,7 @@ export type AdminSection =
   | "dashboard"
   | "auth"
   | "blog"
+  | "pages"
   | "products"
   | "categories"
   | "sell-point"
@@ -31,6 +32,7 @@ export function canAccessAdminSection(access: AdminAccessSnapshot | null, sectio
     case "dashboard":
     case "auth":
     case "blog":
+    case "pages":
       return true
     case "users":
       return access.canManageUsers
@@ -52,7 +54,7 @@ export function canAccessAdminSection(access: AdminAccessSnapshot | null, sectio
 }
 
 export function buildAllowedAdminSections(access: AdminAccessSnapshot | null): AdminSection[] {
-  const sections: AdminSection[] = ["dashboard", "auth", "blog"]
+  const sections: AdminSection[] = ["dashboard", "auth", "blog", "pages"]
 
   if (!access) return sections
 

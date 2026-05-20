@@ -32,7 +32,10 @@ export default function OurStoryPage() {
             <div className="space-y-4">
               <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">{t.eyebrow[lang]}</p>
               <h1 className="font-serif text-4xl text-foreground sm:text-5xl">{t.title[lang]}</h1>
-              <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">{t.subtitle[lang]}</p>
+              <div
+                className="rich-text-content max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg"
+                dangerouslySetInnerHTML={{ __html: t.subtitle[lang] }}
+              />
             </div>
 
             <div className="mt-10">
@@ -46,7 +49,10 @@ export default function OurStoryPage() {
                     <StepIcon index={index} />
                   </div>
                   <h2 className="font-serif text-xl text-foreground">{step.title[lang]}</h2>
-                  <p className="mt-3 text-sm leading-7 text-muted-foreground">{step.body[lang]}</p>
+                  <div
+                    className="rich-text-content mt-3 text-sm leading-7 text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: step.body[lang] }}
+                  />
                 </article>
               ))}
             </div>
@@ -54,7 +60,10 @@ export default function OurStoryPage() {
             <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
               <div className="rounded-[1.75rem] border border-border/60 bg-background p-5 sm:p-6">
                 <h2 className="font-serif text-2xl text-foreground">{t.bottomTitle[lang]}</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">{t.bottomText[lang]}</p>
+                <div
+                  className="rich-text-content mt-3 max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base"
+                  dangerouslySetInnerHTML={{ __html: t.bottomText[lang] }}
+                />
               </div>
               <div className="rounded-[1.75rem] border border-border/60 bg-primary/5 p-5 sm:p-6">
                 <div className="flex items-center gap-3">
