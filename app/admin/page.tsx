@@ -19,10 +19,12 @@ import {
   TrendingUp,
   Users,
   AlertTriangle,
+  Truck,
 } from "lucide-react"
 import { canAccessAdminSection, type AdminAccessSnapshot } from "@/lib/admin-access"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
+import { DEFAULT_FREE_SHIPPING_THRESHOLD, fetchSiteSettings, formatDhAmount } from "@/lib/site-settings"
 
 type RecentOrder = {
   id: number
@@ -38,6 +40,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<NormalizedProduct[]>([])
   const [webOrdersCount, setWebOrdersCount] = useState(0)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(DEFAULT_FREE_SHIPPING_THRESHOLD)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [access, setAccess] = useState<AdminAccessSnapshot | null>(null)
@@ -47,16 +50,21 @@ export default function AdminPage() {
       setLoading(true)
       setError("")
 
-      const [{ data: productsData, error: productsError }, ordersCountResult, { data: ordersData }] =
-        await Promise.all([
-          supabase.from("products").select("*").order("id", { ascending: false }),
-          supabase.from("web_orders").select("id", { count: "exact", head: true }),
-          supabase
-            .from("web_orders")
-            .select("id, reference, customer_full_name, status, total, created_at")
-            .order("created_at", { ascending: false })
-            .limit(5),
-        ])
+      const [
+        { data: productsData, error: productsError },
+        ordersCountResult,
+        { data: ordersData },
+        settings,
+      ] = await Promise.all([
+        supabase.from("products").select("*").order("id", { ascending: false }),
+        supabase.from("web_orders").select("id", { count: "exact", head: true }),
+        supabase
+          .from("web_orders")
+          .select("id, reference, customer_full_name, status, total, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5),
+        fetchSiteSettings(),
+      ])
 
       if (productsError) {
         setError(`Erreur de chargement : ${productsError.message}`)
@@ -67,6 +75,7 @@ export default function AdminPage() {
 
       setWebOrdersCount(ordersCountResult.count ?? 0)
       setRecentOrders((ordersData ?? []) as RecentOrder[])
+      setFreeShippingThreshold(settings.freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD)
       setLoading(false)
     }
 
@@ -93,6 +102,13 @@ export default function AdminPage() {
     { label: "En stock", value: totalStock, icon: Box, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Commandes", value: webOrdersCount, icon: ShoppingBag, color: "text-violet-600", bg: "bg-violet-50" },
     { label: "Valeur catalogue", value: `DH ${catalogValue.toLocaleString()}`, icon: BarChart3, color: "text-amber-600", bg: "bg-amber-50" },
+    {
+      label: "Livraison offerte",
+      value: freeShippingThreshold > 0 ? `${formatDhAmount(freeShippingThreshold)}+` : "Gratuit",
+      icon: Truck,
+      color: "text-emerald-700",
+      bg: "bg-emerald-50",
+    },
   ]
 
   return (
@@ -121,7 +137,7 @@ export default function AdminPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {stats.map((stat) => (
           <div
             key={stat.label}

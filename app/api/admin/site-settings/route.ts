@@ -3,11 +3,14 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseAdminClient } from "@/lib/supabase-admin"
 import {
   DEFAULT_DELIVERY_METHODS,
+  DEFAULT_FREE_SHIPPING_THRESHOLD,
   formatWhatsAppNumberForLink,
   isValidWhatsAppNumber,
   normalizeDeliveryMethods,
+  normalizeFreeShippingThreshold,
   normalizeWhatsAppNumber,
   SITE_SETTING_DELIVERY_METHODS_KEY,
+  SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY,
   SITE_SETTING_WHATSAPP_NUMBER_KEY,
 } from "@/lib/site-settings"
 
@@ -22,10 +25,25 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "You must sign in before updating settings." }, { status: 401 })
     }
 
-    const body = (await request.json()) as { whatsappNumber?: unknown; deliveryMethods?: unknown }
+    const body = (await request.json()) as {
+      whatsappNumber?: unknown
+      deliveryMethods?: unknown
+      freeShippingThreshold?: unknown
+    }
     const hasWhatsappUpdate = typeof body.whatsappNumber === "string" && body.whatsappNumber.trim().length > 0
+    const hasFreeShippingThresholdUpdate = body.freeShippingThreshold !== undefined
     const whatsappNumber = hasWhatsappUpdate ? normalizeWhatsAppNumber(String(body.whatsappNumber ?? "")) : ""
     const deliveryMethods = body.deliveryMethods === undefined ? null : normalizeDeliveryMethods(body.deliveryMethods ?? DEFAULT_DELIVERY_METHODS)
+    const freeShippingThreshold = hasFreeShippingThresholdUpdate
+      ? normalizeFreeShippingThreshold(body.freeShippingThreshold)
+      : null
+
+    if (hasFreeShippingThresholdUpdate && freeShippingThreshold === null) {
+      return NextResponse.json(
+        { error: "Enter a valid free shipping threshold of 0 or more." },
+        { status: 400 }
+      )
+    }
 
     const admin = getSupabaseAdminClient()
     if (hasWhatsappUpdate) {
@@ -53,6 +71,24 @@ export async function PUT(request: Request) {
       }
     }
 
+    if (hasFreeShippingThresholdUpdate) {
+      const { error: thresholdError } = (await (admin.from("site_settings") as any).upsert(
+        {
+          key: SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY,
+          value: String(freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD),
+        },
+        {
+          onConflict: "key",
+        }
+      )) as {
+        error: { message: string } | null
+      }
+
+      if (thresholdError) {
+        return NextResponse.json({ error: thresholdError.message }, { status: 500 })
+      }
+    }
+
     if (deliveryMethods !== null) {
       const { error: deliveryError } = (await (admin.from("site_settings") as any).upsert(
         {
@@ -74,6 +110,9 @@ export async function PUT(request: Request) {
     return NextResponse.json({
       whatsappNumber: hasWhatsappUpdate ? formatWhatsAppNumberForLink(whatsappNumber) : undefined,
       deliveryMethods: deliveryMethods ?? undefined,
+      freeShippingThreshold: hasFreeShippingThresholdUpdate
+        ? freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD
+        : undefined,
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not update settings."

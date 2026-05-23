@@ -2,6 +2,8 @@ import { MOROCCO_DELIVERY_RATES } from "@/lib/morocco-delivery-tariffs"
 
 export const SITE_SETTING_WHATSAPP_NUMBER_KEY = "whatsapp_number"
 export const SITE_SETTING_DELIVERY_METHODS_KEY = "delivery_methods"
+export const SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY = "free_shipping_threshold"
+export const DEFAULT_FREE_SHIPPING_THRESHOLD = 500
 
 export type DeliveryRate = {
   city: string
@@ -19,6 +21,7 @@ export type DeliveryMethod = {
 export type SiteSettingsResponse = {
   whatsappNumber: string
   deliveryMethods: DeliveryMethod[]
+  freeShippingThreshold: number
 }
 
 export function normalizeWhatsAppNumber(value: string) {
@@ -32,6 +35,23 @@ export function formatWhatsAppNumberForLink(value: string) {
 export function isValidWhatsAppNumber(value: string) {
   const digitsOnly = formatWhatsAppNumberForLink(value)
   return digitsOnly.length >= 8 && digitsOnly.length <= 15
+}
+
+export function normalizeFreeShippingThreshold(value: unknown) {
+  if (typeof value === "string" && value.trim() === "") {
+    return null
+  }
+
+  const numericValue = typeof value === "string" ? Number(value) : typeof value === "number" ? value : NaN
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return null
+  }
+
+  return Math.round(numericValue)
+}
+
+export function formatDhAmount(value: number) {
+  return `DH ${value.toLocaleString("en-US")}`
 }
 
 function normalizeCityKey(value: string) {
@@ -123,13 +143,25 @@ export function getDeliveryPrice(methods: DeliveryMethod[], deliveryMethodId: st
 }
 
 export async function fetchSiteSettings() {
-  const response = await fetch("/api/site-settings", {
-    cache: "no-store",
-  })
+  try {
+    const response = await fetch("/api/site-settings", {
+      cache: "no-store",
+    })
 
-  if (!response.ok) {
-    return { whatsappNumber: "", deliveryMethods: DEFAULT_DELIVERY_METHODS }
+    if (!response.ok) {
+      return {
+        whatsappNumber: "",
+        deliveryMethods: DEFAULT_DELIVERY_METHODS,
+        freeShippingThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
+      }
+    }
+
+    return (await response.json()) as SiteSettingsResponse
+  } catch {
+    return {
+      whatsappNumber: "",
+      deliveryMethods: DEFAULT_DELIVERY_METHODS,
+      freeShippingThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
+    }
   }
-
-  return (await response.json()) as SiteSettingsResponse
 }

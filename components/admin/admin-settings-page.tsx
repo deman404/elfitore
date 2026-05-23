@@ -2,14 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react"
 import type { FormEvent } from "react"
-import { Loader2, Lock, MessageSquareMore, Plus, Save, Shield, Smartphone, Trash2 } from "lucide-react"
+import { Loader2, Lock, MessageSquareMore, Plus, Save, Shield, Smartphone, Trash2, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import {
   DEFAULT_DELIVERY_METHODS,
+  DEFAULT_FREE_SHIPPING_THRESHOLD,
   fetchSiteSettings,
+  formatDhAmount,
   isValidWhatsAppNumber,
+  normalizeFreeShippingThreshold,
   type DeliveryMethod,
 } from "@/lib/site-settings"
 
@@ -26,13 +29,16 @@ export function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [whatsappNumber, setWhatsappNumber] = useState("")
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>(DEFAULT_DELIVERY_METHODS)
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(String(DEFAULT_FREE_SHIPPING_THRESHOLD))
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [savingWhatsapp, setSavingWhatsapp] = useState(false)
   const [savingDeliveryMethods, setSavingDeliveryMethods] = useState(false)
+  const [savingFreeShippingThreshold, setSavingFreeShippingThreshold] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordMessage, setPasswordMessage] = useState<MessageState | null>(null)
   const [whatsappMessage, setWhatsappMessage] = useState<MessageState | null>(null)
   const [deliveryMessage, setDeliveryMessage] = useState<MessageState | null>(null)
+  const [shippingMessage, setShippingMessage] = useState<MessageState | null>(null)
   const [activeDeliveryTab, setActiveDeliveryTab] = useState("")
 
   useEffect(() => {
@@ -44,6 +50,7 @@ export function AdminSettingsPage() {
       setAdminEmail(authData.user?.email ?? "")
       setWhatsappNumber(settings.whatsappNumber ?? "")
       setDeliveryMethods(settings.deliveryMethods?.length ? settings.deliveryMethods : DEFAULT_DELIVERY_METHODS)
+      setFreeShippingThreshold(String(settings.freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD))
       setLoadingSettings(false)
     }
 
@@ -154,6 +161,51 @@ export function AdminSettingsPage() {
     setSavingWhatsapp(false)
   }
 
+  const handleSaveFreeShippingThreshold = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setShippingMessage(null)
+
+    const threshold = normalizeFreeShippingThreshold(freeShippingThreshold)
+    if (threshold === null) {
+      setShippingMessage({
+        type: "error",
+        text: "Enter a valid free shipping threshold of 0 or more.",
+      })
+      return
+    }
+
+    setSavingFreeShippingThreshold(true)
+
+    const response = await fetch("/api/admin/site-settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ freeShippingThreshold: threshold }),
+    })
+
+    const data = (await response.json().catch(() => ({}))) as {
+      error?: string
+      freeShippingThreshold?: number
+    }
+
+    if (!response.ok) {
+      setShippingMessage({
+        type: "error",
+        text: data.error ?? "Could not save the free shipping threshold.",
+      })
+    } else {
+      const nextThreshold = data.freeShippingThreshold ?? threshold
+      setFreeShippingThreshold(String(nextThreshold))
+      setShippingMessage({
+        type: "success",
+        text: "The free shipping threshold has been saved.",
+      })
+    }
+
+    setSavingFreeShippingThreshold(false)
+  }
+
   const addDeliveryMethod = () => {
     const nextMethodId = `delivery-${Date.now()}`
     setDeliveryMethods((current) => [
@@ -232,6 +284,8 @@ export function AdminSettingsPage() {
     })
   }
 
+  const freeShippingThresholdValue = Number(freeShippingThreshold || DEFAULT_FREE_SHIPPING_THRESHOLD)
+
   const handleSaveDeliveryMethods = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setDeliveryMessage(null)
@@ -284,6 +338,16 @@ export function AdminSettingsPage() {
             <div className="grid gap-3">
               <SettingPill label="Compte" value={loadingSettings ? "Chargement..." : adminEmail || "Non connecté"} />
               <SettingPill label="WhatsApp" value={loadingSettings ? "Chargement..." : whatsappNumber || "Non défini"} />
+              <SettingPill
+                label="Livraison gratuite"
+                value={
+                  loadingSettings
+                    ? "Chargement..."
+                    : freeShippingThresholdValue > 0
+                      ? `${formatDhAmount(freeShippingThresholdValue)}+`
+                      : "Gratuit"
+                }
+              />
               <SettingPill label="Accès" value="Admin uniquement" />
             </div>
           </div>
@@ -353,6 +417,47 @@ export function AdminSettingsPage() {
               {passwordMessage ? (
                 <Notice type={passwordMessage.type} text={passwordMessage.text} />
               ) : null}
+            </form>
+          </article>
+
+          <article className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                <Truck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-slate-950">Seuil de livraison gratuite</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Le badge de la page d’accueil et les résumés d'administration utilisent cette valeur pour annoncer la livraison offerte.
+                </p>
+              </div>
+            </div>
+
+            <form className="mt-6 space-y-4" onSubmit={handleSaveFreeShippingThreshold}>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Montant minimum</span>
+                <input
+                  value={freeShippingThreshold}
+                  onChange={(event) => setFreeShippingThreshold(event.target.value)}
+                  className="admin-input"
+                  placeholder="500"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
+                />
+              </label>
+
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
+                Les commandes au-dessus de ce montant affichent un message de livraison gratuite sur la page d’accueil.
+              </div>
+
+              <Button type="submit" className="w-full gap-2" disabled={savingFreeShippingThreshold}>
+                {savingFreeShippingThreshold ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {savingFreeShippingThreshold ? "Enregistrement..." : "Enregistrer le seuil"}
+              </Button>
+
+              {shippingMessage ? <Notice type={shippingMessage.type} text={shippingMessage.text} /> : null}
             </form>
           </article>
 
