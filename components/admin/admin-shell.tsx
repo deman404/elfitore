@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -426,7 +425,7 @@ function Sidebar({
       {/* Logo area */}
       <div className="flex h-14 items-center gap-3 border-b border-slate-200 px-4">
         <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
-          <Image src="/logo.png" alt="El Fitore" fill sizes="32px" className="object-contain" />
+          <img src="/logo.png" alt="El Fitore" className="h-full w-full object-contain" />
         </div>
         {!collapsed && (
           <div className="min-w-0">

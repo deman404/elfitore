@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { ChevronDown, Menu, ShoppingBag, X } from "lucide-react"
 import { CartDrawer } from "./cart-drawer"
@@ -152,13 +151,10 @@ export function Header() {
 
             <Link href="/" className="justify-self-center lg:absolute lg:left-1/2 lg:-translate-x-1/2">
               <span className="relative block h-10 w-32 sm:h-12 sm:w-40">
-                <Image
+                <img
                   src="/logo.png"
                   alt="El Fitore"
-                  fill
-                  priority
-                  sizes="(max-width: 640px) 128px, 160px"
-                  className="object-contain"
+                  className="h-full w-full object-contain"
                 />
               </span>
             </Link>

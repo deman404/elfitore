@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import type { MouseEvent } from "react"
 import {
   Bold,
   Heading2,
@@ -24,6 +25,7 @@ type RichTextEditorProps = {
   onChange: (value: string) => void
   placeholder?: string
   className?: string
+  imageUploadFolder?: string
 }
 
 export function RichTextEditor({
@@ -32,8 +34,12 @@ export function RichTextEditor({
   onChange,
   placeholder = "Start writing...",
   className,
+  imageUploadFolder = "marketing-pages",
 }: RichTextEditorProps) {
   const ref = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const selectionRef = useRef<Range | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => {
     const el = ref.current
@@ -61,10 +67,51 @@ export function RichTextEditor({
     apply("createLink", url)
   }
 
-  const insertImage = () => {
-    const url = window.prompt("Image URL")
-    if (!url) return
-    apply("insertImage", url)
+  const saveSelection = () => {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) return
+    const range = selection.getRangeAt(0)
+    if (ref.current && ref.current.contains(range.commonAncestorContainer)) {
+      selectionRef.current = range.cloneRange()
+    }
+  }
+
+  const restoreSelection = () => {
+    const selection = window.getSelection()
+    if (!selection || !selectionRef.current) return false
+    selection.removeAllRanges()
+    selection.addRange(selectionRef.current)
+    return true
+  }
+
+  const insertUploadedImage = async (file: File) => {
+    setUploadingImage(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("folder", imageUploadFolder)
+
+      const response = await fetch("/api/admin/upload-theme-asset", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = (await response.json().catch(() => ({}))) as { url?: string; error?: string }
+
+      if (!response.ok || !data.url) {
+        window.alert(data.error ?? "Image upload failed.")
+        return
+      }
+
+      ref.current?.focus()
+      restoreSelection()
+      const imageHtml = `<img src="${data.url}" alt="" class="editor-inline-image" />`
+      document.execCommand("insertHTML", false, imageHtml)
+      onChange(ref.current?.innerHTML ?? "")
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   return (
@@ -80,7 +127,16 @@ export function RichTextEditor({
           <ToolbarButton label="Numbered list" onClick={() => apply("insertOrderedList")} icon={ListOrdered} />
           <ToolbarButton label="Quote" onClick={() => wrapBlock("blockquote")} icon={Quote} />
           <ToolbarButton label="Link" onClick={insertLink} icon={Link2} />
-          <ToolbarButton label="Image" onClick={insertImage} icon={ImagePlus} />
+          <ToolbarButton
+            label={uploadingImage ? "Uploading..." : "Image"}
+            onMouseDown={(event) => {
+              event.preventDefault()
+              saveSelection()
+            }}
+            onClick={() => fileInputRef.current?.click()}
+            icon={ImagePlus}
+            disabled={uploadingImage}
+          />
           <ToolbarButton label="Clear" onClick={() => apply("removeFormat")} icon={Eraser} />
           <ToolbarButton label="Undo" onClick={() => apply("undo")} icon={Undo2} />
           <ToolbarButton label="Redo" onClick={() => apply("redo")} icon={Redo2} />
@@ -100,6 +156,18 @@ export function RichTextEditor({
             "focus-visible:outline-none",
           )}
         />
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0]
+            if (file) void insertUploadedImage(file)
+            event.target.value = ""
+          }}
+        />
       </div>
     </div>
   )
@@ -108,11 +176,15 @@ export function RichTextEditor({
 function ToolbarButton({
   label,
   onClick,
+  onMouseDown,
   icon: Icon,
+  disabled = false,
 }: {
   label: string
   onClick: () => void
+  onMouseDown?: (event: MouseEvent<HTMLButtonElement>) => void
   icon: typeof Bold
+  disabled?: boolean
 }) {
   return (
     <Button
@@ -120,6 +192,8 @@ function ToolbarButton({
       variant="ghost"
       size="icon-sm"
       onClick={onClick}
+      onMouseDown={onMouseDown}
+      disabled={disabled}
       className="h-8 w-8 rounded-md text-slate-600"
       title={label}
       aria-label={label}

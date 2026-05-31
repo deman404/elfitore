@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Image from "next/image"
 import { LogIn, User } from "lucide-react"
 import {
   Dialog,
@@ -75,7 +74,7 @@ export function AuthDialog() {
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-[#f6f7f7]">
-            <Image src="/logo.png" alt="El Fitore" width={48} height={48} className="object-contain" />
+            <img src="/logo.png" alt="El Fitore" className="h-12 w-12 object-contain" />
           </div>
           <DialogTitle className="text-xl font-semibold">{text.title}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">

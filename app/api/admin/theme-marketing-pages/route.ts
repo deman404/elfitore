@@ -44,8 +44,12 @@ function normalizePropos(input: ThemeMarketingPagesData["propos"]) {
   return {
     eyebrow: normalizeLocalized(input.eyebrow, DEFAULT_THEME_MARKETING_PAGES.propos.eyebrow),
     title: normalizeLocalized(input.title, DEFAULT_THEME_MARKETING_PAGES.propos.title),
+    content: normalizeLocalized(input.content, DEFAULT_THEME_MARKETING_PAGES.propos.content),
+    heroImage: normalizeImage(input.heroImage, DEFAULT_THEME_MARKETING_PAGES.propos.heroImage),
     subtitle: normalizeLocalized(input.subtitle, DEFAULT_THEME_MARKETING_PAGES.propos.subtitle),
     intro: normalizeLocalized(input.intro, DEFAULT_THEME_MARKETING_PAGES.propos.intro),
+    image1: normalizeImage(input.image1, DEFAULT_THEME_MARKETING_PAGES.propos.image1),
+    image2: normalizeImage(input.image2, DEFAULT_THEME_MARKETING_PAGES.propos.image2),
     missionTitle: normalizeLocalized(input.missionTitle, DEFAULT_THEME_MARKETING_PAGES.propos.missionTitle),
     missionText: normalizeLocalized(input.missionText, DEFAULT_THEME_MARKETING_PAGES.propos.missionText),
     featureTitles: input.featureTitles.map((item, index) => ({
@@ -59,12 +63,18 @@ function normalizeOurStory(input: ThemeMarketingPagesData["ourStory"]) {
   return {
     eyebrow: normalizeLocalized(input.eyebrow, DEFAULT_THEME_MARKETING_PAGES.ourStory.eyebrow),
     title: normalizeLocalized(input.title, DEFAULT_THEME_MARKETING_PAGES.ourStory.title),
+    content: normalizeLocalized(input.content, DEFAULT_THEME_MARKETING_PAGES.ourStory.content),
+    heroImage: normalizeImage(input.heroImage, DEFAULT_THEME_MARKETING_PAGES.ourStory.heroImage),
     subtitle: normalizeLocalized(input.subtitle, DEFAULT_THEME_MARKETING_PAGES.ourStory.subtitle),
     timelineTitle: normalizeLocalized(input.timelineTitle, DEFAULT_THEME_MARKETING_PAGES.ourStory.timelineTitle),
     steps: input.steps.map((step, index) => ({
       title: normalizeLocalized(step.title, DEFAULT_THEME_MARKETING_PAGES.ourStory.steps[index]?.title ?? DEFAULT_THEME_MARKETING_PAGES.ourStory.steps[0].title),
       body: normalizeLocalized(step.body, DEFAULT_THEME_MARKETING_PAGES.ourStory.steps[index]?.body ?? DEFAULT_THEME_MARKETING_PAGES.ourStory.steps[0].body),
     })),
+    stepImage1: normalizeImage(input.stepImage1, DEFAULT_THEME_MARKETING_PAGES.ourStory.stepImage1),
+    stepImage2: normalizeImage(input.stepImage2, DEFAULT_THEME_MARKETING_PAGES.ourStory.stepImage2),
+    stepImage3: normalizeImage(input.stepImage3, DEFAULT_THEME_MARKETING_PAGES.ourStory.stepImage3),
+    stepImage4: normalizeImage(input.stepImage4, DEFAULT_THEME_MARKETING_PAGES.ourStory.stepImage4),
     bottomTitle: normalizeLocalized(input.bottomTitle, DEFAULT_THEME_MARKETING_PAGES.ourStory.bottomTitle),
     bottomText: normalizeLocalized(input.bottomText, DEFAULT_THEME_MARKETING_PAGES.ourStory.bottomText),
     cta: normalizeLocalized(input.cta, DEFAULT_THEME_MARKETING_PAGES.ourStory.cta),
@@ -76,9 +86,27 @@ function normalizeLocalized(
   fallback: Record<"en" | "fr" | "ar", string>
 ) {
   return {
-    en: value.en?.trim() || fallback.en,
-    fr: value.fr?.trim() || fallback.fr,
-    ar: value.ar?.trim() || fallback.ar,
+    en: plainTextOrDefault(value.en, fallback.en),
+    fr: plainTextOrDefault(value.fr, fallback.fr),
+    ar: plainTextOrDefault(value.ar, fallback.ar),
   }
 }
 
+function normalizeImage(value: string, fallback: string) {
+  return value?.trim() || fallback
+}
+
+function plainTextOrDefault(value: string, fallback: string) {
+  const plain = htmlToPlainText(value)
+  return plain || fallback
+}
+
+function htmlToPlainText(value: string) {
+  return value
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .trim()
+}
