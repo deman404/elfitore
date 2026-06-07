@@ -28,6 +28,7 @@ const translations = {
   en: {
     shop: "Shop",
     categories: "Categories",
+    viewAllCategories: "View all categories",
     about: "About",
     story: "Our Story",
     blog: "Blog",
@@ -38,6 +39,7 @@ const translations = {
   fr: {
     shop: "Boutique",
     categories: "Catégories",
+    viewAllCategories: "Voir toutes les catégories",
     about: "À propos",
     story: "Notre histoire",
     blog: "Blog",
@@ -48,6 +50,7 @@ const translations = {
   ar: {
     shop: "المتجر",
     categories: "التصنيفات",
+    viewAllCategories: "عرض جميع الفئات",
     about: "عنّا",
     story: "قصتنا",
     blog: "المدونة",
@@ -116,16 +119,24 @@ export function Header() {
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align={isRTL ? "end" : "start"} className="min-w-52 p-2">
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">{t.categories}</p>
-                    <p className="mt-1 text-xs text-foreground/60">Tap a category to open its products.</p>
-                  </div>
-                  <div className="mt-1 space-y-1">
-                    {categories.map((category) => (
-                      <DropdownMenuItem key={category.slug} asChild>
+              <DropdownMenuContent align={isRTL ? "end" : "start"} className="min-w-52 p-2">
+                <div className="px-2 py-1.5">
+                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">{t.categories}</p>
+                  <p className="mt-1 text-xs text-foreground/60">Tap a category to open its products.</p>
+                </div>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/category"
+                    className="flex w-full cursor-pointer items-center rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
+                  >
+                    {t.viewAllCategories}
+                  </Link>
+                </DropdownMenuItem>
+                <div className="mt-1 space-y-1">
+                  {categories.map((category) => (
+                    <DropdownMenuItem key={category.slug} asChild>
                         <Link
-                          href={`/category/${category.slug}`}
+                          href={`/category/${category.id}`}
                           className="flex w-full cursor-pointer items-center rounded-xl px-3 py-2.5 text-sm text-foreground transition hover:bg-muted"
                         >
                           {category.name}
@@ -225,6 +236,13 @@ export function Header() {
                       <span>{t.categories}</span>
                       <ChevronDown className={`h-4 w-4 transition-transform ${isCategoriesOpen ? "rotate-180" : ""}`} />
                     </button>
+                    <Link
+                      href="/category"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="mt-4 block rounded-xl border border-border/60 bg-background px-3 py-3 text-sm font-medium text-foreground transition hover:bg-muted"
+                    >
+                      {t.viewAllCategories}
+                    </Link>
                     <div
                       id="mobile-category-list"
                       className={`grid overflow-hidden transition-all duration-300 ${
@@ -236,7 +254,7 @@ export function Header() {
                           {categories.map((category) => (
                             <Link
                               key={category.slug}
-                              href={`/category/${category.slug}`}
+                              href={`/category/${category.id}`}
                               onClick={() => {
                                 setIsMenuOpen(false)
                                 setIsCategoriesOpen(false)

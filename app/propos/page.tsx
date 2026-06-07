@@ -35,13 +35,6 @@ export default function ProposPage() {
               dangerouslySetInnerHTML={{ __html: t.content[lang] }}
             />
 
-            <div className="mt-10">
-              <div
-                className="rich-text-content max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg"
-                dangerouslySetInnerHTML={{ __html: t.content[lang] }}
-              />
-            </div>
-
             <div className="mt-12 border-t border-border/60 pt-8">
               <Link
                 href="/shop"

@@ -44,7 +44,7 @@ function normalizePropos(input: ThemeMarketingPagesData["propos"]) {
   return {
     eyebrow: normalizeLocalized(input.eyebrow, DEFAULT_THEME_MARKETING_PAGES.propos.eyebrow),
     title: normalizeLocalized(input.title, DEFAULT_THEME_MARKETING_PAGES.propos.title),
-    content: normalizeLocalized(input.content, DEFAULT_THEME_MARKETING_PAGES.propos.content),
+    content: normalizeHtmlLocalized(input.content, DEFAULT_THEME_MARKETING_PAGES.propos.content),
     heroImage: normalizeImage(input.heroImage, DEFAULT_THEME_MARKETING_PAGES.propos.heroImage),
     subtitle: normalizeLocalized(input.subtitle, DEFAULT_THEME_MARKETING_PAGES.propos.subtitle),
     intro: normalizeLocalized(input.intro, DEFAULT_THEME_MARKETING_PAGES.propos.intro),
@@ -63,7 +63,7 @@ function normalizeOurStory(input: ThemeMarketingPagesData["ourStory"]) {
   return {
     eyebrow: normalizeLocalized(input.eyebrow, DEFAULT_THEME_MARKETING_PAGES.ourStory.eyebrow),
     title: normalizeLocalized(input.title, DEFAULT_THEME_MARKETING_PAGES.ourStory.title),
-    content: normalizeLocalized(input.content, DEFAULT_THEME_MARKETING_PAGES.ourStory.content),
+    content: normalizeHtmlLocalized(input.content, DEFAULT_THEME_MARKETING_PAGES.ourStory.content),
     heroImage: normalizeImage(input.heroImage, DEFAULT_THEME_MARKETING_PAGES.ourStory.heroImage),
     subtitle: normalizeLocalized(input.subtitle, DEFAULT_THEME_MARKETING_PAGES.ourStory.subtitle),
     timelineTitle: normalizeLocalized(input.timelineTitle, DEFAULT_THEME_MARKETING_PAGES.ourStory.timelineTitle),
@@ -92,6 +92,17 @@ function normalizeLocalized(
   }
 }
 
+function normalizeHtmlLocalized(
+  value: Record<"en" | "fr" | "ar", string>,
+  fallback: Record<"en" | "fr" | "ar", string>
+) {
+  return {
+    en: htmlOrDefault(value.en, fallback.en),
+    fr: htmlOrDefault(value.fr, fallback.fr),
+    ar: htmlOrDefault(value.ar, fallback.ar),
+  }
+}
+
 function normalizeImage(value: string, fallback: string) {
   return value?.trim() || fallback
 }
@@ -99,6 +110,10 @@ function normalizeImage(value: string, fallback: string) {
 function plainTextOrDefault(value: string, fallback: string) {
   const plain = htmlToPlainText(value)
   return plain || fallback
+}
+
+function htmlOrDefault(value: string, fallback: string) {
+  return value?.trim() || fallback
 }
 
 function htmlToPlainText(value: string) {

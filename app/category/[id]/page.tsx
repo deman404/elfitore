@@ -23,7 +23,7 @@ type CategoryRecord = {
 const pageText: Record<
   Locale,
   {
-    backToShop: string
+    backToCategories: string
     products_one: string
     products_other: string
     notFound: string
@@ -31,21 +31,21 @@ const pageText: Record<
   }
 > = {
   en: {
-    backToShop: "Back to Shop",
+    backToCategories: "Back to Categories",
     products_one: "product",
     products_other: "products",
     notFound: "Category not found",
     noProducts: "No products are available in this category yet.",
   },
   fr: {
-    backToShop: "Retour à la boutique",
+    backToCategories: "Retour aux catégories",
     products_one: "produit",
     products_other: "produits",
     notFound: "Catégorie introuvable",
     noProducts: "Aucun produit n’est encore disponible dans cette catégorie.",
   },
   ar: {
-    backToShop: "العودة إلى المتجر",
+    backToCategories: "العودة إلى الفئات",
     products_one: "منتج",
     products_other: "منتجات",
     notFound: "التصنيف غير موجود",
@@ -56,7 +56,7 @@ const pageText: Record<
 export default function CategoryPage() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const params = useParams()
-  const slug = params.slug as string
+  const categoryParam = params.id as string
   const { locale, isRTL } = useLanguage()
   const t = pageText[locale as Locale]
   const [category, setCategory] = useState<CategoryRecord | null>(null)
@@ -67,15 +67,15 @@ export default function CategoryPage() {
     const loadCategory = async () => {
       setLoading(true)
 
-      const [categoryResult, productsResult] = await Promise.all([
-        supabase
-          .from("product_categories")
-          .select("id, name, slug, description, active")
-          .eq("slug", slug)
-          .eq("active", true)
-          .maybeSingle(),
-        supabase.from("products").select("*").eq("category", slug).order("id", { ascending: false }),
-      ])
+      const categoryId = Number(categoryParam)
+      const categoryQuery = supabase
+        .from("product_categories")
+        .select("id, name, slug, description, active")
+        .eq("active", true)
+
+      const categoryResult = Number.isFinite(categoryId)
+        ? await categoryQuery.eq("id", categoryId).maybeSingle()
+        : await categoryQuery.eq("slug", categoryParam).maybeSingle()
 
       if (categoryResult.error || !categoryResult.data) {
         setCategory(null)
@@ -84,17 +84,23 @@ export default function CategoryPage() {
         return
       }
 
+      const productsResult = await supabase
+        .from("products")
+        .select("*")
+        .eq("category", categoryResult.data.slug)
+        .order("id", { ascending: false })
+
       setCategory(categoryResult.data as CategoryRecord)
       setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
       setLoading(false)
     }
 
     void loadCategory()
-  }, [slug, supabase])
+  }, [categoryParam, supabase])
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [slug])
+  }, [categoryParam])
 
   const heroImage = products[0]?.image || products[0]?.images[0] || "/placeholder.svg"
 
@@ -105,11 +111,11 @@ export default function CategoryPage() {
       <div className="pb-20 pt-24 sm:pt-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link
-            href="/shop"
+            href="/category"
             className={`mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground ${isRTL ? "flex-row-reverse" : ""}`}
           >
             <ChevronLeft className="h-4 w-4" />
-            {t.backToShop}
+            {t.backToCategories}
           </Link>
 
           {loading ? (

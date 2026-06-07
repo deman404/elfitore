@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Instagram, Facebook, Twitter } from "lucide-react"
+import { Facebook, Instagram, Music2 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import type { Locale } from "@/i18n.config"
 
@@ -107,6 +107,12 @@ const footerTexts: Record<Locale, { shop: string; links: string; support: string
   }
 }
 
+const socialLinks = {
+  facebook: "https://www.facebook.com/share/1CQYK9qNjd/?mibextid=wwXIfr",
+  instagram: "https://www.instagram.com/elfitor.officiel?igsh=MTdnOHBiaW1na3FpaQ%3D%3D&utm_source=qr",
+  tiktok: "https://www.tiktok.com/@elfitor.officiel?_r=1&_t=ZS-96WkEg14VE4",
+} as const
+
 export function Footer() {
   const { locale, isRTL } = useLanguage()
   const links = footerLinks[locale as Locale]
@@ -131,16 +137,7 @@ export function Footer() {
             </p>
             <div className="flex gap-3 sm:gap-4">
               <a
-                href="https://x.com/Kerroudjm"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-foreground/60 boty-shadow boty-transition hover:text-foreground"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="https://x.com/Kerroudjm"
+                href={socialLinks.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-foreground/60 boty-shadow boty-transition hover:text-foreground"
@@ -149,13 +146,22 @@ export function Footer() {
                 <Facebook className="w-4 h-4" />
               </a>
               <a
-                href="https://x.com/Kerroudjm"
+                href={socialLinks.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-foreground/60 boty-shadow boty-transition hover:text-foreground"
-                aria-label="Twitter"
+                aria-label="Instagram"
               >
-                <Twitter className="w-4 h-4" />
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a
+                href={socialLinks.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-foreground/60 boty-shadow boty-transition hover:text-foreground"
+                aria-label="TikTok"
+              >
+                <Music2 className="w-4 h-4" />
               </a>
             </div>
           </div>

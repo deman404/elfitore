@@ -206,7 +206,7 @@ export default function AdminPage() {
               ) : (
                 recentOrders.map((order) => (
                   <div key={order.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50">
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 max-w-[20rem]">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium text-slate-900">
                           {order.reference || `#${order.id}`}
@@ -249,16 +249,16 @@ export default function AdminPage() {
               ) : (
                 products.slice(0, 5).map((product) => (
                   <div key={product.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50">
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 max-w-[20rem]">
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium text-slate-900">{product.name.en}</span>
                         <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-600">
                           {product.category}
                         </span>
                       </div>
-                      <p className="mt-0.5 truncate text-xs text-slate-500">{product.description.en}</p>
+                      <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{product.description.en}</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex shrink-0 items-center gap-3">
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                           product.stock <= 0
