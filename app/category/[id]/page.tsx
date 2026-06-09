@@ -129,8 +129,8 @@ export default function CategoryPage() {
             </div>
           ) : (
             <>
-              <section className="overflow-hidden rounded-[2rem] border border-border/60 bg-card shadow-sm">
-                <div className="relative aspect-[16/7] min-h-[260px]">
+              <section className="border border-border/60 bg-card shadow-sm">
+                <div className="relative aspect-[16/7] min-h-[260px] w-full overflow-hidden rounded-b-[2rem]">
                   <Image
                     src={heroImage}
                     alt={category.name}

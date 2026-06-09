@@ -8,7 +8,7 @@ import { Header } from "@/components/boty/header"
 import { Footer } from "@/components/boty/footer"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import { DEFAULT_THEME_HOME_CATEGORIES } from "@/lib/theme-home-categories"
+import { parseStringArray, type CatalogProductRow } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
 
 type CategoryRecord = {
@@ -61,24 +61,35 @@ export default function CategoryIndexPage() {
   const { locale, isRTL } = useLanguage()
   const t = pageText[locale as Locale]
   const [categories, setCategories] = useState<CategoryRecord[]>([])
+  const [heroImage, setHeroImage] = useState("/images/products/oil.jpg")
   const [loading, setLoading] = useState(true)
-
-  const heroImage = DEFAULT_THEME_HOME_CATEGORIES.cards[0]?.imageUrl || "/placeholder.svg"
 
   useEffect(() => {
     const loadCategories = async () => {
       setLoading(true)
 
-      const { data, error } = await supabase
-        .from("product_categories")
-        .select("id, name, slug, description, active")
-        .eq("active", true)
-        .order("sort_order", { ascending: true })
+      const [categoriesResult, productsResult] = await Promise.all([
+        supabase
+          .from("product_categories")
+          .select("id, name, slug, description, active")
+          .eq("active", true)
+          .order("sort_order", { ascending: true }),
+        supabase.from("products").select("id, category, image, images").order("id", { ascending: false }),
+      ])
 
-      if (error) {
+      const categoryData = (categoriesResult.data ?? []) as CategoryRecord[]
+      if (categoriesResult.error) {
         setCategories([])
       } else {
-        setCategories((data ?? []) as CategoryRecord[])
+        setCategories(categoryData)
+      }
+
+      const firstCategory = categoryData[0]
+      if (firstCategory) {
+        const productData = (productsResult.data ?? []) as CatalogProductRow[]
+        const heroProduct = productData.find((product) => product.category === firstCategory.slug)
+        const nextHeroImage = heroProduct?.image || parseStringArray(heroProduct?.images)[0] || "/images/products/oil.jpg"
+        setHeroImage(nextHeroImage)
       }
 
       setLoading(false)

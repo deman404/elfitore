@@ -49,6 +49,11 @@ import {
   type ThemeHomeCategoriesData,
 } from "@/lib/theme-home-categories"
 import {
+  DEFAULT_THEME_FOOTER,
+  fetchThemeFooter,
+  type ThemeFooterData,
+} from "@/lib/theme-footer"
+import {
   DEFAULT_THEME_MARKETING_PAGES,
   fetchThemeMarketingPages,
   type ThemeMarketingPagesData,
@@ -56,7 +61,7 @@ import {
 
 type MessageState = { type: "error" | "success"; text: string }
 type LocaleKey = "en" | "fr" | "ar"
-type SectionKey = "hero" | "feature" | "trust" | "cta" | "categories" | "marketing"
+type SectionKey = "hero" | "feature" | "trust" | "cta" | "categories" | "marketing" | "footer"
 type ProposLocalizedField =
   | "eyebrow"
   | "title"
@@ -118,6 +123,7 @@ export function AdminThemePage() {
   const [cta, setCta] = useState<ThemeCtaBannerData>(DEFAULT_THEME_CTA_BANNER)
   const [categories, setCategories] = useState<ThemeHomeCategoriesData>(DEFAULT_THEME_HOME_CATEGORIES)
   const [marketingPages, setMarketingPages] = useState<ThemeMarketingPagesData>(DEFAULT_THEME_MARKETING_PAGES)
+  const [footer, setFooter] = useState<ThemeFooterData>(DEFAULT_THEME_FOOTER)
 
   const [loading, setLoading] = useState(true)
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null)
@@ -135,12 +141,14 @@ export function AdminThemePage() {
         fetchThemeHomeCategories(),
         fetchThemeMarketingPages(),
       ])
+      const footerData = await fetchThemeFooter()
       setHero(h)
       setFeature(f)
       setTrust(t)
       setCta(c)
       setCategories(categoriesData)
       setMarketingPages(marketingData)
+      setFooter(footerData)
       setLoading(false)
     }
     void load()
@@ -255,6 +263,16 @@ export function AdminThemePage() {
           onEdit={() => setActivePanel("marketing")}
           preview={<MarketingPagesPreview data={marketingPages} />}
         />
+
+        <SectionCard
+          index={7}
+          title="Footer"
+          description="Liens, description et réseaux sociaux"
+          loading={loading}
+          active={activePanel === "footer"}
+          onEdit={() => setActivePanel("footer")}
+          preview={<FooterPreview data={footer} />}
+        />
       </div>
 
       {/* Edit Panels */}
@@ -326,6 +344,16 @@ export function AdminThemePage() {
           onSave={() => void handleSave("marketing", "/api/admin/theme-marketing-pages", marketingPages)}
           saving={isSaving("marketing")}
           message={messages.marketing ?? null}
+        />
+      </EditPanel>
+
+      <EditPanel open={activePanel === "footer"} onClose={() => setActivePanel(null)} title="Modifier le footer" icon={Globe}>
+        <FooterForm
+          data={footer}
+          setData={setFooter}
+          onSave={() => void handleSave("footer", "/api/admin/theme-footer", footer)}
+          saving={isSaving("footer")}
+          message={messages.footer ?? null}
         />
       </EditPanel>
     </div>
@@ -517,6 +545,31 @@ function MarketingPagesPreview({ data }: { data: ThemeMarketingPagesData }) {
       <div className="rounded-md bg-white p-3 shadow-sm">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Our Story</p>
         <p className="mt-1 truncate text-xs font-medium text-slate-700">{data.ourStory.title.en || "Story page"}</p>
+      </div>
+    </div>
+  )
+}
+
+function FooterPreview({ data }: { data: ThemeFooterData }) {
+  return (
+    <div className="grid gap-2">
+      <div className="rounded-md bg-white p-3 shadow-sm">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Brand</p>
+        <p className="mt-1 truncate text-xs font-medium text-slate-700">{data.brandName || "Brand name"}</p>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-md bg-white p-3 shadow-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Shop</p>
+          <p className="mt-1 text-xs font-medium text-slate-700">{data.shopLinks[0]?.name.en || "Shop link"}</p>
+        </div>
+        <div className="rounded-md bg-white p-3 shadow-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Links</p>
+          <p className="mt-1 text-xs font-medium text-slate-700">{data.usefulLinks[0]?.name.en || "Useful link"}</p>
+        </div>
+        <div className="rounded-md bg-white p-3 shadow-sm">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Support</p>
+          <p className="mt-1 text-xs font-medium text-slate-700">{data.supportLinks[0]?.name.en || "Support link"}</p>
+        </div>
       </div>
     </div>
   )
@@ -980,6 +1033,113 @@ function MarketingPagesForm({
           ))}
         </Collapsible>
       </Collapsible>
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
+function FooterForm({
+  data,
+  setData,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeFooterData
+  setData: React.Dispatch<React.SetStateAction<ThemeFooterData>>
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+}) {
+  const updateText =
+    (field: "description" | "copyright", locale: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        [field]: { ...prev[field], [locale]: e.target.value },
+      }))
+
+  const updateLink =
+    (group: "shopLinks" | "usefulLinks" | "supportLinks", index: number, field: "name" | "href", locale?: LocaleKey) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setData((prev) => ({
+        ...prev,
+        [group]: prev[group].map((link, linkIndex) => {
+          if (linkIndex !== index) return link
+          if (field === "href") {
+            return { ...link, href: e.target.value }
+          }
+          if (!locale) return link
+          return {
+            ...link,
+            name: { ...link.name, [locale]: e.target.value },
+          }
+        }),
+      }))
+
+  const updateSocial =
+    (field: keyof ThemeFooterData["socialLinks"]) =>
+    (e: ChangeEvent<HTMLInputElement>) =>
+      setData((prev) => ({
+        ...prev,
+        socialLinks: {
+          ...prev.socialLinks,
+          [field]: e.target.value,
+        },
+      }))
+
+  const renderLinkGroup = (title: string, group: "shopLinks" | "usefulLinks" | "supportLinks") => (
+    <Collapsible title={title} defaultOpen>
+      <div className="space-y-4">
+        {data[group].map((link, index) => (
+          <div key={index} className="rounded-lg border border-slate-100 bg-white p-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Lien {index + 1}</p>
+            <div className="space-y-3">
+              <Input label="URL" value={link.href} onChange={updateLink(group, index, "href")} />
+              {locales.map((locale) => (
+                <Input
+                  key={locale}
+                  label={`Nom ${localeLabels[locale]}`}
+                  value={link.name[locale]}
+                  onChange={updateLink(group, index, "name", locale)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Collapsible>
+  )
+
+  return (
+    <div className="space-y-6">
+      <Collapsible title="Brand et texte" defaultOpen>
+        <div className="space-y-3">
+          <Input label="Nom de marque" value={data.brandName} onChange={(e) => setData((prev) => ({ ...prev, brandName: e.target.value }))} />
+          {locales.map((locale) => (
+            <div key={locale} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+              <div className="space-y-3">
+                <Textarea label="Description" value={data.description[locale]} onChange={updateText("description", locale)} />
+                <Input label="Copyright" value={data.copyright[locale]} onChange={updateText("copyright", locale)} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Collapsible>
+
+      <Collapsible title="Réseaux sociaux" defaultOpen>
+        <div className="space-y-3">
+          <Input label="Facebook" value={data.socialLinks.facebook} onChange={updateSocial("facebook")} />
+          <Input label="Instagram" value={data.socialLinks.instagram} onChange={updateSocial("instagram")} />
+          <Input label="TikTok" value={data.socialLinks.tiktok} onChange={updateSocial("tiktok")} />
+        </div>
+      </Collapsible>
+
+      {renderLinkGroup("Liens boutique", "shopLinks")}
+      {renderLinkGroup("Liens utiles", "usefulLinks")}
+      {renderLinkGroup("Liens support", "supportLinks")}
 
       <SaveBar onSave={onSave} saving={saving} message={message} />
     </div>
