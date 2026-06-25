@@ -5,6 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
+import { fetchThemeHomeCategories } from "@/lib/theme-home-categories"
+import type { Locale } from "@/i18n.config"
 import { parseStringArray, type CatalogCategoryRow, type CatalogProductRow } from "@/lib/catalog"
 
 type FeaturedCategoryCard = {
@@ -55,7 +57,8 @@ export function HomeCategoriesSection() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const [categoriesResult, productsResult] = await Promise.all([
+      const [themeCategories, categoriesResult, productsResult] = await Promise.all([
+        fetchThemeHomeCategories(),
         supabase
           .from("product_categories")
           .select("id, name, slug, description, active, sort_order")
@@ -81,20 +84,41 @@ export function HomeCategoriesSection() {
         }
       }
 
+      const normalizedCategories = categories.map((category) => ({
+        ...category,
+        normalizedName: normalizeText(category.name),
+        normalizedSlug: normalizeText(category.slug),
+      }))
+
       setCards(
-        categories.map((category) => ({
-          id: category.id,
-          href: `/category/${category.id}`,
-          title: category.name,
-          description: category.description || fallbackDescription,
-          imageUrl: firstImageByCategory.get(category.slug) || "/images/products/oil.jpg",
-        }))
+        themeCategories.cards.map((card, index) => {
+          const title = getLocalizedCardText(card.title, locale)
+          const description = getLocalizedCardText(card.description, locale) || fallbackDescription
+          const matchedCategory =
+            normalizedCategories.find((category) => {
+              const normalizedTitle = normalizeText(title)
+              return normalizedTitle === category.normalizedName || normalizedTitle === category.normalizedSlug
+            }) ?? normalizedCategories[index]
+          const href = matchedCategory ? `/category/${matchedCategory.id}` : "/category"
+          const imageUrl =
+            card.imageUrl ||
+            (matchedCategory ? firstImageByCategory.get(matchedCategory.slug) : "") ||
+            "/images/products/oil.jpg"
+
+          return {
+            id: matchedCategory?.id ?? index + 1,
+            href,
+            title,
+            description,
+            imageUrl,
+          }
+        })
       )
       setLoading(false)
     }
 
     void load()
-  }, [supabase])
+  }, [fallbackDescription, locale, supabase])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -175,4 +199,16 @@ export function HomeCategoriesSection() {
       </div>
     </section>
   )
+}
+
+function getLocalizedCardText(text: Record<Locale, string>, locale: Locale) {
+  return text[locale] || text.en || ""
+}
+
+function normalizeText(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
 }
