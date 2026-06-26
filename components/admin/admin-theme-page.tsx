@@ -19,12 +19,14 @@ import {
   Save,
   ShieldCheck,
   Sparkles,
+  ShoppingBag,
   Truck,
   Type,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { ThemeMediaUpload } from "@/components/admin/theme-media-upload"
+import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { fetchThemeHero, isValidThemeHeroText, type ThemeHeroData } from "@/lib/theme-hero"
 import {
   DEFAULT_THEME_FEATURE_SECTION,
@@ -49,6 +51,11 @@ import {
   type ThemeHomeCategoriesData,
 } from "@/lib/theme-home-categories"
 import {
+  DEFAULT_THEME_BEST_SELLERS,
+  fetchThemeBestSellers,
+  type ThemeBestSellersData,
+} from "@/lib/theme-best-sellers"
+import {
   DEFAULT_THEME_FOOTER,
   fetchThemeFooter,
   type ThemeFooterData,
@@ -58,10 +65,11 @@ import {
   fetchThemeMarketingPages,
   type ThemeMarketingPagesData,
 } from "@/lib/theme-marketing-pages"
+import { normalizeProductRow, type CatalogCategoryRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
 
 type MessageState = { type: "error" | "success"; text: string }
 type LocaleKey = "en" | "fr" | "ar"
-type SectionKey = "hero" | "feature" | "trust" | "cta" | "categories" | "marketing" | "footer"
+type SectionKey = "hero" | "feature" | "trust" | "cta" | "bestSellers" | "categories" | "marketing" | "footer"
 type ProposLocalizedField =
   | "eyebrow"
   | "title"
@@ -108,6 +116,7 @@ const trustIconMap: Record<ThemeTrustBadgeIcon, typeof Leaf> = {
 }
 
 export function AdminThemePage() {
+  const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const [hero, setHero] = useState<ThemeHeroData>({
     mediaType: "video",
     mediaUrl: "",
@@ -121,7 +130,10 @@ export function AdminThemePage() {
   const [feature, setFeature] = useState<ThemeFeatureSectionData>(DEFAULT_THEME_FEATURE_SECTION)
   const [trust, setTrust] = useState<ThemeTrustBadgesData>(DEFAULT_THEME_TRUST_BADGES)
   const [cta, setCta] = useState<ThemeCtaBannerData>(DEFAULT_THEME_CTA_BANNER)
+  const [bestSellers, setBestSellers] = useState<ThemeBestSellersData>(DEFAULT_THEME_BEST_SELLERS)
   const [categories, setCategories] = useState<ThemeHomeCategoriesData>(DEFAULT_THEME_HOME_CATEGORIES)
+  const [categoryOptions, setCategoryOptions] = useState<CatalogCategoryRow[]>([])
+  const [productOptions, setProductOptions] = useState<NormalizedProduct[]>([])
   const [marketingPages, setMarketingPages] = useState<ThemeMarketingPagesData>(DEFAULT_THEME_MARKETING_PAGES)
   const [footer, setFooter] = useState<ThemeFooterData>(DEFAULT_THEME_FOOTER)
 
@@ -133,26 +145,39 @@ export function AdminThemePage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const [h, f, t, c, categoriesData, marketingData] = await Promise.all([
+      const [h, f, t, c, bestSellersData, categoriesData, marketingData, categoryRows, productRows] = await Promise.all([
         fetchThemeHero(),
         fetchThemeFeatureSection(),
         fetchThemeTrustBadges(),
         fetchThemeCtaBanner(),
+        fetchThemeBestSellers(),
         fetchThemeHomeCategories(),
         fetchThemeMarketingPages(),
+        supabase.from("product_categories").select("id, name, slug").eq("active", true).order("sort_order", { ascending: true }),
+        supabase.from("products").select("*").order("id", { ascending: false }),
       ])
       const footerData = await fetchThemeFooter()
+      const products = ((productRows.data ?? []) as CatalogProductRow[]).map(normalizeProductRow)
       setHero(h)
       setFeature(f)
       setTrust(t)
       setCta(c)
-      setCategories(categoriesData)
+      setBestSellers(bestSellersData)
+      setCategories({
+        ...categoriesData,
+        cards: categoriesData.cards.map((card) => ({
+          ...card,
+          categorySlug: card.categorySlug || inferCategorySlug(card.title, categoryRows.data ?? []),
+        })),
+      })
+      setProductOptions(products)
       setMarketingPages(marketingData)
       setFooter(footerData)
+      setCategoryOptions((categoryRows.data ?? []) as CatalogCategoryRow[])
       setLoading(false)
     }
     void load()
-  }, [])
+  }, [supabase])
 
   const setMessage = (section: SectionKey, msg: MessageState | null) => {
     setMessages((prev) => ({ ...prev, [section]: msg ?? undefined }))
@@ -246,6 +271,16 @@ export function AdminThemePage() {
 
         <SectionCard
           index={5}
+          title="Best Sellers"
+          description="Choisissez les produits mis en avant sur la page d'accueil"
+          loading={loading}
+          active={activePanel === "bestSellers"}
+          onEdit={() => setActivePanel("bestSellers")}
+          preview={<BestSellersPreview data={bestSellers} products={productOptions} />}
+        />
+
+        <SectionCard
+          index={6}
           title="Catégories d'accueil"
           description="4 cartes éditables entre best sellers et produits"
           loading={loading}
@@ -255,7 +290,7 @@ export function AdminThemePage() {
         />
 
         <SectionCard
-          index={6}
+          index={7}
           title="Pages éditables"
           description="À propos et Notre histoire"
           loading={loading}
@@ -265,7 +300,7 @@ export function AdminThemePage() {
         />
 
         <SectionCard
-          index={7}
+          index={8}
           title="Footer"
           description="Liens, description et réseaux sociaux"
           loading={loading}
@@ -276,6 +311,17 @@ export function AdminThemePage() {
       </div>
 
       {/* Edit Panels */}
+      <EditPanel open={activePanel === "bestSellers"} onClose={() => setActivePanel(null)} title="Modifier les best sellers" icon={ShoppingBag}>
+        <BestSellersForm
+          data={bestSellers}
+          setData={setBestSellers}
+          productOptions={productOptions}
+          onSave={() => void handleSave("bestSellers", "/api/admin/theme-best-sellers", bestSellers)}
+          saving={isSaving("bestSellers")}
+          message={messages.bestSellers ?? null}
+        />
+      </EditPanel>
+
       <EditPanel open={activePanel === "hero"} onClose={() => setActivePanel(null)} title="Modifier le Hero" icon={ImageIcon}>
         <HeroForm
           data={hero}
@@ -330,6 +376,7 @@ export function AdminThemePage() {
       <EditPanel open={activePanel === "categories"} onClose={() => setActivePanel(null)} title="Modifier les catégories d'accueil" icon={ImageIcon}>
         <HomeCategoriesForm
           data={categories}
+          categoryOptions={categoryOptions}
           setData={setCategories}
           onSave={() => void handleSave("categories", "/api/admin/theme-home-categories", categories)}
           saving={isSaving("categories")}
@@ -514,6 +561,34 @@ function CtaPreview({ data }: { data: ThemeCtaBannerData }) {
         <p className="text-sm font-semibold">{data.title1.en || "Titre CTA"}</p>
         <p className="text-xs text-white/70">{data.title2.en || "Sous-titre"}</p>
       </div>
+    </div>
+  )
+}
+
+function BestSellersPreview({
+  data,
+  products,
+}: {
+  data: ThemeBestSellersData
+  products: NormalizedProduct[]
+}) {
+  const byId = new Map(products.map((product) => [product.dbId, product] as const))
+  const selected = data.productIds
+    .map((id) => byId.get(id))
+    .filter((product): product is NormalizedProduct => Boolean(product))
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {(selected.length ? selected : products.slice(0, 4)).map((product, index) => (
+        <div key={product.dbId} className="overflow-hidden rounded-md bg-white shadow-sm">
+          <div className="flex h-20 items-center justify-center bg-slate-200">
+            <ImageIcon className="h-5 w-5 text-slate-400" />
+          </div>
+          <div className="p-2">
+            <p className="truncate text-[10px] font-medium text-slate-700">{product.name.en || `Produit ${index + 1}`}</p>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -850,14 +925,72 @@ function CtaForm({
   )
 }
 
+function BestSellersForm({
+  data,
+  setData,
+  productOptions,
+  onSave,
+  saving,
+  message,
+}: {
+  data: ThemeBestSellersData
+  setData: React.Dispatch<React.SetStateAction<ThemeBestSellersData>>
+  productOptions: NormalizedProduct[]
+  onSave: () => void
+  saving: boolean
+  message: MessageState | null
+  }) {
+  const updateSlot = (index: number) => (e: ChangeEvent<HTMLSelectElement>) =>
+    setData((prev) => {
+      const productId = Number(e.target.value)
+      const next = [...prev.productIds]
+      next[index] = Number.isFinite(productId) && productId > 0 ? productId : 0
+      while (next.length < 4) {
+        next.push(0)
+      }
+      return { ...prev, productIds: next.slice(0, 4) }
+    })
+
+  const slots = Array.from({ length: 4 }, (_, index) => data.productIds[index] ?? 0)
+
+  return (
+    <div className="space-y-6">
+      <Collapsible title="Produits mis en avant" defaultOpen>
+        <p className="mb-4 text-sm leading-6 text-slate-500">
+          Choisissez jusqu'à 4 produits à afficher dans la section des best sellers de la page d'accueil.
+        </p>
+        <div className="space-y-4">
+          {slots.map((productId, index) => (
+            <label key={index} className="block space-y-1.5">
+              <span className="text-xs font-medium text-slate-600">Produit {index + 1}</span>
+              <select value={productId || ""} onChange={updateSlot(index)} className="admin-input">
+                <option value="">Aucun produit</option>
+                {productOptions.map((product) => (
+                  <option key={product.dbId} value={product.dbId}>
+                    {product.name.en} #{product.dbId}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      </Collapsible>
+
+      <SaveBar onSave={onSave} saving={saving} message={message} />
+    </div>
+  )
+}
+
 function HomeCategoriesForm({
   data,
+  categoryOptions,
   setData,
   onSave,
   saving,
   message,
 }: {
   data: ThemeHomeCategoriesData
+  categoryOptions: CatalogCategoryRow[]
   setData: React.Dispatch<React.SetStateAction<ThemeHomeCategoriesData>>
   onSave: () => void
   saving: boolean
@@ -878,6 +1011,12 @@ function HomeCategoriesForm({
       cards: prev.cards.map((card, index) => (index === cardIndex ? { ...card, imageUrl: url } : card)),
     }))
 
+  const updateCategorySlug = (cardIndex: number) => (e: ChangeEvent<HTMLSelectElement>) =>
+    setData((prev) => ({
+      ...prev,
+      cards: prev.cards.map((card, index) => (index === cardIndex ? { ...card, categorySlug: e.target.value } : card)),
+    }))
+
   return (
     <div className="space-y-6">
       <Collapsible title="Cartes de catégories" defaultOpen>
@@ -891,6 +1030,17 @@ function HomeCategoriesForm({
                 folder="home-categories"
                 label="Image de la catégorie"
               />
+              <label className="block space-y-1.5">
+                <span className="text-xs font-medium text-slate-600">Catégorie liée</span>
+                <select value={card.categorySlug} onChange={updateCategorySlug(index)} className="admin-input">
+                  <option value="">Sélectionner une catégorie</option>
+                  {categoryOptions.map((category) => (
+                    <option key={category.id} value={category.slug}>
+                      {category.name} ({category.slug})
+                    </option>
+                  ))}
+                </select>
+              </label>
               {locales.map((locale) => (
                 <div key={locale} className="space-y-3 rounded-lg border border-slate-100 bg-white p-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
@@ -1246,4 +1396,23 @@ function SaveBar({
       ) : null}
     </div>
   )
+}
+
+function inferCategorySlug(title: Record<LocaleKey, string>, categories: CatalogCategoryRow[]) {
+  const titles = Object.values(title).map((value) => normalizeText(value))
+  const matched = categories.find((category) => {
+    const name = normalizeText(category.name)
+    const slug = normalizeText(category.slug)
+    return titles.some((value) => value && (value === name || value === slug))
+  })
+
+  return matched?.slug ?? ""
+}
+
+function normalizeText(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
 }

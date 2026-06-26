@@ -9,6 +9,7 @@ import { useCart } from "./cart-context"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
+import { fetchThemeBestSellers } from "@/lib/theme-best-sellers"
 import type { Locale } from "@/i18n.config"
 
 const sectionText: Record<Locale, { eyebrow: string; title: string; description: string; quickAdd: string }> = {
@@ -128,15 +129,24 @@ export function BestSellerSection() {
     const loadProducts = async () => {
       setLoading(true)
 
-      const { data, error } = await supabase.from("products").select("*").order("id", { ascending: false })
+      const [bestSellersResult, productsResult] = await Promise.all([
+        fetchThemeBestSellers(),
+        supabase.from("products").select("*").order("id", { ascending: false }),
+      ])
 
-      if (error) {
+      if (productsResult.error) {
         setProducts([])
         setLoading(false)
         return
       }
 
-      setProducts(((data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+      const allProducts = ((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow)
+      const byId = new Map(allProducts.map((product) => [product.dbId, product] as const))
+      const selectedProducts = bestSellersResult.productIds
+        .map((id) => byId.get(id))
+        .filter((product): product is NormalizedProduct => Boolean(product))
+
+      setProducts(selectedProducts.length ? selectedProducts : allProducts.slice(0, 4))
       setLoading(false)
     }
 

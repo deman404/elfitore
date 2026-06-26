@@ -40,6 +40,9 @@ function normalize(row: Record<string, unknown>): ThemeHomeCategoriesData {
       imageUrl: typeof item?.imageUrl === "string" && item.imageUrl.trim()
         ? item.imageUrl
         : DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.imageUrl ?? "",
+      categorySlug: typeof item?.categorySlug === "string" && item.categorySlug.trim()
+        ? item.categorySlug
+        : DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.categorySlug ?? "",
     })),
   }
 }

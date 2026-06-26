@@ -84,22 +84,18 @@ export function HomeCategoriesSection() {
         }
       }
 
-      const normalizedCategories = categories.map((category) => ({
-        ...category,
-        normalizedName: normalizeText(category.name),
-        normalizedSlug: normalizeText(category.slug),
-      }))
+      const categoryBySlug = new Map(categories.map((category) => [category.slug, category]))
 
       setCards(
         themeCategories.cards.map((card, index) => {
           const title = getLocalizedCardText(card.title, locale)
           const description = getLocalizedCardText(card.description, locale) || fallbackDescription
-          const matchedCategory =
-            normalizedCategories.find((category) => {
-              const normalizedTitle = normalizeText(title)
-              return normalizedTitle === category.normalizedName || normalizedTitle === category.normalizedSlug
-            }) ?? normalizedCategories[index]
-          const href = matchedCategory ? `/category/${matchedCategory.id}` : "/category"
+          const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : categories[index]
+          const href = card.categorySlug
+            ? `/category/${card.categorySlug}`
+            : matchedCategory
+              ? `/category/${matchedCategory.slug}`
+              : "/category"
           const imageUrl =
             card.imageUrl ||
             (matchedCategory ? firstImageByCategory.get(matchedCategory.slug) : "") ||
@@ -203,12 +199,4 @@ export function HomeCategoriesSection() {
 
 function getLocalizedCardText(text: Record<Locale, string>, locale: Locale) {
   return text[locale] || text.en || ""
-}
-
-function normalizeText(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
 }

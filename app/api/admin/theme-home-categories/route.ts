@@ -29,6 +29,8 @@ export async function PUT(request: Request) {
             ar: card.description?.ar?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.description.ar || "",
           },
           imageUrl: card.imageUrl?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.imageUrl || "",
+          categorySlug:
+            card.categorySlug?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.categorySlug || "",
         }))
       : DEFAULT_THEME_HOME_CATEGORIES.cards
 

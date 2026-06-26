@@ -4,6 +4,7 @@ export type ThemeHomeCategoryCard = {
   title: Record<Locale, string>
   description: Record<Locale, string>
   imageUrl: string
+  categorySlug: string
 }
 
 export type ThemeHomeCategoriesData = {
@@ -24,6 +25,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "زيوت زيتون طازجة واختيارات زيتون للاستخدام اليومي.",
       },
       imageUrl: "/product.png",
+      categorySlug: "",
     },
     {
       title: {
@@ -37,6 +39,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "معصور على البارد وغني بالنكهة.",
       },
       imageUrl: "/product2.png",
+      categorySlug: "",
     },
     {
       title: {
@@ -50,6 +53,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "مختارة للطعم والقوام والجودة.",
       },
       imageUrl: "/product3.png",
+      categorySlug: "",
     },
     {
       title: {
@@ -63,6 +67,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "مجموعات جميلة جاهزة للمشاركة.",
       },
       imageUrl: "/product4.png",
+      categorySlug: "",
     },
   ],
 }
