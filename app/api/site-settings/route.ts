@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server"
 import { getSupabaseAdminClient } from "@/lib/supabase-admin"
 import {
+  DEFAULT_CONTACT_ADDRESS,
+  DEFAULT_CONTACT_GOOGLE_MAPS_URL,
+  DEFAULT_CONTACT_PHONE,
+  DEFAULT_CONTACT_WHATSAPP_NUMBER,
   DEFAULT_DELIVERY_METHODS,
   DEFAULT_FREE_SHIPPING_THRESHOLD,
+  SITE_SETTING_CONTACT_ADDRESS_KEY,
+  SITE_SETTING_CONTACT_GOOGLE_MAPS_URL_KEY,
+  SITE_SETTING_CONTACT_PHONE_KEY,
   normalizeDeliveryMethods,
   normalizeFreeShippingThreshold,
   SITE_SETTING_DELIVERY_METHODS_KEY,
@@ -15,35 +22,23 @@ export const dynamic = "force-dynamic"
 export async function GET() {
   try {
     const admin = getSupabaseAdminClient()
-    const whatsappResult = (await admin
-      .from("site_settings")
-      .select("value")
-      .eq("key", SITE_SETTING_WHATSAPP_NUMBER_KEY)
-      .maybeSingle()) as {
-      data: { value?: string } | null
-      error: { message: string } | null
-    }
-    const deliveryResult = (await admin
-      .from("site_settings")
-      .select("value")
-      .eq("key", SITE_SETTING_DELIVERY_METHODS_KEY)
-      .maybeSingle()) as {
-      data: { value?: string } | null
-      error: { message: string } | null
-    }
-    const shippingResult = (await admin
-      .from("site_settings")
-      .select("value")
-      .eq("key", SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY)
-      .maybeSingle()) as {
-      data: { value?: string } | null
-      error: { message: string } | null
-    }
+    const siteSettings = admin.from("site_settings") as any
+    const [whatsappResult, phoneResult, addressResult, mapsResult, deliveryResult, shippingResult] = await Promise.all([
+      siteSettings.select("value").eq("key", SITE_SETTING_WHATSAPP_NUMBER_KEY).maybeSingle(),
+      siteSettings.select("value").eq("key", SITE_SETTING_CONTACT_PHONE_KEY).maybeSingle(),
+      siteSettings.select("value").eq("key", SITE_SETTING_CONTACT_ADDRESS_KEY).maybeSingle(),
+      siteSettings.select("value").eq("key", SITE_SETTING_CONTACT_GOOGLE_MAPS_URL_KEY).maybeSingle(),
+      siteSettings.select("value").eq("key", SITE_SETTING_DELIVERY_METHODS_KEY).maybeSingle(),
+      siteSettings.select("value").eq("key", SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY).maybeSingle(),
+    ])
 
-    if (whatsappResult.error || deliveryResult.error || shippingResult.error) {
+    if (whatsappResult.error || phoneResult.error || addressResult.error || mapsResult.error || deliveryResult.error || shippingResult.error) {
       return NextResponse.json(
         {
-          whatsappNumber: "",
+          whatsappNumber: DEFAULT_CONTACT_WHATSAPP_NUMBER,
+          contactPhone: DEFAULT_CONTACT_PHONE,
+          contactAddress: DEFAULT_CONTACT_ADDRESS,
+          contactGoogleMapsUrl: DEFAULT_CONTACT_GOOGLE_MAPS_URL,
           deliveryMethods: DEFAULT_DELIVERY_METHODS,
           freeShippingThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
         },
@@ -65,14 +60,20 @@ export async function GET() {
       DEFAULT_FREE_SHIPPING_THRESHOLD
 
     return NextResponse.json({
-      whatsappNumber: typeof whatsappResult.data?.value === "string" ? whatsappResult.data.value : "",
+      whatsappNumber: typeof whatsappResult.data?.value === "string" ? whatsappResult.data.value : DEFAULT_CONTACT_WHATSAPP_NUMBER,
+      contactPhone: typeof phoneResult.data?.value === "string" ? phoneResult.data.value : DEFAULT_CONTACT_PHONE,
+      contactAddress: typeof addressResult.data?.value === "string" ? addressResult.data.value : DEFAULT_CONTACT_ADDRESS,
+      contactGoogleMapsUrl: typeof mapsResult.data?.value === "string" ? mapsResult.data.value : DEFAULT_CONTACT_GOOGLE_MAPS_URL,
       deliveryMethods: parsedDeliveryMethods,
       freeShippingThreshold: parsedFreeShippingThreshold,
     })
   } catch {
     return NextResponse.json(
       {
-        whatsappNumber: "",
+        whatsappNumber: DEFAULT_CONTACT_WHATSAPP_NUMBER,
+        contactPhone: DEFAULT_CONTACT_PHONE,
+        contactAddress: DEFAULT_CONTACT_ADDRESS,
+        contactGoogleMapsUrl: DEFAULT_CONTACT_GOOGLE_MAPS_URL,
         deliveryMethods: DEFAULT_DELIVERY_METHODS,
         freeShippingThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
       },

@@ -8,7 +8,11 @@ import { Header } from "@/components/boty/header"
 import { Footer } from "@/components/boty/footer"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import { fetchThemeHomeCategories } from "@/lib/theme-home-categories"
+import {
+  fetchThemeHomeCategories,
+  isRenderableThemeHomeCategoryImageUrl,
+  THEME_HOME_CATEGORY_FALLBACK_IMAGE,
+} from "@/lib/theme-home-categories"
 import { parseStringArray, type CatalogCategoryRow, type CatalogProductRow } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
 
@@ -40,20 +44,20 @@ const pageText: Record<
     empty: "No active categories are available right now.",
   },
   fr: {
-    eyebrow: "CatÃ©gories",
-    title: "Parcourir toutes les catÃ©gories",
-    description: "Commencez par lâ€™aperÃ§u des catÃ©gories, puis ouvrez une collection pour voir ses produits.",
-    browse: "Parcourir les catÃ©gories",
-    viewCategory: "Voir la catÃ©gorie",
-    empty: "Aucune catÃ©gorie active nâ€™est disponible pour le moment.",
+  eyebrow: "Catégories",
+    title: "Parcourir toutes les catégories",
+    description: "Commencez par l'aperçu des catégories, puis ouvrez une collection pour voir ses produits.",
+    browse: "Parcourir les catégories",
+    viewCategory: "Voir la catégorie",
+    empty: "Aucune catégorie active n'est disponible pour le moment.",
   },
   ar: {
-    eyebrow: "Ø§Ù„ÙØ¦Ø§Øª",
-    title: "ØªØµÙÙ‘Ø­ Ø¬Ù…ÙŠØ¹ Ø§Ù„ÙØ¦Ø§Øª",
-    description: "Ø§Ø¨Ø¯Ø£ Ø¨Ø§Ù„Ù†Ø¸Ø±Ø© Ø§Ù„Ù…Ø®ØªØ§Ø±Ø©ØŒ Ø«Ù… Ø§ÙØªØ­ Ø£ÙŠ Ù…Ø¬Ù…ÙˆØ¹Ø© Ù„Ø±Ø¤ÙŠØ© Ù…Ù†ØªØ¬Ø§ØªÙ‡Ø§.",
-    browse: "ØªØµÙØ­ Ø§Ù„ÙØ¦Ø§Øª",
-    viewCategory: "Ø¹Ø±Ø¶ Ø§Ù„ÙØ¦Ø©",
-    empty: "Ù„Ø§ ØªÙˆØ¬Ø¯ ÙØ¦Ø§Øª Ù†Ø´Ø·Ø© Ù…ØªØ§Ø­Ø© Ø§Ù„Ø¢Ù†.",
+    eyebrow: "الفئات",
+    title: "تصفح جميع الفئات",
+    description: "ابدأ بالنظرة العامة المختارة، ثم افتح أي مجموعة لرؤية منتجاتها.",
+    browse: "تصفح الفئات",
+    viewCategory: "عرض الفئة",
+    empty: "لا توجد فئات نشطة متاحة حالياً.",
   },
 }
 
@@ -100,20 +104,18 @@ export default function CategoryIndexPage() {
         const nextCards = themeCategories.cards.map((card, index) => {
           const title = getLocalizedCardText(card.title, locale)
           const description = getLocalizedCardText(card.description, locale) || t.description
-          const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : categories[index]
+          const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : undefined
+          const fallbackCategory = categories[index]
+          const resolvedCategory = matchedCategory ?? fallbackCategory
 
-          const href = card.categorySlug
-            ? `/category/${card.categorySlug}`
-            : matchedCategory
-              ? `/category/${matchedCategory.slug}`
-              : "/category"
-          const imageUrl =
-            card.imageUrl ||
-            (matchedCategory ? firstImageByCategory.get(matchedCategory.slug) : "") ||
-            "/images/products/oil.jpg"
+          const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/category"
+          const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
+            ? card.imageUrl
+            : (resolvedCategory ? firstImageByCategory.get(resolvedCategory.slug) : "") ||
+              THEME_HOME_CATEGORY_FALLBACK_IMAGE
 
           return {
-            id: matchedCategory?.id ?? index + 1,
+            id: resolvedCategory?.id ?? index + 1,
             href,
             title,
             description,
@@ -123,6 +125,9 @@ export default function CategoryIndexPage() {
 
         setCards(nextCards)
         setHeroImage(nextCards[0]?.imageUrl || "/images/products/oil.jpg")
+      } catch {
+        setCards([])
+        setHeroImage("/images/products/oil.jpg")
       } finally {
         setLoading(false)
       }

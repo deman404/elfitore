@@ -9,8 +9,10 @@ import { getSupabaseBrowserClient } from "@/lib/supabase"
 import {
   DEFAULT_DELIVERY_METHODS,
   DEFAULT_FREE_SHIPPING_THRESHOLD,
+  buildGoogleMapsLink,
   fetchSiteSettings,
   formatDhAmount,
+  formatPhoneNumberForLink,
   isValidWhatsAppNumber,
   normalizeFreeShippingThreshold,
   type DeliveryMethod,
@@ -28,10 +30,14 @@ export function AdminSettingsPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [whatsappNumber, setWhatsappNumber] = useState("")
+  const [contactPhone, setContactPhone] = useState("")
+  const [contactAddress, setContactAddress] = useState("")
+  const [contactGoogleMapsUrl, setContactGoogleMapsUrl] = useState("")
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>(DEFAULT_DELIVERY_METHODS)
   const [freeShippingThreshold, setFreeShippingThreshold] = useState(String(DEFAULT_FREE_SHIPPING_THRESHOLD))
   const [loadingSettings, setLoadingSettings] = useState(true)
   const [savingWhatsapp, setSavingWhatsapp] = useState(false)
+  const [savingContact, setSavingContact] = useState(false)
   const [savingDeliveryMethods, setSavingDeliveryMethods] = useState(false)
   const [savingFreeShippingThreshold, setSavingFreeShippingThreshold] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
@@ -44,14 +50,27 @@ export function AdminSettingsPage() {
   useEffect(() => {
     const loadSettings = async () => {
       setLoadingSettings(true)
+      try {
+        const [{ data: authData }, settings] = await Promise.all([supabase.auth.getUser(), fetchSiteSettings()])
 
-      const [{ data: authData }, settings] = await Promise.all([supabase.auth.getUser(), fetchSiteSettings()])
-
-      setAdminEmail(authData.user?.email ?? "")
-      setWhatsappNumber(settings.whatsappNumber ?? "")
-      setDeliveryMethods(settings.deliveryMethods?.length ? settings.deliveryMethods : DEFAULT_DELIVERY_METHODS)
-      setFreeShippingThreshold(String(settings.freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD))
-      setLoadingSettings(false)
+        setAdminEmail(authData.user?.email ?? "")
+        setWhatsappNumber(settings.whatsappNumber ?? "")
+        setContactPhone(settings.contactPhone ?? "")
+        setContactAddress(settings.contactAddress ?? "")
+        setContactGoogleMapsUrl(settings.contactGoogleMapsUrl ?? "")
+        setDeliveryMethods(settings.deliveryMethods?.length ? settings.deliveryMethods : DEFAULT_DELIVERY_METHODS)
+        setFreeShippingThreshold(String(settings.freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD))
+      } catch {
+        setAdminEmail("")
+        setWhatsappNumber("")
+        setContactPhone("")
+        setContactAddress("")
+        setContactGoogleMapsUrl("")
+        setDeliveryMethods(DEFAULT_DELIVERY_METHODS)
+        setFreeShippingThreshold(String(DEFAULT_FREE_SHIPPING_THRESHOLD))
+      } finally {
+        setLoadingSettings(false)
+      }
     }
 
     void loadSettings()
@@ -135,30 +154,90 @@ export function AdminSettingsPage() {
 
     setSavingWhatsapp(true)
 
-    const response = await fetch("/api/admin/site-settings", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ whatsappNumber }),
-    })
+    try {
+      const response = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ whatsappNumber }),
+      })
 
-    const data = (await response.json().catch(() => ({}))) as { error?: string; whatsappNumber?: string }
+      const data = (await response.json().catch(() => ({}))) as { error?: string; whatsappNumber?: string }
 
-    if (!response.ok) {
+      if (!response.ok) {
+        setWhatsappMessage({
+          type: "error",
+          text: data.error ?? "Could not save the WhatsApp number.",
+        })
+      } else {
+        setWhatsappNumber(data.whatsappNumber ?? whatsappNumber)
+        setWhatsappMessage({
+          type: "success",
+          text: "The WhatsApp number has been saved and will be used for order links.",
+        })
+      }
+    } catch (error) {
       setWhatsappMessage({
         type: "error",
-        text: data.error ?? "Could not save the WhatsApp number.",
+        text: error instanceof Error ? error.message : "Could not save the WhatsApp number.",
       })
-    } else {
-      setWhatsappNumber(data.whatsappNumber ?? whatsappNumber)
-      setWhatsappMessage({
-        type: "success",
-        text: "The WhatsApp number has been saved and will be used for order links.",
-      })
+    } finally {
+      setSavingWhatsapp(false)
+    }
+  }
+
+  const handleSaveContact = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setWhatsappMessage(null)
+
+    const payload = {
+      contactPhone: contactPhone.trim(),
+      contactAddress: contactAddress.trim(),
+      contactGoogleMapsUrl: contactGoogleMapsUrl.trim(),
     }
 
-    setSavingWhatsapp(false)
+    if (!payload.contactPhone || !payload.contactAddress) {
+      setWhatsappMessage({ type: "error", text: "Provide a phone number and address before saving contact settings." })
+      return
+    }
+
+    setSavingContact(true)
+
+    try {
+      const response = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string
+        contactPhone?: string
+        contactAddress?: string
+        contactGoogleMapsUrl?: string
+      }
+
+      if (!response.ok) {
+        setWhatsappMessage({ type: "error", text: data.error ?? "Could not save contact settings." })
+      } else {
+        setContactPhone(data.contactPhone ?? formatPhoneNumberForLink(payload.contactPhone))
+        setContactAddress(data.contactAddress ?? payload.contactAddress)
+        setContactGoogleMapsUrl(
+          data.contactGoogleMapsUrl ?? buildGoogleMapsLink(payload.contactGoogleMapsUrl, payload.contactAddress)
+        )
+        setWhatsappMessage({ type: "success", text: "Contact details have been saved." })
+      }
+    } catch (error) {
+      setWhatsappMessage({
+        type: "error",
+        text: error instanceof Error ? error.message : "Could not save contact settings.",
+      })
+    } finally {
+      setSavingContact(false)
+    }
   }
 
   const handleSaveFreeShippingThreshold = async (event: FormEvent<HTMLFormElement>) => {
@@ -176,34 +255,41 @@ export function AdminSettingsPage() {
 
     setSavingFreeShippingThreshold(true)
 
-    const response = await fetch("/api/admin/site-settings", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ freeShippingThreshold: threshold }),
-    })
+    try {
+      const response = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ freeShippingThreshold: threshold }),
+      })
 
-    const data = (await response.json().catch(() => ({}))) as {
-      error?: string
-      freeShippingThreshold?: number
-    }
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string
+        freeShippingThreshold?: number
+      }
 
-    if (!response.ok) {
+      if (!response.ok) {
+        setShippingMessage({
+          type: "error",
+          text: data.error ?? "Could not save the free shipping threshold.",
+        })
+      } else {
+        const nextThreshold = data.freeShippingThreshold ?? threshold
+        setFreeShippingThreshold(String(nextThreshold))
+        setShippingMessage({
+          type: "success",
+          text: "The free shipping threshold has been saved.",
+        })
+      }
+    } catch (error) {
       setShippingMessage({
         type: "error",
-        text: data.error ?? "Could not save the free shipping threshold.",
+        text: error instanceof Error ? error.message : "Could not save the free shipping threshold.",
       })
-    } else {
-      const nextThreshold = data.freeShippingThreshold ?? threshold
-      setFreeShippingThreshold(String(nextThreshold))
-      setShippingMessage({
-        type: "success",
-        text: "The free shipping threshold has been saved.",
-      })
+    } finally {
+      setSavingFreeShippingThreshold(false)
     }
-
-    setSavingFreeShippingThreshold(false)
   }
 
   const addDeliveryMethod = () => {
@@ -291,33 +377,40 @@ export function AdminSettingsPage() {
     setDeliveryMessage(null)
     setSavingDeliveryMethods(true)
 
-    const response = await fetch("/api/admin/site-settings", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        whatsappNumber: isValidWhatsAppNumber(whatsappNumber) ? whatsappNumber : undefined,
-        deliveryMethods,
-      }),
-    })
+    try {
+      const response = await fetch("/api/admin/site-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          whatsappNumber: isValidWhatsAppNumber(whatsappNumber) ? whatsappNumber : undefined,
+          deliveryMethods,
+        }),
+      })
 
-    const data = (await response.json().catch(() => ({}))) as { error?: string; deliveryMethods?: DeliveryMethod[] }
+      const data = (await response.json().catch(() => ({}))) as { error?: string; deliveryMethods?: DeliveryMethod[] }
 
-    if (!response.ok) {
+      if (!response.ok) {
+        setDeliveryMessage({
+          type: "error",
+          text: data.error ?? "Could not save delivery methods.",
+        })
+      } else {
+        setDeliveryMethods(data.deliveryMethods ?? deliveryMethods)
+        setDeliveryMessage({
+          type: "success",
+          text: "Les sociétés de livraison et leurs tarifs ont été enregistrés.",
+        })
+      }
+    } catch (error) {
       setDeliveryMessage({
         type: "error",
-        text: data.error ?? "Could not save delivery methods.",
+        text: error instanceof Error ? error.message : "Could not save delivery methods.",
       })
-    } else {
-      setDeliveryMethods(data.deliveryMethods ?? deliveryMethods)
-      setDeliveryMessage({
-        type: "success",
-        text: "Les sociétés de livraison et leurs tarifs ont été enregistrés.",
-      })
+    } finally {
+      setSavingDeliveryMethods(false)
     }
-
-    setSavingDeliveryMethods(false)
   }
 
   return (
@@ -338,6 +431,8 @@ export function AdminSettingsPage() {
             <div className="grid gap-3">
               <SettingPill label="Compte" value={loadingSettings ? "Chargement..." : adminEmail || "Non connecté"} />
               <SettingPill label="WhatsApp" value={loadingSettings ? "Chargement..." : whatsappNumber || "Non défini"} />
+              <SettingPill label="Téléphone" value={loadingSettings ? "Chargement..." : contactPhone || "Non défini"} />
+              <SettingPill label="Adresse" value={loadingSettings ? "Chargement..." : contactAddress || "Non définie"} />
               <SettingPill
                 label="Livraison gratuite"
                 value={
@@ -499,6 +594,66 @@ export function AdminSettingsPage() {
               {whatsappMessage ? (
                 <Notice type={whatsappMessage.type} text={whatsappMessage.text} />
               ) : null}
+            </form>
+          </article>
+
+          <article className="rounded-[2rem] border border-slate-200/80 bg-white/92 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <MessageSquareMore className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-slate-950">Coordonnées publiques</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  These values are used by the contact page and public buttons. They can later be moved to a fully admin-managed settings table.
+                </p>
+              </div>
+            </div>
+
+            <form className="mt-6 space-y-4" onSubmit={handleSaveContact}>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Numéro de téléphone</span>
+                <input
+                  value={contactPhone}
+                  onChange={(event) => setContactPhone(event.target.value)}
+                  className="admin-input"
+                  placeholder="+212600000000"
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Adresse</span>
+                <input
+                  value={contactAddress}
+                  onChange={(event) => setContactAddress(event.target.value)}
+                  className="admin-input"
+                  placeholder="Morocco"
+                />
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Google Maps</span>
+                <input
+                  value={contactGoogleMapsUrl}
+                  onChange={(event) => setContactGoogleMapsUrl(event.target.value)}
+                  className="admin-input"
+                  placeholder="https://www.google.com/maps/search/?api=1&query=Morocco"
+                  autoComplete="url"
+                />
+              </label>
+
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-800">
+                Le lien Google Maps peut être une URL complète ou seulement une adresse. Le code produit un lien de secours si besoin.
+              </div>
+
+              <Button type="submit" className="w-full gap-2" disabled={savingContact}>
+                {savingContact ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {savingContact ? "Enregistrement..." : "Enregistrer les coordonnées"}
+              </Button>
+
+              {whatsappMessage ? <Notice type={whatsappMessage.type} text={whatsappMessage.text} /> : null}
             </form>
           </article>
         </section>

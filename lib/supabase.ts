@@ -1,6 +1,7 @@
 import { createBrowserClient } from "@supabase/ssr"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
+
 declare global {
   // Reuse one browser client across hot reloads and route transitions.
   // eslint-disable-next-line no-var

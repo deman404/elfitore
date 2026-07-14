@@ -1,12 +1,13 @@
 import { AdminLoginForm } from "@/components/admin/admin-login-form"
 
-export default function AdminAuthPage({
+export default async function AdminAuthPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     next?: string
-  }
+  }>
 }) {
-  return <AdminLoginForm nextPath={searchParams?.next || "/admin"} />
+  const resolvedSearchParams = await searchParams
+  return <AdminLoginForm nextPath={resolvedSearchParams?.next || "/admin"} />
 }
 

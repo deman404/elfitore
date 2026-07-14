@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/components/boty/cart-context'
 import { LanguageProvider } from '@/components/language-context'
 import { RtlWrapper } from '@/components/rtl-wrapper'
+import { AuthProvider } from '@/components/boty/auth-context'
 import './globals.css'
 
 const dmSans = DM_Sans({ 
@@ -50,9 +51,11 @@ export default function RootLayout({
       <RtlWrapper>
         <html lang="fr" suppressHydrationWarning>
           <body className={`${dmSans.variable} ${playfairDisplay.variable} ${cairo.variable} font-sans antialiased`}>
-            <CartProvider>
-              {children}
-            </CartProvider>
+            <AuthProvider>
+              <CartProvider>
+                {children}
+              </CartProvider>
+            </AuthProvider>
             <Analytics />
           </body>
         </html>

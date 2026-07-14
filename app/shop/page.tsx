@@ -82,29 +82,35 @@ export default function ShopPage() {
       setLoading(true)
       setError("")
 
-      const [productsResult, categoriesResult] = await Promise.all([
-        supabase.from("products").select("*").order("id", { ascending: false }),
-        supabase
-          .from("product_categories")
-          .select("id, name, slug, active")
-          .eq("active", true)
-          .order("sort_order", { ascending: true }),
-      ])
+      try {
+        const [productsResult, categoriesResult] = await Promise.all([
+          supabase.from("products").select("*").order("id", { ascending: false }),
+          supabase
+            .from("product_categories")
+            .select("id, name, slug, active")
+            .eq("active", true)
+            .order("sort_order", { ascending: true }),
+        ])
 
-      if (productsResult.error) {
+        if (productsResult.error) {
+          setProducts([])
+          setError(`Could not load products: ${productsResult.error.message}`)
+        } else {
+          setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+        }
+
+        if (categoriesResult.error) {
+          setCategories([])
+        } else {
+          setCategories((categoriesResult.data ?? []) as CatalogCategoryRow[])
+        }
+      } catch (error) {
         setProducts([])
-        setError(`Could not load products: ${productsResult.error.message}`)
-      } else {
-        setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
-      }
-
-      if (categoriesResult.error) {
         setCategories([])
-      } else {
-        setCategories((categoriesResult.data ?? []) as CatalogCategoryRow[])
+        setError(error instanceof Error ? error.message : "Could not load the catalog.")
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     void loadCatalog()

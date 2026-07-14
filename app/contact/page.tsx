@@ -7,7 +7,16 @@ import { Footer } from "@/components/boty/footer"
 import { Header } from "@/components/boty/header"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-context"
-import { fetchSiteSettings } from "@/lib/site-settings"
+import {
+  DEFAULT_CONTACT_ADDRESS,
+  DEFAULT_CONTACT_GOOGLE_MAPS_URL,
+  DEFAULT_CONTACT_PHONE,
+  DEFAULT_CONTACT_WHATSAPP_NUMBER,
+  buildGoogleMapsLink,
+  fetchSiteSettings,
+  formatPhoneNumberForLink,
+  formatWhatsAppNumberForLink,
+} from "@/lib/site-settings"
 import type { Locale } from "@/i18n.config"
 
 const translations = {
@@ -64,13 +73,24 @@ const translations = {
 export default function ContactPage() {
   const { locale, isRTL } = useLanguage()
   const t = translations[locale as Locale]
-  const [whatsappLink, setWhatsappLink] = useState("https://wa.me/")
+  const [whatsappLink, setWhatsappLink] = useState(`https://wa.me/${DEFAULT_CONTACT_WHATSAPP_NUMBER}`)
+  const [phoneLink, setPhoneLink] = useState(`tel:${formatPhoneNumberForLink(DEFAULT_CONTACT_PHONE)}`)
+  const [contactAddress, setContactAddress] = useState(DEFAULT_CONTACT_ADDRESS)
+  const [mapsLink, setMapsLink] = useState(DEFAULT_CONTACT_GOOGLE_MAPS_URL)
+  const [displayPhone, setDisplayPhone] = useState(DEFAULT_CONTACT_PHONE)
 
   useEffect(() => {
     const loadSettings = async () => {
       const settings = await fetchSiteSettings()
-      const digitsOnly = settings.whatsappNumber.replace(/[^\d]/g, "")
-      setWhatsappLink(digitsOnly ? `https://wa.me/${digitsOnly}` : "https://wa.me/")
+      const whatsappDigits = formatWhatsAppNumberForLink(settings.whatsappNumber || DEFAULT_CONTACT_WHATSAPP_NUMBER)
+      const phoneValue = settings.contactPhone || DEFAULT_CONTACT_PHONE
+      const addressValue = settings.contactAddress || DEFAULT_CONTACT_ADDRESS
+
+      setWhatsappLink(`https://wa.me/${whatsappDigits || DEFAULT_CONTACT_WHATSAPP_NUMBER}`)
+      setPhoneLink(`tel:${formatPhoneNumberForLink(phoneValue)}`)
+      setContactAddress(addressValue)
+      setMapsLink(buildGoogleMapsLink(settings.contactGoogleMapsUrl || DEFAULT_CONTACT_GOOGLE_MAPS_URL, addressValue))
+      setDisplayPhone(phoneValue)
     }
 
     void loadSettings()
@@ -94,13 +114,13 @@ export default function ContactPage() {
 
                 <div className="grid gap-4 sm:grid-cols-3">
                   <InfoCard icon={MessageCircle} title={t.whatsapp} description="Fast replies for orders and delivery questions" />
-                  <InfoCard icon={Phone} title={t.callUs} description="+212 600 000 000" />
-                  <InfoCard icon={MapPin} title={t.visitUs} description="Morocco" />
+                  <InfoCard icon={Phone} title={t.callUs} description={displayPhone} href={phoneLink} />
+                  <InfoCard icon={MapPin} title={t.visitUs} description={contactAddress} href={mapsLink} />
                 </div>
 
                 <div className="flex flex-wrap gap-3">
                   <Button asChild className="rounded-full">
-                    <Link href={whatsappLink}>{t.send}</Link>
+                    <a href={whatsappLink} target="_blank" rel="noreferrer">{t.send}</a>
                   </Button>
                   <Button asChild variant="outline" className="rounded-full">
                     <Link href="/faq">FAQ</Link>
@@ -148,22 +168,30 @@ function InfoCard({
   icon: Icon,
   title,
   description,
+  href,
 }: {
   icon: typeof Mail
   title: string
   description: string
+  href?: string
 }) {
-  return (
-    <div className="rounded-2xl border border-border/60 bg-background p-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" />
-        </div>
-        <div>
-          <h3 className="font-medium text-foreground">{title}</h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
+  const content = (
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div>
+        <h3 className="font-medium text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
       </div>
     </div>
+  )
+
+  return href ? (
+    <a href={href} className="rounded-2xl border border-border/60 bg-background p-4 transition hover:bg-muted/30">
+      {content}
+    </a>
+  ) : (
+    <div className="rounded-2xl border border-border/60 bg-background p-4">{content}</div>
   )
 }

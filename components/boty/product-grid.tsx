@@ -53,16 +53,21 @@ export function ProductGrid() {
       setLoading(true)
       setError("")
 
-      const productsResult = await supabase.from("products").select("*").order("id", { ascending: false })
+      try {
+        const productsResult = await supabase.from("products").select("*").order("id", { ascending: false })
 
-      if (productsResult.error) {
+        if (productsResult.error) {
+          setProducts([])
+          setError(`Could not load products: ${productsResult.error.message}`)
+        } else {
+          setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+        }
+      } catch (error) {
         setProducts([])
-        setError(`Could not load products: ${productsResult.error.message}`)
-      } else {
-        setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+        setError(error instanceof Error ? error.message : "Could not load products.")
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     void loadCatalog()

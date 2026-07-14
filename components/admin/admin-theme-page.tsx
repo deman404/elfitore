@@ -1,7 +1,8 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
+import Image from "next/image"
 import {
   Check,
   ChevronDown,
@@ -48,6 +49,10 @@ import {
 import {
   DEFAULT_THEME_HOME_CATEGORIES,
   fetchThemeHomeCategories,
+  normalizeThemeHomeCategoriesData,
+  isRenderableThemeHomeCategoryImageUrl,
+  THEME_HOME_CATEGORY_FALLBACK_IMAGE,
+  validateThemeHomeCategoryCards,
   type ThemeHomeCategoriesData,
 } from "@/lib/theme-home-categories"
 import {
@@ -101,7 +106,7 @@ type FeatureLocalizedField =
   | "bottomTitle"
 type CtaLocalizedField = "title1" | "title2" | "leaf" | "flower" | "globe"
 
-const localeLabels: Record<LocaleKey, string> = { en: "English", fr: "Français", ar: "العربية" }
+const localeLabels: Record<LocaleKey, string> = { en: "English", fr: "FranÃ§ais", ar: "Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©" }
 const locales: LocaleKey[] = ["en", "fr", "ar"]
 
 const trustIconMap: Record<ThemeTrustBadgeIcon, typeof Leaf> = {
@@ -141,6 +146,14 @@ export function AdminThemePage() {
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null)
   const [messages, setMessages] = useState<Partial<Record<SectionKey, MessageState>>>({})
   const [activePanel, setActivePanel] = useState<SectionKey | null>(null)
+  const categorySlugs = useMemo(
+    () => categoryOptions.map((category) => category.slug).filter(Boolean),
+    [categoryOptions]
+  )
+  const homeCategoryWarnings = useMemo(
+    () => validateThemeHomeCategoryCards(categories.cards as Array<Record<string, unknown>>, categorySlugs),
+    [categories.cards, categorySlugs]
+  )
 
   useEffect(() => {
     const load = async () => {
@@ -163,13 +176,7 @@ export function AdminThemePage() {
       setTrust(t)
       setCta(c)
       setBestSellers(bestSellersData)
-      setCategories({
-        ...categoriesData,
-        cards: categoriesData.cards.map((card) => ({
-          ...card,
-          categorySlug: card.categorySlug || inferCategorySlug(card.title, categoryRows.data ?? []),
-        })),
-      })
+      setCategories(enrichHomeCategories(categoriesData, (categoryRows.data ?? []) as CatalogCategoryRow[]))
       setProductOptions(products)
       setMarketingPages(marketingData)
       setFooter(footerData)
@@ -183,6 +190,17 @@ export function AdminThemePage() {
     setMessages((prev) => ({ ...prev, [section]: msg ?? undefined }))
   }
 
+  const refreshHomeCategories = async () => {
+    const [freshCategories, freshCategoryRows] = await Promise.all([
+      fetchThemeHomeCategories(),
+      supabase.from("product_categories").select("id, name, slug").eq("active", true).order("sort_order", { ascending: true }),
+    ])
+
+    const nextCategoryRows = (freshCategoryRows.data ?? []) as CatalogCategoryRow[]
+    setCategoryOptions(nextCategoryRows)
+    setCategories(enrichHomeCategories(freshCategories, nextCategoryRows))
+  }
+
   const handleSave = async (section: SectionKey, endpoint: string, payload: unknown) => {
     setSavingSection(section)
     setMessage(section, null)
@@ -193,15 +211,29 @@ export function AdminThemePage() {
       body: JSON.stringify(payload),
     })
 
-    const data = (await res.json().catch(() => ({}))) as { error?: string }
+    const data = (await res.json().catch(() => ({}))) as { error?: string; warnings?: string[] }
     if (!res.ok) {
       setMessage(section, { type: "error", text: data.error ?? "Erreur de sauvegarde." })
-    } else {
-      setMessage(section, { type: "success", text: "Modifications enregistrées." })
+      setSavingSection(null)
+      return false
     }
-    setSavingSection(null)
-  }
 
+    const warnings = Array.isArray(data.warnings)
+      ? data.warnings.filter((warning) => typeof warning === "string" && warning.trim())
+      : []
+
+    setMessage(
+      section,
+      {
+        type: "success",
+        text: warnings.length
+          ? `Modifications enregistrées. ${warnings.join(" ")}`
+          : "Modifications enregistrées.",
+      }
+    )
+    setSavingSection(null)
+    return true
+  }
   const isSaving = (s: SectionKey) => savingSection === s
 
   return (
@@ -209,7 +241,7 @@ export function AdminThemePage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Éditeur de page d'accueil</h2>
+          <h2 className="text-lg font-semibold text-slate-900">Ã‰diteur de page d'accueil</h2>
           <p className="text-sm text-slate-500">
             Modifiez les sections de la page d'accueil comme dans un constructeur de page.
           </p>
@@ -221,7 +253,7 @@ export function AdminThemePage() {
           className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
         >
           <Eye className="h-4 w-4" />
-          Aperçu du site
+          AperÃ§u du site
         </a>
       </div>
 
@@ -230,7 +262,7 @@ export function AdminThemePage() {
         <SectionCard
           index={1}
           title="Hero"
-          description="Bannière principale avec vidéo ou image"
+          description="BanniÃ¨re principale avec vidÃ©o ou image"
           loading={loading}
           active={activePanel === "hero"}
           onEdit={() => setActivePanel("hero")}
@@ -241,8 +273,8 @@ export function AdminThemePage() {
 
         <SectionCard
           index={2}
-          title="Section Fonctionnalités"
-          description="Grille bento et cartes de présentation"
+          title="Section FonctionnalitÃ©s"
+          description="Grille bento et cartes de prÃ©sentation"
           loading={loading}
           active={activePanel === "feature"}
           onEdit={() => setActivePanel("feature")}
@@ -252,7 +284,7 @@ export function AdminThemePage() {
         <SectionCard
           index={3}
           title="Badges de confiance"
-          description="Icônes et avantages sous le hero"
+          description="IcÃ´nes et avantages sous le hero"
           loading={loading}
           active={activePanel === "trust"}
           onEdit={() => setActivePanel("trust")}
@@ -261,8 +293,8 @@ export function AdminThemePage() {
 
         <SectionCard
           index={4}
-          title="Bannière CTA"
-          description="Appel à l'action en bas de page"
+          title="BanniÃ¨re CTA"
+          description="Appel Ã  l'action en bas de page"
           loading={loading}
           active={activePanel === "cta"}
           onEdit={() => setActivePanel("cta")}
@@ -281,8 +313,8 @@ export function AdminThemePage() {
 
         <SectionCard
           index={6}
-          title="Catégories d'accueil"
-          description="4 cartes éditables entre best sellers et produits"
+          title="CatÃ©gories d'accueil"
+          description="4 cartes Ã©ditables entre best sellers et produits"
           loading={loading}
           active={activePanel === "categories"}
           onEdit={() => setActivePanel("categories")}
@@ -291,8 +323,8 @@ export function AdminThemePage() {
 
         <SectionCard
           index={7}
-          title="Pages éditables"
-          description="À propos et Notre histoire"
+          title="Pages Ã©ditables"
+          description="Ã€ propos et Notre histoire"
           loading={loading}
           active={activePanel === "marketing"}
           onEdit={() => setActivePanel("marketing")}
@@ -302,7 +334,7 @@ export function AdminThemePage() {
         <SectionCard
           index={8}
           title="Footer"
-          description="Liens, description et réseaux sociaux"
+          description="Liens, description et rÃ©seaux sociaux"
           loading={loading}
           active={activePanel === "footer"}
           onEdit={() => setActivePanel("footer")}
@@ -328,7 +360,7 @@ export function AdminThemePage() {
           setData={setHero}
           onSave={() => {
             if (!hero.mediaUrl.trim()) {
-              setMessage("hero", { type: "error", text: "Ajoutez une URL ou un chemin média." })
+              setMessage("hero", { type: "error", text: "Ajoutez une URL ou un chemin mÃ©dia." })
               return
             }
             const required = [hero.subtitle.en, hero.title1.en, hero.title2.en, hero.description.en, hero.cta.en, hero.scroll.en]
@@ -343,7 +375,7 @@ export function AdminThemePage() {
         />
       </EditPanel>
 
-      <EditPanel open={activePanel === "feature"} onClose={() => setActivePanel(null)} title="Modifier la section Fonctionnalités" icon={Maximize2}>
+      <EditPanel open={activePanel === "feature"} onClose={() => setActivePanel(null)} title="Modifier la section FonctionnalitÃ©s" icon={Maximize2}>
         <FeatureForm
           data={feature}
           setData={setFeature}
@@ -363,7 +395,7 @@ export function AdminThemePage() {
         />
       </EditPanel>
 
-      <EditPanel open={activePanel === "cta"} onClose={() => setActivePanel(null)} title="Modifier la Bannière CTA" icon={Sparkles}>
+      <EditPanel open={activePanel === "cta"} onClose={() => setActivePanel(null)} title="Modifier la BanniÃ¨re CTA" icon={Sparkles}>
         <CtaForm
           data={cta}
           setData={setCta}
@@ -373,18 +405,24 @@ export function AdminThemePage() {
         />
       </EditPanel>
 
-      <EditPanel open={activePanel === "categories"} onClose={() => setActivePanel(null)} title="Modifier les catégories d'accueil" icon={ImageIcon}>
+      <EditPanel open={activePanel === "categories"} onClose={() => setActivePanel(null)} title="Modifier les catÃ©gories d'accueil" icon={ImageIcon}>
         <HomeCategoriesForm
           data={categories}
           categoryOptions={categoryOptions}
+          warnings={homeCategoryWarnings}
           setData={setCategories}
-          onSave={() => void handleSave("categories", "/api/admin/theme-home-categories", categories)}
+          onSave={async () => {
+            const saved = await handleSave("categories", "/api/admin/theme-home-categories", categories)
+            if (saved) {
+              await refreshHomeCategories()
+            }
+          }}
           saving={isSaving("categories")}
           message={messages.categories ?? null}
         />
       </EditPanel>
 
-      <EditPanel open={activePanel === "marketing"} onClose={() => setActivePanel(null)} title="Modifier les pages éditables" icon={Type}>
+      <EditPanel open={activePanel === "marketing"} onClose={() => setActivePanel(null)} title="Modifier les pages Ã©ditables" icon={Type}>
         <MarketingPagesForm
           data={marketingPages}
           setData={setMarketingPages}
@@ -407,7 +445,7 @@ export function AdminThemePage() {
   )
 }
 
-/* ───────────────────── Section Card ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Section Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function SectionCard({
   index,
@@ -462,7 +500,7 @@ function SectionCard({
   )
 }
 
-/* ───────────────────── Edit Panel Shell ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Edit Panel Shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function EditPanel({
   open,
@@ -494,7 +532,7 @@ function EditPanel({
   )
 }
 
-/* ───────────────────── Previews ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Previews â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function HeroPreview({ data }: { data: ThemeHeroData }) {
   const text = data.title1.en || data.title2.en || "Titre du hero"
@@ -596,16 +634,28 @@ function BestSellersPreview({
 function HomeCategoriesPreview({ data }: { data: ThemeHomeCategoriesData }) {
   return (
     <div className="grid grid-cols-2 gap-2">
-      {data.cards.map((card, index) => (
-        <div key={index} className="overflow-hidden rounded-md bg-white shadow-sm">
-          <div className="flex h-20 items-center justify-center bg-slate-200">
-            <ImageIcon className="h-5 w-5 text-slate-400" />
+      {data.cards.map((card, index) => {
+        const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
+          ? card.imageUrl
+          : THEME_HOME_CATEGORY_FALLBACK_IMAGE
+
+        return (
+          <div key={index} className="overflow-hidden rounded-md bg-white shadow-sm">
+            <div className="relative aspect-[4/3] bg-slate-100">
+              <Image
+                src={imageUrl}
+                alt={card.title.en || `Categorie ${index + 1}`}
+                fill
+                sizes="160px"
+                className="object-cover"
+              />
+            </div>
+            <div className="p-2">
+              <p className="truncate text-[10px] font-medium text-slate-700">{card.title.en || `Categorie ${index + 1}`}</p>
+            </div>
           </div>
-          <div className="p-2">
-            <p className="truncate text-[10px] font-medium text-slate-700">{card.title.en || `Catégorie ${index + 1}`}</p>
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -614,7 +664,7 @@ function MarketingPagesPreview({ data }: { data: ThemeMarketingPagesData }) {
   return (
     <div className="grid gap-2">
       <div className="rounded-md bg-white p-3 shadow-sm">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">À propos</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Ã€ propos</p>
         <p className="mt-1 truncate text-xs font-medium text-slate-700">{data.propos.title.en || "About page"}</p>
       </div>
       <div className="rounded-md bg-white p-3 shadow-sm">
@@ -650,7 +700,7 @@ function FooterPreview({ data }: { data: ThemeFooterData }) {
   )
 }
 
-/* ───────────────────── Hero Form ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Hero Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function HeroForm({
   data,
@@ -671,7 +721,7 @@ function HeroForm({
 
   return (
     <div className="space-y-6">
-      <Collapsible title="Média" defaultOpen>
+      <Collapsible title="MÃ©dia" defaultOpen>
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
@@ -691,18 +741,18 @@ function HeroForm({
             }`}
           >
             <Clapperboard className="h-6 w-6" />
-            <span className="text-sm font-medium">Vidéo</span>
+            <span className="text-sm font-medium">VidÃ©o</span>
           </button>
         </div>
         <ThemeMediaUpload
           value={data.mediaUrl}
           onChange={(url) => setData((p) => ({ ...p, mediaUrl: url }))}
           folder="hero"
-          label={data.mediaType === "video" ? "Vidéo du hero" : "Image du hero"}
+          label={data.mediaType === "video" ? "VidÃ©o du hero" : "Image du hero"}
         />
       </Collapsible>
 
-      <Collapsible title="Textes localisés" defaultOpen>
+      <Collapsible title="Textes localisÃ©s" defaultOpen>
         {locales.map((locale) => (
           <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
@@ -723,7 +773,7 @@ function HeroForm({
   )
 }
 
-/* ───────────────────── Feature Form ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Feature Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function FeatureForm({
   data,
@@ -756,7 +806,7 @@ function FeatureForm({
           <ThemeMediaUpload value={data.leftImageUrl} onChange={(url) => setData((p) => ({ ...p, leftImageUrl: url }))} folder="features" label="Image gauche (bento)" />
           <ThemeMediaUpload value={data.topImageUrl} onChange={(url) => setData((p) => ({ ...p, topImageUrl: url }))} folder="features" label="Image haut (bento)" />
           <ThemeMediaUpload value={data.bottomImageUrl} onChange={(url) => setData((p) => ({ ...p, bottomImageUrl: url }))} folder="features" label="Image bas (bento)" />
-          <ThemeMediaUpload value={data.videoImageUrl} onChange={(url) => setData((p) => ({ ...p, videoImageUrl: url }))} folder="features" label="Image vidéo" />
+          <ThemeMediaUpload value={data.videoImageUrl} onChange={(url) => setData((p) => ({ ...p, videoImageUrl: url }))} folder="features" label="Image vidÃ©o" />
         </div>
       </Collapsible>
 
@@ -813,7 +863,7 @@ function FeatureForm({
   )
 }
 
-/* ───────────────────── Trust Form ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Trust Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function TrustForm({
   data,
@@ -855,7 +905,7 @@ function TrustForm({
             </div>
             <div className="space-y-3">
               <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-slate-600">Icône</span>
+                <span className="text-xs font-medium text-slate-600">IcÃ´ne</span>
                 <select value={badge.icon} onChange={updateIcon(idx)} className="admin-input">
                   {TRUST_BADGE_ICON_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -880,7 +930,7 @@ function TrustForm({
   )
 }
 
-/* ───────────────────── CTA Form ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ CTA Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function CtaForm({
   data,
@@ -905,7 +955,7 @@ function CtaForm({
         <ThemeMediaUpload value={data.backgroundImageUrl} onChange={(url) => setData((p) => ({ ...p, backgroundImageUrl: url }))} folder="cta" label="Image de fond" />
       </Collapsible>
 
-      <Collapsible title="Textes localisés" defaultOpen>
+      <Collapsible title="Textes localisÃ©s" defaultOpen>
         {locales.map((locale) => (
           <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
@@ -957,7 +1007,7 @@ function BestSellersForm({
     <div className="space-y-6">
       <Collapsible title="Produits mis en avant" defaultOpen>
         <p className="mb-4 text-sm leading-6 text-slate-500">
-          Choisissez jusqu'à 4 produits à afficher dans la section des best sellers de la page d'accueil.
+          Choisissez jusqu'Ã  4 produits Ã  afficher dans la section des best sellers de la page d'accueil.
         </p>
         <div className="space-y-4">
           {slots.map((productId, index) => (
@@ -984,6 +1034,7 @@ function BestSellersForm({
 function HomeCategoriesForm({
   data,
   categoryOptions,
+  warnings,
   setData,
   onSave,
   saving,
@@ -991,6 +1042,7 @@ function HomeCategoriesForm({
 }: {
   data: ThemeHomeCategoriesData
   categoryOptions: CatalogCategoryRow[]
+  warnings: Array<{ index: number; message: string }>
   setData: React.Dispatch<React.SetStateAction<ThemeHomeCategoriesData>>
   onSave: () => void
   saving: boolean
@@ -1017,40 +1069,80 @@ function HomeCategoriesForm({
       cards: prev.cards.map((card, index) => (index === cardIndex ? { ...card, categorySlug: e.target.value } : card)),
     }))
 
+  const warningsByIndex = new Map<number, string[]>()
+  for (const warning of warnings) {
+    const current = warningsByIndex.get(warning.index) ?? []
+    current.push(warning.message)
+    warningsByIndex.set(warning.index, current)
+  }
+
   return (
     <div className="space-y-6">
       <Collapsible title="Cartes de catégories" defaultOpen>
-        {data.cards.map((card, index) => (
-          <div key={index} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 last:mb-0">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Carte {index + 1}</p>
-            <div className="space-y-4">
-              <ThemeMediaUpload
-                value={card.imageUrl}
-                onChange={updateImage(index)}
-                folder="home-categories"
-                label="Image de la catégorie"
-              />
-              <label className="block space-y-1.5">
-                <span className="text-xs font-medium text-slate-600">Catégorie liée</span>
-                <select value={card.categorySlug} onChange={updateCategorySlug(index)} className="admin-input">
-                  <option value="">Sélectionner une catégorie</option>
-                  {categoryOptions.map((category) => (
-                    <option key={category.id} value={category.slug}>
-                      {category.name} ({category.slug})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {locales.map((locale) => (
-                <div key={locale} className="space-y-3 rounded-lg border border-slate-100 bg-white p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
-                  <Input label="Titre" value={card.title[locale]} onChange={update(index, "title", locale)} />
-                  <Textarea label="Description" value={card.description[locale]} onChange={update(index, "description", locale)} />
-                </div>
-              ))}
-            </div>
+        {warnings.length ? (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {warnings.map((warning) => (
+              <p key={`${warning.index}-${warning.message}`}>{warning.message}</p>
+            ))}
           </div>
-        ))}
+        ) : null}
+
+        {data.cards.map((card, index) => {
+          const cardWarnings = warningsByIndex.get(index) ?? []
+          const isInvalidSlug = Boolean(card.categorySlug) && !categoryOptions.some((category) => category.slug === card.categorySlug)
+          const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
+            ? card.imageUrl
+            : THEME_HOME_CATEGORY_FALLBACK_IMAGE
+
+          return (
+            <div key={index} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 last:mb-0">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Carte {index + 1}</p>
+              <div className="space-y-4">
+                <ThemeMediaUpload
+                  value={card.imageUrl}
+                  onChange={updateImage(index)}
+                  folder="home-categories"
+                  label="Image de la catégorie"
+                />
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <div className="relative aspect-[4/3] bg-slate-100">
+                    <Image src={imageUrl} alt={card.title.en || `Categorie ${index + 1}`} fill sizes="180px" className="object-cover" />
+                  </div>
+                </div>
+                <label className="block space-y-1.5">
+                  <span className="text-xs font-medium text-slate-600">Catégorie liée</span>
+                  <select value={card.categorySlug} onChange={updateCategorySlug(index)} className="admin-input">
+                    <option value="">Sélectionner une catégorie</option>
+                    {categoryOptions.map((category) => (
+                      <option key={category.id} value={category.slug}>
+                        {category.name} ({category.slug})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {isInvalidSlug ? (
+                  <p className="text-xs font-medium text-amber-700">
+                    Ce slug n'existe plus dans product_categories. Corrigez-le avant de publier.
+                  </p>
+                ) : null}
+                {cardWarnings.length ? (
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    {cardWarnings.map((warning) => (
+                      <p key={warning}>{warning}</p>
+                    ))}
+                  </div>
+                ) : null}
+                {locales.map((locale) => (
+                  <div key={locale} className="space-y-3 rounded-lg border border-slate-100 bg-white p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
+                    <Input label="Titre" value={card.title[locale]} onChange={update(index, "title", locale)} />
+                    <Textarea label="Description" value={card.description[locale]} onChange={update(index, "description", locale)} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
       </Collapsible>
 
       <SaveBar onSave={onSave} saving={saving} message={message} />
@@ -1121,7 +1213,7 @@ function MarketingPagesForm({
 
   return (
     <div className="space-y-6">
-      <Collapsible title="Page À propos" defaultOpen>
+      <Collapsible title="Page Ã€ propos" defaultOpen>
         {locales.map((locale) => (
           <div key={locale} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
@@ -1168,10 +1260,10 @@ function MarketingPagesForm({
           </div>
         ))}
 
-        <Collapsible title="Étapes">
+        <Collapsible title="Ã‰tapes">
           {data.ourStory.steps.map((step, index) => (
             <div key={index} className="mb-4 rounded-lg border border-slate-100 bg-slate-50 p-3 last:mb-0">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Étape {index + 1}</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Ã‰tape {index + 1}</p>
               {locales.map((locale) => (
                 <div key={locale} className="mb-3 rounded-lg border border-slate-100 bg-white p-3 last:mb-0">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{localeLabels[locale]}</p>
@@ -1279,7 +1371,7 @@ function FooterForm({
         </div>
       </Collapsible>
 
-      <Collapsible title="Réseaux sociaux" defaultOpen>
+      <Collapsible title="RÃ©seaux sociaux" defaultOpen>
         <div className="space-y-3">
           <Input label="Facebook" value={data.socialLinks.facebook} onChange={updateSocial("facebook")} />
           <Input label="Instagram" value={data.socialLinks.instagram} onChange={updateSocial("instagram")} />
@@ -1296,7 +1388,7 @@ function FooterForm({
   )
 }
 
-/* ───────────────────── Reusable UI ───────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Reusable UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 function Collapsible({
   title,
@@ -1376,7 +1468,7 @@ function SaveBar({
       <div className="flex items-center justify-between rounded-lg border border-dashed border-slate-300 bg-white p-4">
         <div>
           <p className="text-sm font-semibold text-slate-900">Enregistrer les modifications</p>
-          <p className="text-xs text-slate-500">Les changements seront visibles immédiatement sur le site.</p>
+          <p className="text-xs text-slate-500">Les changements seront visibles immÃ©diatement sur le site.</p>
         </div>
         <Button onClick={onSave} disabled={saving} className="gap-2">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -1398,6 +1490,20 @@ function SaveBar({
   )
 }
 
+function enrichHomeCategories(data: ThemeHomeCategoriesData, categoryOptions: CatalogCategoryRow[]) {
+  return {
+    ...data,
+    cards: data.cards.map((card, index) => {
+      const matchedCategory = card.categorySlug || inferCategorySlug(card.title, categoryOptions)
+      return {
+        ...card,
+        categorySlug: matchedCategory,
+        imageUrl: card.imageUrl || THEME_HOME_CATEGORY_FALLBACK_IMAGE,
+      }
+    }),
+  }
+}
+
 function inferCategorySlug(title: Record<LocaleKey, string>, categories: CatalogCategoryRow[]) {
   const titles = Object.values(title).map((value) => normalizeText(value))
   const matched = categories.find((category) => {
@@ -1416,3 +1522,6 @@ function normalizeText(value: string) {
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
 }
+
+
+

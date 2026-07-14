@@ -1,9 +1,16 @@
 import { MOROCCO_DELIVERY_RATES } from "@/lib/morocco-delivery-tariffs"
 
 export const SITE_SETTING_WHATSAPP_NUMBER_KEY = "whatsapp_number"
+export const SITE_SETTING_CONTACT_PHONE_KEY = "contact_phone"
+export const SITE_SETTING_CONTACT_ADDRESS_KEY = "contact_address"
+export const SITE_SETTING_CONTACT_GOOGLE_MAPS_URL_KEY = "contact_google_maps_url"
 export const SITE_SETTING_DELIVERY_METHODS_KEY = "delivery_methods"
 export const SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY = "free_shipping_threshold"
 export const DEFAULT_FREE_SHIPPING_THRESHOLD = 500
+export const DEFAULT_CONTACT_PHONE = "+212 600 000 000"
+export const DEFAULT_CONTACT_WHATSAPP_NUMBER = "212600000000"
+export const DEFAULT_CONTACT_ADDRESS = "Morocco"
+export const DEFAULT_CONTACT_GOOGLE_MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Morocco"
 
 export type DeliveryRate = {
   city: string
@@ -20,6 +27,9 @@ export type DeliveryMethod = {
 
 export type SiteSettingsResponse = {
   whatsappNumber: string
+  contactPhone: string
+  contactAddress: string
+  contactGoogleMapsUrl: string
   deliveryMethods: DeliveryMethod[]
   freeShippingThreshold: number
 }
@@ -30,6 +40,21 @@ export function normalizeWhatsAppNumber(value: string) {
 
 export function formatWhatsAppNumberForLink(value: string) {
   return value.replace(/[^\d]/g, "")
+}
+
+export function formatPhoneNumberForLink(value: string) {
+  return value.replace(/[^\d+]/g, "")
+}
+
+export function buildGoogleMapsLink(value: string, fallbackAddress = DEFAULT_CONTACT_ADDRESS) {
+  const raw = value.trim()
+
+  if (raw && /^https?:\/\//i.test(raw)) {
+    return raw
+  }
+
+  const query = raw || fallbackAddress
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
 export function isValidWhatsAppNumber(value: string) {
@@ -150,7 +175,10 @@ export async function fetchSiteSettings() {
 
     if (!response.ok) {
       return {
-        whatsappNumber: "",
+        whatsappNumber: DEFAULT_CONTACT_WHATSAPP_NUMBER,
+        contactPhone: DEFAULT_CONTACT_PHONE,
+        contactAddress: DEFAULT_CONTACT_ADDRESS,
+        contactGoogleMapsUrl: DEFAULT_CONTACT_GOOGLE_MAPS_URL,
         deliveryMethods: DEFAULT_DELIVERY_METHODS,
         freeShippingThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
       }
@@ -159,7 +187,10 @@ export async function fetchSiteSettings() {
     return (await response.json()) as SiteSettingsResponse
   } catch {
     return {
-      whatsappNumber: "",
+      whatsappNumber: DEFAULT_CONTACT_WHATSAPP_NUMBER,
+      contactPhone: DEFAULT_CONTACT_PHONE,
+      contactAddress: DEFAULT_CONTACT_ADDRESS,
+      contactGoogleMapsUrl: DEFAULT_CONTACT_GOOGLE_MAPS_URL,
       deliveryMethods: DEFAULT_DELIVERY_METHODS,
       freeShippingThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
     }

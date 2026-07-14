@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { useAuth } from "@/components/boty/auth-context"
 import { ChevronDown, Menu, ShoppingBag, X } from "lucide-react"
 import { CartDrawer } from "./cart-drawer"
 import { useCart } from "./cart-context"
@@ -24,6 +25,8 @@ import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { type CatalogCategoryRow } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
 
+
+
 const translations = {
   en: {
     shop: "Shop",
@@ -35,6 +38,7 @@ const translations = {
     contact: "Contact",
     cart: "Cart",
     menu: "Toggle menu",
+    signIn: "Sign in",
   },
   fr: {
     shop: "Boutique",
@@ -46,6 +50,7 @@ const translations = {
     contact: "Contact",
     cart: "Panier",
     menu: "Basculer le menu",
+    signIn: "Connexion",
   },
   ar: {
     shop: "المتجر",
@@ -57,6 +62,7 @@ const translations = {
     contact: "اتصل",
     cart: "السلة",
     menu: "تبديل القائمة",
+    signIn: "تسجيل الدخول",
   },
 }
 
@@ -64,8 +70,10 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [categories, setCategories] = useState<CatalogCategoryRow[]>([])
+  const [mounted, setMounted] = useState(false) 
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const { setIsOpen, itemCount } = useCart()
+  const { user, loading ,  setIsAuthDialogOpen} = useAuth()
   const { locale, isRTL } = useLanguage()
   const t = translations[locale as Locale]
 
@@ -83,6 +91,9 @@ export function Header() {
 
     void loadCategories()
   }, [supabase])
+  useEffect(() => {                    
+  setMounted(true)
+  }, [])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
@@ -172,6 +183,19 @@ export function Header() {
 
             <div className={`flex items-center gap-3 justify-self-end sm:gap-4 ${isRTL ? "flex-row-reverse" : ""}`}>
               <LanguageSwitcher />
+      {!loading && (
+  user ? (
+    <span className="text-sm text-foreground/70">{user.email}</span>
+  ) : (
+    <button
+      type="button"
+      onClick={() => setIsAuthDialogOpen(true)}
+      className="text-sm text-foreground/70 hover:text-foreground boty-transition"
+    >
+      {t.signIn}
+    </button>
+  )
+)}
               <button
                 type="button"
                 onClick={() => setIsOpen(true)}
@@ -179,7 +203,7 @@ export function Header() {
                 aria-label={t.cart}
               >
                 <ShoppingBag className="h-5 w-5" />
-                {itemCount > 0 ? (
+                {mounted && itemCount > 0 ? (
                   <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
                     {itemCount}
                   </span>
@@ -189,6 +213,7 @@ export function Header() {
           </div>
 
           <CartDrawer />
+          
 
           <Sheet
             open={isMenuOpen}

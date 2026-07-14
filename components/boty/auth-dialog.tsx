@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
+import { useAuth } from "@/components/boty/auth-context"
 
 const STORAGE_KEY = "elfitor-auth-dismissed"
 
@@ -40,7 +41,7 @@ const copy = {
 } as const
 
 export function AuthDialog() {
-  const [open, setOpen] = useState(false)
+  const { isAuthDialogOpen, setIsAuthDialogOpen } = useAuth()   // was: const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const { locale } = useLanguage()
   const text = copy[locale]
@@ -48,29 +49,33 @@ export function AuthDialog() {
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY)
     if (!dismissed) {
-      const timer = setTimeout(() => setOpen(true), 1500)
+      const timer = setTimeout(() => setIsAuthDialogOpen(true), 1500)   // was setOpen(true)
       return () => clearTimeout(timer)
     }
   }, [])
 
-  const handleGoogle = async () => {
-    setLoading(true)
-    const supabase = getSupabaseBrowserClient()
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
+ const handleGoogle = async () => {
+  setLoading(true)
+  const supabase = getSupabaseBrowserClient()
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+    },
+  })
+  if (error) {
+    console.error("Google sign-in error:", error.message)
+    setLoading(false)
   }
+}
 
   const handleGuest = () => {
     localStorage.setItem(STORAGE_KEY, "true")
-    setOpen(false)
+    setIsAuthDialogOpen(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-[#f6f7f7]">
