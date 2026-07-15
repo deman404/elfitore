@@ -37,6 +37,7 @@ const translations = {
     cart: "Cart",
     menu: "Toggle menu",
     signIn: "Sign in",
+    signOut: "Sign out",
   },
   fr: {
     shop: "Boutique",
@@ -49,6 +50,7 @@ const translations = {
     cart: "Panier",
     menu: "Basculer le menu",
     signIn: "Connexion",
+    signOut: "Déconnexion",
   },
   ar: {
     shop: "المتجر",
@@ -61,6 +63,7 @@ const translations = {
     cart: "السلة",
     menu: "تبديل القائمة",
     signIn: "تسجيل الدخول",
+    signOut: "تسجيل الخروج",
   },
 }
 
@@ -114,8 +117,7 @@ export function Header() {
             >
               <Menu className="h-5 w-5" />
             </button>
-
-            <div className={`flex items-center gap-1.5 justify-self-end sm:gap-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+<div className={`hidden items-center gap-1.5 justify-self-end sm:gap-4 lg:flex ${isRTL ? "flex-row-reverse" : ""}`}>
               <Link href="/shop" className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition">
                 {t.shop}
               </Link>
@@ -180,17 +182,18 @@ export function Header() {
               </span>
             </Link>
 
-            <div className={`flex items-center gap-3 justify-self-end sm:gap-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+            <div className={`flex items-center gap-1.5 justify-self-end sm:gap-4 ${isRTL ? "flex-row-reverse" : ""}`}>
               <LanguageSwitcher />
               {!loading && (
-                user ? (
+                 user ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="hidden max-w-[140px] items-center gap-1 truncate text-sm text-foreground/70 hover:text-foreground boty-transition sm:inline-flex"
+                        className="flex max-w-[80px] items-center gap-1 truncate text-sm text-foreground/70 hover:text-foreground boty-transition sm:max-w-[160px]"
                       >
-                        <span className="truncate">{user.email}</span>
+                        <span className="truncate sm:hidden">{user.email?.split("@")[0]}</span>
+                        <span className="hidden truncate sm:inline">{user.email}</span>
                         <ChevronDown className="h-3.5 w-3.5 shrink-0" />
                       </button>
                     </DropdownMenuTrigger>
@@ -200,7 +203,7 @@ export function Header() {
                         className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-red-600 transition hover:bg-red-50"
                       >
                         <LogOut className="h-4 w-4" />
-                        Déconnexion
+                        {t.signOut}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -219,7 +222,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setIsOpen(true)}
-                className="relative p-2 text-foreground/70 hover:text-foreground boty-transition"
+                className="relative shrink-0 p-2 text-foreground/70 hover:text-foreground boty-transition"
                 aria-label={t.cart}
               >
                 <ShoppingBag className="h-5 w-5" />
