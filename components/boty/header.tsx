@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/components/boty/auth-context"
-import { ChevronDown, LogIn, Menu, ShoppingBag, X } from "lucide-react"
+import { ChevronDown,LogOut, LogIn, Menu, ShoppingBag, X } from "lucide-react"
 import { CartDrawer } from "./cart-drawer"
 import { useCart } from "./cart-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
@@ -71,7 +71,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false)
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const { setIsOpen, itemCount } = useCart()
-  const { user, loading, setIsAuthDialogOpen } = useAuth()
+  const { user, loading,  signOut, setIsAuthDialogOpen } = useAuth()
   const { locale, isRTL } = useLanguage()
   const t = translations[locale as Locale]
 
@@ -184,9 +184,26 @@ export function Header() {
               <LanguageSwitcher />
               {!loading && (
                 user ? (
-                  <span className="hidden sm:inline max-w-[140px] truncate text-sm text-foreground/70 whitespace-nowrap">
-                    {user.email}
-                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="hidden max-w-[140px] items-center gap-1 truncate text-sm text-foreground/70 hover:text-foreground boty-transition sm:inline-flex"
+                      >
+                        <span className="truncate">{user.email}</span>
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align={isRTL ? "start" : "end"} className="min-w-44 p-2">
+                      <DropdownMenuItem
+                        onClick={() => void signOut()}
+                        className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-red-600 transition hover:bg-red-50"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Déconnexion
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : (
                   <button
                     type="button"
