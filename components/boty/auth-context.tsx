@@ -4,7 +4,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { User } from "@supabase/supabase-js"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 
-
 type AuthContextValue = {
   user: User | null
   loading: boolean
@@ -29,12 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
 
-    supabase.auth.getUser().then(({ data, error }) => {
-      if (error) console.error("getUser error:", error.message)
-      setUser(data.user ?? null)
-      setLoading(false)
-    })
-
+   supabase.auth.getUser().then(({ data, error }) => {
+  if (error && error.message !== "Auth session missing!") {
+    console.error("getUser error:", error.message)
+  }
+  setUser(data.user ?? null)
+  setLoading(false)
+})
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth event:", event, session?.user?.email)
       setUser(session?.user ?? null)

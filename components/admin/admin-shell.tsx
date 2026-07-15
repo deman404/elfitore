@@ -73,6 +73,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/admin/blogs", label: "Blog", section: "blog" },
       { href: "/admin/pages", label: "Pages", section: "pages" },
+      { href: "/admin/support-pages", label: "Pages support", section: "support-pages" },
       { href: "/admin/theme", label: "Thème", section: "theme" },
     ],
   },
@@ -93,6 +94,7 @@ const sectionMeta: Record<
   dashboard: { title: "Tableau de bord", description: "Vue d'ensemble de votre boutique en temps réel." },
   blog: { title: "Blog", description: "Publiez et gérez les articles du site." },
   pages: { title: "Pages", description: "Créez des pages personnalisées avec image et contenu." },
+  "support-pages": { title: "Pages support", description: "Modifiez le contenu des pages Contact, FAQ, Livraison, Retours et pages légales." },
   "sell-point": { title: "Point de vente", description: "Encaissement rapide en magasin." },
   "last-sell": { title: "Dernières ventes", description: "Historique des transactions et reçus." },
   orders: { title: "Commandes web", description: "Gérez les commandes en ligne et leur statut." },
@@ -123,6 +125,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     if (pathname.startsWith("/admin/addProduct")) return "products"
     if (pathname.startsWith("/admin/categories")) return "categories"
     if (pathname.startsWith("/admin/blogs")) return "blog"
+    if (pathname.startsWith("/admin/support-pages")) return "support-pages"
     if (pathname.startsWith("/admin/pages")) return "pages"
     if (pathname.startsWith("/admin/theme")) return "theme"
     if (pathname.startsWith("/admin/users")) return "users"

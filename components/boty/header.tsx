@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useAuth } from "@/components/boty/auth-context"
-import { ChevronDown, Menu, ShoppingBag, X } from "lucide-react"
+import { ChevronDown, LogIn, Menu, ShoppingBag, X } from "lucide-react"
 import { CartDrawer } from "./cart-drawer"
 import { useCart } from "./cart-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
@@ -24,8 +24,6 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { type CatalogCategoryRow } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
-
-
 
 const translations = {
   en: {
@@ -70,10 +68,10 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [categories, setCategories] = useState<CatalogCategoryRow[]>([])
-  const [mounted, setMounted] = useState(false) 
+  const [mounted, setMounted] = useState(false)
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const { setIsOpen, itemCount } = useCart()
-  const { user, loading ,  setIsAuthDialogOpen} = useAuth()
+  const { user, loading, setIsAuthDialogOpen } = useAuth()
   const { locale, isRTL } = useLanguage()
   const t = translations[locale as Locale]
 
@@ -91,8 +89,9 @@ export function Header() {
 
     void loadCategories()
   }, [supabase])
-  useEffect(() => {                    
-  setMounted(true)
+
+  useEffect(() => {
+    setMounted(true)
   }, [])
 
   return (
@@ -137,7 +136,7 @@ export function Header() {
                 </div>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/category"
+                    href="/shop"
                     className="flex w-full cursor-pointer items-center rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
                   >
                     {t.viewAllCategories}
@@ -183,23 +182,23 @@ export function Header() {
 
             <div className={`flex items-center gap-3 justify-self-end sm:gap-4 ${isRTL ? "flex-row-reverse" : ""}`}>
               <LanguageSwitcher />
-      {!loading && (
-  user ? (
-    <span className="hidden sm:inline max-w-[140px] truncate text-sm text-foreground/70 whitespace-nowrap">
-      {user.email}
-    </span>
-  ) : (
-    <button
-      type="button"
-      onClick={() => setIsAuthDialogOpen(true)}
-      className="flex items-center gap-1.5 p-2 text-foreground/70 hover:text-foreground boty-transition sm:p-0"
-      aria-label={t.signIn}
-    >
-      <LogIn className="h-5 w-5 sm:hidden" />
-      <span className="hidden text-sm whitespace-nowrap sm:inline">{t.signIn}</span>
-    </button>
-  )
-)}
+              {!loading && (
+                user ? (
+                  <span className="hidden sm:inline max-w-[140px] truncate text-sm text-foreground/70 whitespace-nowrap">
+                    {user.email}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAuthDialogOpen(true)}
+                    className="flex items-center gap-1.5 p-2 text-foreground/70 hover:text-foreground boty-transition sm:p-0"
+                    aria-label={t.signIn}
+                  >
+                    <LogIn className="h-5 w-5 sm:hidden" />
+                    <span className="hidden text-sm whitespace-nowrap sm:inline">{t.signIn}</span>
+                  </button>
+                )
+              )}
               <button
                 type="button"
                 onClick={() => setIsOpen(true)}
@@ -217,7 +216,6 @@ export function Header() {
           </div>
 
           <CartDrawer />
-          
 
           <Sheet
             open={isMenuOpen}
@@ -266,7 +264,7 @@ export function Header() {
                       <ChevronDown className={`h-4 w-4 transition-transform ${isCategoriesOpen ? "rotate-180" : ""}`} />
                     </button>
                     <Link
-                      href="/category"
+                      href="/shop"
                       onClick={() => setIsMenuOpen(false)}
                       className="mt-4 block rounded-xl border border-border/60 bg-background px-3 py-3 text-sm font-medium text-foreground transition hover:bg-muted"
                     >

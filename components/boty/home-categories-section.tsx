@@ -101,7 +101,7 @@ export function HomeCategoriesSection() {
             const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : undefined
             const fallbackCategory = categories[index]
             const resolvedCategory = matchedCategory ?? fallbackCategory
-            const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/category"
+const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/shop"
             const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
               ? card.imageUrl
               : (resolvedCategory ? firstImageByCategory.get(resolvedCategory.slug) : "") ||
@@ -151,7 +151,7 @@ export function HomeCategoriesSection() {
     <section ref={sectionRef} className="bg-background py-14 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className={`mb-8 sm:mb-10 ${isRTL ? "text-right" : "text-left"}`}>
-          <Link href="/category" className="group inline-block cursor-pointer">
+          <Link href="/shop" className="group inline-block cursor-pointer">
             <span
               className={`mb-3 block text-xs uppercase tracking-[0.28em] text-primary sm:text-sm transition group-hover:text-primary/80 ${
                 isVisible ? "animate-blur-in opacity-0" : "opacity-0"
@@ -197,8 +197,8 @@ export function HomeCategoriesSection() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
-            {cards.map((card) => (
-              <CategoryCard key={card.id} card={card} />
+            {cards.map((card,index) => (
+             <CategoryCard key={`${card.id}-${index}`} card={card} />
             ))}
           </div>
         )}

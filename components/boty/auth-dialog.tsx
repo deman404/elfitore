@@ -41,7 +41,7 @@ const copy = {
 } as const
 
 export function AuthDialog() {
-  const { isAuthDialogOpen, setIsAuthDialogOpen } = useAuth()   // was: const [open, setOpen] = useState(false)
+  const { isAuthDialogOpen, setIsAuthDialogOpen } = useAuth()
   const [loading, setLoading] = useState(false)
   const { locale } = useLanguage()
   const text = copy[locale]
@@ -49,33 +49,40 @@ export function AuthDialog() {
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY)
     if (!dismissed) {
-      const timer = setTimeout(() => setIsAuthDialogOpen(true), 1500)   // was setOpen(true)
+      const timer = setTimeout(() => setIsAuthDialogOpen(true), 1500)
       return () => clearTimeout(timer)
     }
   }, [])
 
- const handleGoogle = async () => {
-  setLoading(true)
-  const supabase = getSupabaseBrowserClient()
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
-    },
-  })
-  if (error) {
-    console.error("Google sign-in error:", error.message)
-    setLoading(false)
+  const handleGoogle = async () => {
+    setLoading(true)
+    localStorage.setItem(STORAGE_KEY, "true")
+    const supabase = getSupabaseBrowserClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    if (error) {
+      console.error("Google sign-in error:", error.message)
+      setLoading(false)
+    }
   }
-}
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      localStorage.setItem(STORAGE_KEY, "true")
+    }
+    setIsAuthDialogOpen(next)
+  }
 
   const handleGuest = () => {
-    localStorage.setItem(STORAGE_KEY, "true")
-    setIsAuthDialogOpen(false)
+    handleOpenChange(false)
   }
 
   return (
-    <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
+    <Dialog open={isAuthDialogOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-[#f6f7f7]">

@@ -7,10 +7,10 @@ export const SITE_SETTING_CONTACT_GOOGLE_MAPS_URL_KEY = "contact_google_maps_url
 export const SITE_SETTING_DELIVERY_METHODS_KEY = "delivery_methods"
 export const SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY = "free_shipping_threshold"
 export const DEFAULT_FREE_SHIPPING_THRESHOLD = 500
-export const DEFAULT_CONTACT_PHONE = "+212 600 000 000"
-export const DEFAULT_CONTACT_WHATSAPP_NUMBER = "212600000000"
+export const DEFAULT_CONTACT_PHONE = "+212 674-722163"
+export const DEFAULT_CONTACT_WHATSAPP_NUMBER = "+212 674-722163"
 export const DEFAULT_CONTACT_ADDRESS = "Morocco"
-export const DEFAULT_CONTACT_GOOGLE_MAPS_URL = "https://www.google.com/maps/search/?api=1&query=Morocco"
+export const DEFAULT_CONTACT_GOOGLE_MAPS_URL = "https://maps.app.goo.gl/7qxtBCQ6keWyot4K7"
 
 export type DeliveryRate = {
   city: string

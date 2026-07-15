@@ -116,7 +116,7 @@ export default function CategoryPage() {
       <div className="pb-20 pt-24 sm:pt-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link
-            href="/category"
+            href="/shop"
             className={`mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground ${isRTL ? "flex-row-reverse" : ""}`}
           >
             <ChevronLeft className="h-4 w-4" />

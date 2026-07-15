@@ -1,47 +1,26 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Footer } from "@/components/boty/footer"
 import { Header } from "@/components/boty/header"
 import { useLanguage } from "@/components/language-context"
 import { RotateCcw, ShieldCheck, TimerReset } from "lucide-react"
+import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
-
-const translations = {
-  en: {
-    title: "Returns",
-    subtitle: "How returns and issue handling work for online orders.",
-    points: [
-      "Contact us quickly if a product arrives damaged or incorrect.",
-      "We will review the issue and guide you through the next step.",
-      "Returns are handled case by case depending on the product and condition.",
-      "Please keep the original packaging when possible so we can review it properly.",
-    ],
-  },
-  fr: {
-    title: "Retours",
-    subtitle: "Comment fonctionnent les retours et la gestion des problèmes pour les commandes en ligne.",
-    points: [
-      "Contactez-nous rapidement si un produit arrive endommagé ou incorrect.",
-      "Nous examinerons le problème et vous guiderons pour la suite.",
-      "Les retours sont traités au cas par cas selon le produit et son état.",
-      "Conservez si possible l’emballage d’origine pour que nous puissions l’examiner correctement.",
-    ],
-  },
-  ar: {
-    title: "المرتجعات",
-    subtitle: "كيفية التعامل مع المرتجعات والمشاكل في الطلبات عبر الإنترنت.",
-    points: [
-      "تواصل معنا بسرعة إذا وصل المنتج تالفًا أو غير صحيح.",
-      "سنراجع المشكلة ونرشدك إلى الخطوة التالية.",
-      "تُعالج المرتجعات حالةً بحالة حسب المنتج والحالة.",
-      "يرجى الاحتفاظ بالتغليف الأصلي قدر الإمكان لنتمكن من مراجعته بشكل صحيح.",
-    ],
-  },
-} as const
 
 export default function ReturnsPage() {
   const { locale, isRTL } = useLanguage()
-  const t = translations[locale as Locale]
+  const [data, setData] = useState(DEFAULT_THEME_SUPPORT_PAGES.returns)
+
+  useEffect(() => {
+    void fetchThemeSupportPages().then((pages) => setData(pages.returns))
+  }, [])
+
+  const t = {
+    title: data.title[locale as Locale],
+    subtitle: data.subtitle[locale as Locale],
+    points: data.points.map((point) => point[locale as Locale]),
+  }
 
   return (
     <main className="min-h-screen">

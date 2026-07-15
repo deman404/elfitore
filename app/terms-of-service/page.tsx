@@ -1,83 +1,29 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Footer } from "@/components/boty/footer"
 import { Header } from "@/components/boty/header"
 import { useLanguage } from "@/components/language-context"
 import { ClipboardList, PackageCheck, AlertTriangle, Scale } from "lucide-react"
+import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
-
-const translations = {
-  en: {
-    title: "Terms of Service",
-    subtitle: "The basic rules for using our site and placing orders.",
-    sections: [
-      {
-        title: "Using the site",
-        body: "Please use the website lawfully and do not attempt to disrupt, scrape, or misuse the service or its content.",
-      },
-      {
-        title: "Orders and availability",
-        body: "Orders are accepted subject to product availability, delivery area coverage, and confirmation of order details.",
-      },
-      {
-        title: "Pricing and delivery",
-        body: "Prices, shipping rates, and delivery options may change. The checkout page shows the current total before you submit an order.",
-      },
-      {
-        title: "Limitations and contact",
-        body: "We do our best to provide accurate information, but errors can happen. Contact us if you need help resolving an issue.",
-      },
-    ],
-  },
-  fr: {
-    title: "Conditions d’utilisation",
-    subtitle: "Les règles de base pour utiliser notre site et passer commande.",
-    sections: [
-      {
-        title: "Utilisation du site",
-        body: "Veuillez utiliser le site de manière légale et ne pas tenter de perturber, copier ou détourner le service ou son contenu.",
-      },
-      {
-        title: "Commandes et disponibilité",
-        body: "Les commandes sont acceptées sous réserve de disponibilité des produits, de la zone de livraison et de la confirmation des détails.",
-      },
-      {
-        title: "Prix et livraison",
-        body: "Les prix, tarifs de livraison et options peuvent changer. La page de paiement affiche le total actuel avant validation.",
-      },
-      {
-        title: "Limites et contact",
-        body: "Nous faisons de notre mieux pour fournir des informations exactes, mais des erreurs peuvent survenir. Contactez-nous en cas de besoin.",
-      },
-    ],
-  },
-  ar: {
-    title: "شروط الخدمة",
-    subtitle: "القواعد الأساسية لاستخدام الموقع وإرسال الطلبات.",
-    sections: [
-      {
-        title: "استخدام الموقع",
-        body: "يرجى استخدام الموقع بشكل قانوني وعدم محاولة تعطيل الخدمة أو نسخها أو إساءة استخدامها أو إساءة استخدام محتواها.",
-      },
-      {
-        title: "الطلبات والتوفر",
-        body: "تُقبل الطلبات حسب توفر المنتجات وتغطية منطقة التوصيل وتأكيد تفاصيل الطلب.",
-      },
-      {
-        title: "الأسعار والتوصيل",
-        body: "قد تتغير الأسعار ورسوم الشحن وخيارات التوصيل. تعرض صفحة الدفع الإجمالي الحالي قبل إرسال الطلب.",
-      },
-      {
-        title: "القيود والتواصل",
-        body: "نبذل قصارى جهدنا لتقديم معلومات دقيقة، لكن قد تحدث أخطاء. تواصل معنا إذا كنت بحاجة إلى المساعدة.",
-      },
-    ],
-  },
-} as const
 
 export default function TermsOfServicePage() {
   const { locale, isRTL } = useLanguage()
-  const t = translations[locale as Locale]
+  const [data, setData] = useState(DEFAULT_THEME_SUPPORT_PAGES.termsOfService)
+
+  useEffect(() => {
+    void fetchThemeSupportPages().then((pages) => setData(pages.termsOfService))
+  }, [])
+
+  const t = {
+    title: data.title[locale as Locale],
+    subtitle: data.subtitle[locale as Locale],
+    sections: data.sections.map((section) => ({
+      title: section.title[locale as Locale],
+      body: section.body[locale as Locale],
+    })),
+  }
 
   return (
     <main className="min-h-screen">
