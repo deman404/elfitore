@@ -69,16 +69,20 @@ export function YouMayLikeSection({
     const loadProducts = async () => {
       setLoading(true)
 
-      const { data, error } = await supabase.from("products").select("*").order("id", { ascending: false })
+      try {
+        const { data, error } = await supabase.from("products").select("*").order("id", { ascending: false })
 
-      if (error) {
+        if (error) {
+          setProducts([])
+          return
+        }
+
+        setProducts(((data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+      } catch {
         setProducts([])
+      } finally {
         setLoading(false)
-        return
       }
-
-      setProducts(((data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
-      setLoading(false)
     }
 
     void loadProducts()

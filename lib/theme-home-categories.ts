@@ -11,6 +11,22 @@ export type ThemeHomeCategoriesData = {
   cards: ThemeHomeCategoryCard[]
 }
 
+export type ThemeHomeCategoryWarning = {
+  index: number
+  message: string
+}
+
+export const THEME_HOME_CATEGORY_FALLBACK_IMAGE = "/images/products/oil.jpg"
+
+export function isRenderableThemeHomeCategoryImageUrl(value: unknown) {
+  if (typeof value !== "string") return false
+
+  const trimmed = value.trim()
+  if (!trimmed) return false
+
+  return /^(https?:\/\/|\/(?!\/))/i.test(trimmed)
+}
+
 export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
   cards: [
     {
@@ -72,9 +88,82 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
   ],
 }
 
+export function normalizeThemeHomeCategoriesData(value: unknown): ThemeHomeCategoriesData {
+  const cards = Array.isArray((value as { cards?: unknown } | null)?.cards)
+    ? ((value as { cards: unknown[] }).cards ?? [])
+    : DEFAULT_THEME_HOME_CATEGORIES.cards
+
+  return {
+    cards: cards.map((card, index) => normalizeThemeHomeCategoryCard(card, index)),
+  }
+}
+
+export function normalizeThemeHomeCategoryCard(value: unknown, index: number): ThemeHomeCategoryCard {
+  const source = value && typeof value === "object" ? (value as Record<string, unknown>) : {}
+  const fallbackCard = DEFAULT_THEME_HOME_CATEGORIES.cards[index] ?? DEFAULT_THEME_HOME_CATEGORIES.cards[0]
+
+  return {
+    title: {
+      en: stringOrDefault(source.title, "en", fallbackCard.title.en),
+      fr: stringOrDefault(source.title, "fr", fallbackCard.title.fr),
+      ar: stringOrDefault(source.title, "ar", fallbackCard.title.ar),
+    },
+    description: {
+      en: stringOrDefault(source.description, "en", fallbackCard.description.en),
+      fr: stringOrDefault(source.description, "fr", fallbackCard.description.fr),
+      ar: stringOrDefault(source.description, "ar", fallbackCard.description.ar),
+    },
+    imageUrl: isRenderableThemeHomeCategoryImageUrl(source.imageUrl)
+      ? String(source.imageUrl).trim()
+      : fallbackCard.imageUrl || THEME_HOME_CATEGORY_FALLBACK_IMAGE,
+    categorySlug: typeof source.categorySlug === "string" && source.categorySlug.trim()
+      ? source.categorySlug.trim()
+      : fallbackCard.categorySlug ?? "",
+  }
+}
+
+export function validateThemeHomeCategoryCards(
+  cards: Array<Record<string, unknown>>,
+  categorySlugs: string[]
+): ThemeHomeCategoryWarning[] {
+  const slugSet = new Set(categorySlugs.map((slug) => slug.trim()).filter(Boolean))
+
+  return cards.flatMap((card, index) => {
+    const warnings: ThemeHomeCategoryWarning[] = []
+
+    if (!isRenderableThemeHomeCategoryImageUrl(card.imageUrl)) {
+      warnings.push({
+        index,
+        message: `Carte ${index + 1} : image manquante ou invalide, fallback visuel appliquÃ©.`,
+      })
+    }
+
+    const slug = typeof card.categorySlug === "string" ? card.categorySlug.trim() : ""
+    if (slug && !slugSet.has(slug)) {
+      warnings.push({
+        index,
+        message: `Carte ${index + 1} : le slug "${slug}" n'existe plus dans product_categories.`,
+      })
+    }
+
+    return warnings
+  })
+}
+
 export function fetchThemeHomeCategories() {
   return fetch("/api/theme-home-categories", { cache: "no-store" }).then(async (response) => {
     if (!response.ok) return DEFAULT_THEME_HOME_CATEGORIES
-    return (await response.json()) as ThemeHomeCategoriesData
+    return normalizeThemeHomeCategoriesData(await response.json())
   })
+}
+
+function stringOrDefault(
+  value: unknown,
+  locale: Locale,
+  fallback: string
+) {
+  if (!value || typeof value !== "object") return fallback
+
+  const localized = (value as Record<string, unknown>)[locale]
+  return typeof localized === "string" && localized.trim() ? localized.trim() : fallback
 }

@@ -129,25 +129,29 @@ export function BestSellerSection() {
     const loadProducts = async () => {
       setLoading(true)
 
-      const [bestSellersResult, productsResult] = await Promise.all([
-        fetchThemeBestSellers(),
-        supabase.from("products").select("*").order("id", { ascending: false }),
-      ])
+      try {
+        const [bestSellersResult, productsResult] = await Promise.all([
+          fetchThemeBestSellers(),
+          supabase.from("products").select("*").order("id", { ascending: false }),
+        ])
 
-      if (productsResult.error) {
+        if (productsResult.error) {
+          setProducts([])
+          return
+        }
+
+        const allProducts = ((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow)
+        const byId = new Map(allProducts.map((product) => [product.dbId, product] as const))
+        const selectedProducts = bestSellersResult.productIds
+          .map((id) => byId.get(id))
+          .filter((product): product is NormalizedProduct => Boolean(product))
+
+        setProducts(selectedProducts.length ? selectedProducts : allProducts.slice(0, 4))
+      } catch {
         setProducts([])
+      } finally {
         setLoading(false)
-        return
       }
-
-      const allProducts = ((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow)
-      const byId = new Map(allProducts.map((product) => [product.dbId, product] as const))
-      const selectedProducts = bestSellersResult.productIds
-        .map((id) => byId.get(id))
-        .filter((product): product is NormalizedProduct => Boolean(product))
-
-      setProducts(selectedProducts.length ? selectedProducts : allProducts.slice(0, 4))
-      setLoading(false)
     }
 
     void loadProducts()

@@ -5,7 +5,11 @@ import Image from "next/image"
 import Link from "next/link"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
-import { fetchThemeHomeCategories } from "@/lib/theme-home-categories"
+import {
+  fetchThemeHomeCategories,
+  isRenderableThemeHomeCategoryImageUrl,
+  THEME_HOME_CATEGORY_FALLBACK_IMAGE,
+} from "@/lib/theme-home-categories"
 import type { Locale } from "@/i18n.config"
 import { parseStringArray, type CatalogCategoryRow, type CatalogProductRow } from "@/lib/catalog"
 
@@ -18,12 +22,15 @@ type FeaturedCategoryCard = {
 }
 
 function CategoryCard({ card }: { card: FeaturedCategoryCard }) {
+  const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
+    ? card.imageUrl
+    : THEME_HOME_CATEGORY_FALLBACK_IMAGE
   return (
     <Link href={card.href} className="group block h-full">
       <article className="overflow-hidden rounded-[1.75rem] border border-border/50 bg-background shadow-sm transition-transform duration-300 group-hover:-translate-y-1">
         <div className="relative aspect-[4/5] bg-muted">
           <Image
-            src={card.imageUrl || "/images/products/oil.jpg"}
+            src={imageUrl}
             alt={card.title}
             fill
             sizes="(min-width: 1024px) 25vw, 50vw"
@@ -57,60 +64,63 @@ export function HomeCategoriesSection() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const [themeCategories, categoriesResult, productsResult] = await Promise.all([
-        fetchThemeHomeCategories(),
-        supabase
-          .from("product_categories")
-          .select("id, name, slug, description, active, sort_order")
-          .eq("active", true)
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("products")
-          .select("id, category, image, images")
-          .order("id", { ascending: false }),
-      ])
+      try {
+        const [themeCategories, categoriesResult, productsResult] = await Promise.all([
+          fetchThemeHomeCategories(),
+          supabase
+            .from("product_categories")
+            .select("id, name, slug, description, active, sort_order")
+            .eq("active", true)
+            .order("sort_order", { ascending: true }),
+          supabase
+            .from("products")
+            .select("id, category, image, images")
+            .order("id", { ascending: false }),
+        ])
 
-      const categories = (categoriesResult.data ?? []) as Array<
-        CatalogCategoryRow & { description: string | null; sort_order?: number | null }
-      >
-      const products = (productsResult.data ?? []) as CatalogProductRow[]
-      const firstImageByCategory = new Map<string, string>()
+        const categories = (categoriesResult.data ?? []) as Array<
+          CatalogCategoryRow & { description: string | null; sort_order?: number | null }
+        >
+        const products = (productsResult.data ?? []) as CatalogProductRow[]
+        const firstImageByCategory = new Map<string, string>()
 
-      for (const product of products) {
-        if (firstImageByCategory.has(product.category)) continue
-        const image = product.image || parseStringArray(product.images)[0] || ""
-        if (image) {
-          firstImageByCategory.set(product.category, image)
-        }
-      }
-
-      const categoryBySlug = new Map(categories.map((category) => [category.slug, category]))
-
-      setCards(
-        themeCategories.cards.map((card, index) => {
-          const title = getLocalizedCardText(card.title, locale)
-          const description = getLocalizedCardText(card.description, locale) || fallbackDescription
-          const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : categories[index]
-          const href = card.categorySlug
-            ? `/category/${card.categorySlug}`
-            : matchedCategory
-              ? `/category/${matchedCategory.slug}`
-              : "/category"
-          const imageUrl =
-            card.imageUrl ||
-            (matchedCategory ? firstImageByCategory.get(matchedCategory.slug) : "") ||
-            "/images/products/oil.jpg"
-
-          return {
-            id: matchedCategory?.id ?? index + 1,
-            href,
-            title,
-            description,
-            imageUrl,
+        for (const product of products) {
+          if (firstImageByCategory.has(product.category)) continue
+          const image = product.image || parseStringArray(product.images)[0] || ""
+          if (image) {
+            firstImageByCategory.set(product.category, image)
           }
-        })
-      )
-      setLoading(false)
+        }
+
+        const categoryBySlug = new Map(categories.map((category) => [category.slug, category]))
+
+        setCards(
+          themeCategories.cards.map((card, index) => {
+            const title = getLocalizedCardText(card.title, locale)
+            const description = getLocalizedCardText(card.description, locale) || fallbackDescription
+            const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : undefined
+            const fallbackCategory = categories[index]
+            const resolvedCategory = matchedCategory ?? fallbackCategory
+            const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/category"
+            const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
+              ? card.imageUrl
+              : (resolvedCategory ? firstImageByCategory.get(resolvedCategory.slug) : "") ||
+                THEME_HOME_CATEGORY_FALLBACK_IMAGE
+
+            return {
+              id: resolvedCategory?.id ?? index + 1,
+              href,
+              title,
+              description,
+              imageUrl,
+            }
+          })
+        )
+      } catch {
+        setCards([])
+      } finally {
+        setLoading(false)
+      }
     }
 
     void load()

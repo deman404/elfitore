@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { getSupabaseAdminClient } from "@/lib/supabase-admin"
-import { DEFAULT_THEME_HOME_CATEGORIES, type ThemeHomeCategoriesData } from "@/lib/theme-home-categories"
+import {
+  DEFAULT_THEME_HOME_CATEGORIES,
+  normalizeThemeHomeCategoriesData,
+  validateThemeHomeCategoryCards,
+  type ThemeHomeCategoriesData,
+} from "@/lib/theme-home-categories"
 
 export const dynamic = "force-dynamic"
 
@@ -16,23 +21,7 @@ export async function PUT(request: Request) {
 
     const body = (await request.json()) as ThemeHomeCategoriesData
     const incomingCards = Array.isArray(body.cards) ? body.cards : []
-    const cards = incomingCards.length
-      ? incomingCards.map((card, index) => ({
-          title: {
-            en: card.title?.en?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.title.en || "",
-            fr: card.title?.fr?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.title.fr || "",
-            ar: card.title?.ar?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.title.ar || "",
-          },
-          description: {
-            en: card.description?.en?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.description.en || "",
-            fr: card.description?.fr?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.description.fr || "",
-            ar: card.description?.ar?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.description.ar || "",
-          },
-          imageUrl: card.imageUrl?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.imageUrl || "",
-          categorySlug:
-            card.categorySlug?.trim() || DEFAULT_THEME_HOME_CATEGORIES.cards[index]?.categorySlug || "",
-        }))
-      : DEFAULT_THEME_HOME_CATEGORIES.cards
+    const cards = incomingCards.length ? normalizeThemeHomeCategoriesData({ cards: incomingCards }).cards : DEFAULT_THEME_HOME_CATEGORIES.cards
 
     const payload = {
       id: 1,
@@ -40,6 +29,8 @@ export async function PUT(request: Request) {
     }
 
     const admin = getSupabaseAdminClient()
+    const { data: categoryRows } = await (admin.from("product_categories") as any).select("slug")
+    const warnings = validateThemeHomeCategoryCards(incomingCards as Array<Record<string, unknown>>, (categoryRows ?? []).map((row: { slug: string }) => row.slug))
     const { error } = (await (admin.from("theme_home_categories") as any).upsert(payload, { onConflict: "id" })) as {
       error: { message: string } | null
     }
@@ -48,7 +39,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json(payload)
+    return NextResponse.json({ ...payload, warnings })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not update home categories."
     return NextResponse.json({ error: message }, { status: 500 })

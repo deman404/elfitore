@@ -16,6 +16,16 @@ const nextConfig = {
         hostname: "cdn.youcan.shop",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "elfitor.ma",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.elfitor.ma",
+        pathname: "/**",
+      },
     ],
   },
 }

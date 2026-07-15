@@ -42,7 +42,7 @@ export type StorefrontOrderRecord = {
   subtotal: number
   total: number
   createdAt: string
-  customer: Required<StorefrontCustomerInfo>
+  customer: StorefrontCustomerInfo
   items: Array<{
     productId?: number
     name: string

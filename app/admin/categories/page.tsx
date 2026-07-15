@@ -69,20 +69,24 @@ export default function CategoriesPage() {
   const loadCategories = async () => {
     setLoading(true)
     setStatus("")
+    try {
+      const { data, error } = await supabase
+        .from("product_categories")
+        .select("*")
+        .order("sort_order", { ascending: true })
 
-    const { data, error } = await supabase
-      .from("product_categories")
-      .select("*")
-      .order("sort_order", { ascending: true })
-
-    if (error) {
+      if (error) {
+        setRows([])
+        setStatus(`Impossible de charger les catégories depuis Supabase : ${error.message}`)
+      } else {
+        setRows((data ?? []) as CategoryRow[])
+      }
+    } catch (error) {
       setRows([])
-      setStatus(`Impossible de charger les catégories depuis Supabase : ${error.message}`)
-    } else {
-      setRows((data ?? []) as CategoryRow[])
+      setStatus(error instanceof Error ? error.message : "Impossible de charger les catégories depuis Supabase.")
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -118,47 +122,54 @@ export default function CategoriesPage() {
     event.preventDefault()
     setSaving(true)
     setStatus("")
+    try {
+      const payload = {
+        name: form.name,
+        slug: form.slug,
+        description: form.description || null,
+        active: form.active,
+        sort_order: Number(form.sortOrder),
+      }
 
-    const payload = {
-      name: form.name,
-      slug: form.slug,
-      description: form.description || null,
-      active: form.active,
-      sort_order: Number(form.sortOrder),
+      const query = editingId === null
+        ? supabase.from("product_categories").insert(payload)
+        : supabase.from("product_categories").update(payload).eq("id", editingId)
+
+      const { error } = await query
+
+      if (error) {
+        setStatus(`Impossible d'enregistrer la catégorie : ${error.message}`)
+      } else {
+        setStatus(editingId === null ? "Catégorie ajoutée." : "Catégorie mise à jour.")
+        setSheetOpen(false)
+        setEditingId(null)
+        setForm(emptyForm)
+        await loadCategories()
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Impossible d'enregistrer la catégorie.")
+    } finally {
+      setSaving(false)
     }
-
-    const query = editingId === null
-      ? supabase.from("product_categories").insert(payload)
-      : supabase.from("product_categories").update(payload).eq("id", editingId)
-
-    const { error } = await query
-
-    if (error) {
-      setStatus(`Impossible d'enregistrer la catégorie : ${error.message}`)
-    } else {
-      setStatus(editingId === null ? "Catégorie ajoutée." : "Catégorie mise à jour.")
-      setSheetOpen(false)
-      setEditingId(null)
-      setForm(emptyForm)
-      await loadCategories()
-    }
-
-    setSaving(false)
   }
 
   const deleteCategory = async (id: number) => {
     setSaving(true)
     setStatus("")
-    const { error } = await supabase.from("product_categories").delete().eq("id", id)
+    try {
+      const { error } = await supabase.from("product_categories").delete().eq("id", id)
 
-    if (error) {
-      setStatus(`Impossible de supprimer la catégorie : ${error.message}`)
-    } else {
-      setStatus("Catégorie supprimée.")
-      await loadCategories()
+      if (error) {
+        setStatus(`Impossible de supprimer la catégorie : ${error.message}`)
+      } else {
+        setStatus("Catégorie supprimée.")
+        await loadCategories()
+      }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Impossible de supprimer la catégorie.")
+    } finally {
+      setSaving(false)
     }
-
-    setSaving(false)
   }
 
   const confirmDeleteCategory = async () => {

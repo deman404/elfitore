@@ -67,32 +67,37 @@ export default function CategoryPage() {
     const loadCategory = async () => {
       setLoading(true)
 
-      const categoryId = Number(categoryParam)
-      const categoryQuery = supabase
-        .from("product_categories")
-        .select("id, name, slug, description, active")
-        .eq("active", true)
+      try {
+        const categoryId = Number(categoryParam)
+        const categoryQuery = supabase
+          .from("product_categories")
+          .select("id, name, slug, description, active")
+          .eq("active", true)
 
-      const categoryResult = Number.isFinite(categoryId)
-        ? await categoryQuery.eq("id", categoryId).maybeSingle()
-        : await categoryQuery.eq("slug", categoryParam).maybeSingle()
+        const categoryResult = Number.isFinite(categoryId)
+          ? await categoryQuery.eq("id", categoryId).maybeSingle()
+          : await categoryQuery.eq("slug", categoryParam).maybeSingle()
 
-      if (categoryResult.error || !categoryResult.data) {
+        if (categoryResult.error || !categoryResult.data) {
+          setCategory(null)
+          setProducts([])
+          return
+        }
+
+        const productsResult = await supabase
+          .from("products")
+          .select("*")
+          .eq("category", categoryResult.data.slug)
+          .order("id", { ascending: false })
+
+        setCategory(categoryResult.data as CategoryRecord)
+        setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+      } catch {
         setCategory(null)
         setProducts([])
+      } finally {
         setLoading(false)
-        return
       }
-
-      const productsResult = await supabase
-        .from("products")
-        .select("*")
-        .eq("category", categoryResult.data.slug)
-        .order("id", { ascending: false })
-
-      setCategory(categoryResult.data as CategoryRecord)
-      setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
-      setLoading(false)
     }
 
     void loadCategory()
