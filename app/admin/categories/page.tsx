@@ -143,13 +143,9 @@ export default function CategoriesPage() {
     setSaving(true)
     setStatus("")
     try {
-      const payload = {
+ const payload = {
         name: form.name,
-<<<<<<< HEAD
-        slug: form.slug,
-=======
         slug,
->>>>>>> 8e3c7794611f2a37d66697753279ac28cc839b1f
         description: form.description || null,
         active: form.active,
         sort_order: Number(form.sortOrder),
@@ -165,13 +161,10 @@ export default function CategoriesPage() {
         setStatus(`Impossible d'enregistrer la catégorie : ${error.message}`)
       } else {
         setStatus(editingId === null ? "Catégorie ajoutée." : "Catégorie mise à jour.")
-        setSheetOpen(false)
+      setSheetOpen(false)
         setEditingId(null)
         setForm(emptyForm)
-<<<<<<< HEAD
-=======
         setSlugTouched(false)
->>>>>>> 8e3c7794611f2a37d66697753279ac28cc839b1f
         await loadCategories()
       }
     } catch (error) {
