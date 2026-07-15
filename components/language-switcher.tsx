@@ -29,7 +29,6 @@ export function LanguageSwitcher() {
           aria-label={t.change}
         >
           <Globe className="w-4 h-4" />
-          <span>{localeLabels[locale]}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

@@ -116,7 +116,7 @@ export function Header() {
               <Menu className="h-5 w-5" />
             </button>
 
-            <div className={`hidden items-center gap-8 lg:flex ${isRTL ? "flex-row-reverse" : ""}`}>
+            <div className={`flex items-center gap-1.5 justify-self-end sm:gap-4 ${isRTL ? "flex-row-reverse" : ""}`}>
               <Link href="/shop" className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition">
                 {t.shop}
               </Link>
@@ -185,14 +185,18 @@ export function Header() {
               <LanguageSwitcher />
       {!loading && (
   user ? (
-    <span className="text-sm text-foreground/70">{user.email}</span>
+    <span className="hidden sm:inline max-w-[140px] truncate text-sm text-foreground/70 whitespace-nowrap">
+      {user.email}
+    </span>
   ) : (
     <button
       type="button"
       onClick={() => setIsAuthDialogOpen(true)}
-      className="text-sm text-foreground/70 hover:text-foreground boty-transition"
+      className="flex items-center gap-1.5 p-2 text-foreground/70 hover:text-foreground boty-transition sm:p-0"
+      aria-label={t.signIn}
     >
-      {t.signIn}
+      <LogIn className="h-5 w-5 sm:hidden" />
+      <span className="hidden text-sm whitespace-nowrap sm:inline">{t.signIn}</span>
     </button>
   )
 )}
