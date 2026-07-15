@@ -117,7 +117,7 @@ export function Header() {
             >
               <Menu className="h-5 w-5" />
             </button>
-<div className={`hidden items-center gap-1.5 justify-self-end sm:gap-4 lg:flex ${isRTL ? "flex-row-reverse" : ""}`}>
+<div className="hidden items-center gap-1.5 justify-self-end sm:gap-4 lg:flex">
               <Link href="/shop" className="text-sm tracking-wide text-foreground/70 hover:text-foreground boty-transition">
                 {t.shop}
               </Link>
