@@ -137,7 +137,7 @@ export function Header() {
                 </div>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/category"
+                    href="/shop"
                     className="flex w-full cursor-pointer items-center rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
                   >
                     {t.viewAllCategories}
@@ -262,7 +262,7 @@ export function Header() {
                       <ChevronDown className={`h-4 w-4 transition-transform ${isCategoriesOpen ? "rotate-180" : ""}`} />
                     </button>
                     <Link
-                      href="/category"
+                      href="/shop"
                       onClick={() => setIsMenuOpen(false)}
                       className="mt-4 block rounded-xl border border-border/60 bg-background px-3 py-3 text-sm font-medium text-foreground transition hover:bg-muted"
                     >
