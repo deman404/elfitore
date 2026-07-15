@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { ChangeEvent, FormEvent, ReactNode } from "react"
 import { Check, Loader2, Plus, Pencil, Trash2 } from "lucide-react"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
+import { slugify } from "@/lib/blog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,6 +66,7 @@ export default function CategoriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<CategoryRow | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [form, setForm] = useState<CategoryForm>(emptyForm)
+  const [slugTouched, setSlugTouched] = useState(false)
 
   const loadCategories = async () => {
     setLoading(true)
@@ -96,6 +98,7 @@ export default function CategoriesPage() {
   const openAddSheet = () => {
     setEditingId(null)
     setForm(emptyForm)
+    setSlugTouched(false)
     setStatus("")
     setSheetOpen(true)
   }
@@ -109,23 +112,40 @@ export default function CategoriesPage() {
       active: row.active,
       sortOrder: String(row.sort_order),
     })
+    setSlugTouched(Boolean(row.slug))
     setStatus("")
     setSheetOpen(true)
   }
 
   const handleChange = (field: keyof CategoryForm) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = field === "active" ? String((event.target as HTMLInputElement).checked) : event.target.value
-    setForm((current) => ({ ...current, [field]: value }))
+
+    if (field === "slug") {
+      setSlugTouched(value.trim().length > 0)
+    }
+
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+      ...(field === "name" && !slugTouched ? { slug: slugify(value) } : {}),
+    }))
   }
 
   const saveCategory = async (event: FormEvent) => {
     event.preventDefault()
+
+    const slug = slugify(form.slug) || slugify(form.name)
+    if (!slug) {
+      setStatus("Le slug est requis : saisissez un nom ou un slug valide.")
+      return
+    }
+
     setSaving(true)
     setStatus("")
     try {
       const payload = {
         name: form.name,
-        slug: form.slug,
+        slug,
         description: form.description || null,
         active: form.active,
         sort_order: Number(form.sortOrder),
@@ -144,6 +164,7 @@ export default function CategoriesPage() {
         setSheetOpen(false)
         setEditingId(null)
         setForm(emptyForm)
+        setSlugTouched(false)
         await loadCategories()
       }
     } catch (error) {
@@ -403,6 +424,7 @@ export default function CategoriesPage() {
                   setSheetOpen(false)
                   setEditingId(null)
                   setForm(emptyForm)
+                  setSlugTouched(false)
                 }}
                 className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >

@@ -56,6 +56,7 @@ export function AuthDialog() {
 
  const handleGoogle = async () => {
   setLoading(true)
+  localStorage.setItem(STORAGE_KEY, "true")
   const supabase = getSupabaseBrowserClient()
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -69,13 +70,19 @@ export function AuthDialog() {
   }
 }
 
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      localStorage.setItem(STORAGE_KEY, "true")
+    }
+    setIsAuthDialogOpen(next)
+  }
+
   const handleGuest = () => {
-    localStorage.setItem(STORAGE_KEY, "true")
-    setIsAuthDialogOpen(false)
+    handleOpenChange(false)
   }
 
   return (
-    <Dialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen}>
+    <Dialog open={isAuthDialogOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-[#f6f7f7]">
