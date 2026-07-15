@@ -1,83 +1,29 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Footer } from "@/components/boty/footer"
 import { Header } from "@/components/boty/header"
 import { useLanguage } from "@/components/language-context"
 import { ShieldCheck, Lock, Eye, Database } from "lucide-react"
+import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
-
-const translations = {
-  en: {
-    title: "Privacy Policy",
-    subtitle: "How we collect, use, and protect your information.",
-    sections: [
-      {
-        title: "Information we collect",
-        body: "We may collect details you submit through checkout, WhatsApp orders, contact forms, and admin-managed delivery settings.",
-      },
-      {
-        title: "How we use information",
-        body: "We use your information to process orders, contact you about delivery, improve the storefront experience, and maintain admin records.",
-      },
-      {
-        title: "Sharing and security",
-        body: "We do not sell personal data. Access is limited to authorized staff, and we take reasonable steps to protect stored information.",
-      },
-      {
-        title: "Your choices",
-        body: "You can contact us to review or update order details where applicable, and you may choose not to submit optional information.",
-      },
-    ],
-  },
-  fr: {
-    title: "Politique de confidentialité",
-    subtitle: "Comment nous collectons, utilisons et protégeons vos informations.",
-    sections: [
-      {
-        title: "Informations collectées",
-        body: "Nous pouvons collecter les informations que vous soumettez via le paiement, les commandes WhatsApp, les formulaires de contact et les paramètres de livraison gérés par l’admin.",
-      },
-      {
-        title: "Utilisation des informations",
-        body: "Nous utilisons vos informations pour traiter les commandes, vous contacter au sujet de la livraison, améliorer la boutique et conserver les enregistrements administratifs.",
-      },
-      {
-        title: "Partage et sécurité",
-        body: "Nous ne vendons pas les données personnelles. L’accès est limité au personnel autorisé et nous prenons des mesures raisonnables pour protéger les informations stockées.",
-      },
-      {
-        title: "Vos choix",
-        body: "Vous pouvez nous contacter pour consulter ou mettre à jour les détails de commande lorsque cela est possible, et vous pouvez choisir de ne pas fournir les informations facultatives.",
-      },
-    ],
-  },
-  ar: {
-    title: "سياسة الخصوصية",
-    subtitle: "كيف نجمع معلوماتك ونستخدمها ونحميها.",
-    sections: [
-      {
-        title: "المعلومات التي نجمعها",
-        body: "قد نجمع التفاصيل التي ترسلها عبر الدفع وطلبات واتس آب ونماذج التواصل وإعدادات التوصيل التي يديرها المشرف.",
-      },
-      {
-        title: "كيف نستخدم المعلومات",
-        body: "نستخدم معلوماتك لمعالجة الطلبات والتواصل معك بخصوص التوصيل وتحسين تجربة المتجر والحفاظ على السجلات الإدارية.",
-      },
-      {
-        title: "المشاركة والأمان",
-        body: "نحن لا نبيع البيانات الشخصية. يقتصر الوصول على الموظفين المخولين، ونتخذ خطوات معقولة لحماية المعلومات المخزنة.",
-      },
-      {
-        title: "خياراتك",
-        body: "يمكنك التواصل معنا لمراجعة أو تحديث تفاصيل الطلب حيثما ينطبق ذلك، ويمكنك اختيار عدم إرسال المعلومات الاختيارية.",
-      },
-    ],
-  },
-} as const
 
 export default function PrivacyPolicyPage() {
   const { locale, isRTL } = useLanguage()
-  const t = translations[locale as Locale]
+  const [data, setData] = useState(DEFAULT_THEME_SUPPORT_PAGES.privacyPolicy)
+
+  useEffect(() => {
+    void fetchThemeSupportPages().then((pages) => setData(pages.privacyPolicy))
+  }, [])
+
+  const t = {
+    title: data.title[locale as Locale],
+    subtitle: data.subtitle[locale as Locale],
+    sections: data.sections.map((section) => ({
+      title: section.title[locale as Locale],
+      body: section.body[locale as Locale],
+    })),
+  }
 
   return (
     <main className="min-h-screen">

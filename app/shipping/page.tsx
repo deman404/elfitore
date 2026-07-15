@@ -1,47 +1,26 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Footer } from "@/components/boty/footer"
 import { Header } from "@/components/boty/header"
 import { useLanguage } from "@/components/language-context"
 import { CheckCircle2, Package, Truck } from "lucide-react"
+import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
-
-const translations = {
-  en: {
-    title: "Shipping",
-    subtitle: "Delivery pricing, areas, and how shipping works on El Fitore.",
-    bullets: [
-      "Shipping rates are set by city and delivery company in the admin panel.",
-      "Checkout shows the shipping price before you place the order.",
-      "Admins can add or update delivery methods and city prices anytime.",
-      "Orders placed by WhatsApp or COD are still saved in the admin orders list.",
-    ],
-  },
-  fr: {
-    title: "Livraison",
-    subtitle: "Prix de livraison, zones desservies et fonctionnement de la livraison sur El Fitore.",
-    bullets: [
-      "Les tarifs sont définis par ville et par transporteur dans le panneau d’administration.",
-      "Le paiement affiche le prix de livraison avant validation de la commande.",
-      "Les admins peuvent ajouter ou modifier les méthodes de livraison et les prix à tout moment.",
-      "Les commandes passées par WhatsApp ou contre remboursement sont aussi enregistrées dans l’administration.",
-    ],
-  },
-  ar: {
-    title: "التوصيل",
-    subtitle: "أسعار التوصيل والمناطق وكيفية عمل الشحن في El Fitore.",
-    bullets: [
-      "يتم تحديد أسعار الشحن حسب المدينة وشركة التوصيل من لوحة الإدارة.",
-      "يعرض الدفع سعر الشحن قبل إتمام الطلب.",
-      "يمكن للمشرف إضافة أو تعديل طرق التوصيل وأسعار المدن في أي وقت.",
-      "الطلبات عبر واتس آب أو الدفع عند الاستلام تُحفظ أيضًا في لوحة الإدارة.",
-    ],
-  },
-} as const
 
 export default function ShippingPage() {
   const { locale, isRTL } = useLanguage()
-  const t = translations[locale as Locale]
+  const [data, setData] = useState(DEFAULT_THEME_SUPPORT_PAGES.shipping)
+
+  useEffect(() => {
+    void fetchThemeSupportPages().then((pages) => setData(pages.shipping))
+  }, [])
+
+  const t = {
+    title: data.title[locale as Locale],
+    subtitle: data.subtitle[locale as Locale],
+    bullets: data.bullets.map((bullet) => bullet[locale as Locale]),
+  }
 
   return (
     <main className="min-h-screen">

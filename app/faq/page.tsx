@@ -1,54 +1,23 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Footer } from "@/components/boty/footer"
 import { Header } from "@/components/boty/header"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useLanguage } from "@/components/language-context"
+import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
-
-const translations = {
-  en: {
-    title: "FAQ",
-    subtitle: "Quick answers to the most common questions about orders, payment, and delivery.",
-  },
-  fr: {
-    title: "FAQ",
-    subtitle: "Réponses rapides aux questions les plus fréquentes sur les commandes, le paiement et la livraison.",
-  },
-  ar: {
-    title: "الأسئلة الشائعة",
-    subtitle: "إجابات سريعة على أكثر الأسئلة شيوعًا حول الطلبات والدفع والتوصيل.",
-  },
-} as const
-
-const faqItems = {
-  en: [
-    { q: "How do I place an order?", a: "Add products to your cart, choose checkout or WhatsApp, then complete your contact details and delivery choice." },
-    { q: "Can I pay on delivery?", a: "Yes. Cash on delivery is available for supported delivery areas." },
-    { q: "Do you ship across Morocco?", a: "We ship to the Moroccan cities and zones listed in the delivery settings, and admins can add more destinations anytime." },
-    { q: "How long does delivery take?", a: "Delivery time depends on the city and carrier. Your order will show the shipping price during checkout." },
-    { q: "Can I change my order after placing it?", a: "Contact us as soon as possible on WhatsApp so we can help update the order before it is processed." },
-  ],
-  fr: [
-    { q: "Comment passer une commande ?", a: "Ajoutez les produits au panier, choisissez le paiement ou WhatsApp, puis complétez vos coordonnées et la livraison." },
-    { q: "Puis-je payer à la livraison ?", a: "Oui. Le paiement à la livraison est disponible pour les zones compatibles." },
-    { q: "Livrez-vous partout au Maroc ?", a: "Nous livrons dans les villes et zones définies dans les paramètres de livraison, et l’admin peut en ajouter d’autres à tout moment." },
-    { q: "Combien de temps prend la livraison ?", a: "Le délai dépend de la ville et du transporteur. Le prix de livraison apparaît au paiement." },
-    { q: "Puis-je modifier ma commande après l’avoir passée ?", a: "Contactez-nous au plus vite sur WhatsApp afin que nous puissions vous aider avant le traitement." },
-  ],
-  ar: [
-    { q: "كيف أقدم طلبًا؟", a: "أضف المنتجات إلى السلة، ثم اختر الدفع أو واتس آب وأكمل بياناتك وخيار التوصيل." },
-    { q: "هل يمكنني الدفع عند الاستلام؟", a: "نعم، الدفع عند الاستلام متاح للمناطق المدعومة." },
-    { q: "هل تشحنون داخل المغرب؟", a: "نحن نشحن إلى المدن والمناطق المحددة في إعدادات التوصيل، ويمكن للمشرف إضافة وجهات جديدة في أي وقت." },
-    { q: "كم يستغرق التوصيل؟", a: "يعتمد الوقت على المدينة وشركة الشحن. يظهر سعر الشحن عند إتمام الطلب." },
-    { q: "هل يمكنني تعديل الطلب بعد إرساله؟", a: "تواصل معنا بسرعة عبر واتس آب وسنحاول تحديث الطلب قبل معالجته." },
-  ],
-} as const
 
 export default function FaqPage() {
   const { locale, isRTL } = useLanguage()
-  const t = translations[locale as Locale]
-  const items = faqItems[locale as Locale]
+  const [data, setData] = useState(DEFAULT_THEME_SUPPORT_PAGES.faq)
+
+  useEffect(() => {
+    void fetchThemeSupportPages().then((pages) => setData(pages.faq))
+  }, [])
+
+  const t = { title: data.title[locale as Locale], subtitle: data.subtitle[locale as Locale] }
+  const items = data.items.map((item) => ({ q: item.q[locale as Locale], a: item.a[locale as Locale] }))
 
   return (
     <main className="min-h-screen">

@@ -17,13 +17,11 @@ import {
   formatPhoneNumberForLink,
   formatWhatsAppNumberForLink,
 } from "@/lib/site-settings"
+import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
 
 const translations = {
   en: {
-    title: "Contact Us",
-    subtitle: "Reach out if you need help with an order, product question, or delivery update.",
-    intro: "We are available by WhatsApp and through the contact form below.",
     whatsapp: "WhatsApp",
     callUs: "Call us",
     visitUs: "Visit us",
@@ -37,9 +35,6 @@ const translations = {
     reply: "We usually reply as soon as possible during business hours.",
   },
   fr: {
-    title: "Contactez-nous",
-    subtitle: "Contactez-nous pour une commande, une question produit ou une mise à jour de livraison.",
-    intro: "Nous sommes disponibles via WhatsApp et via le formulaire ci-dessous.",
     whatsapp: "WhatsApp",
     callUs: "Téléphone",
     visitUs: "Adresse",
@@ -53,9 +48,6 @@ const translations = {
     reply: "Nous répondons généralement dès que possible pendant les heures ouvrables.",
   },
   ar: {
-    title: "اتصل بنا",
-    subtitle: "تواصل معنا إذا كنت بحاجة إلى مساعدة بخصوص طلب أو منتج أو تحديث توصيل.",
-    intro: "نحن متاحون عبر واتس آب ومن خلال نموذج التواصل أدناه.",
     whatsapp: "واتس آب",
     callUs: "اتصال",
     visitUs: "زيارة",
@@ -72,12 +64,23 @@ const translations = {
 
 export default function ContactPage() {
   const { locale, isRTL } = useLanguage()
-  const t = translations[locale as Locale]
+  const staticText = translations[locale as Locale]
+  const [content, setContent] = useState(DEFAULT_THEME_SUPPORT_PAGES.contact)
+  const t = {
+    ...staticText,
+    title: content.title[locale as Locale],
+    subtitle: content.subtitle[locale as Locale],
+    intro: content.intro[locale as Locale],
+  }
   const [whatsappLink, setWhatsappLink] = useState(`https://wa.me/${DEFAULT_CONTACT_WHATSAPP_NUMBER}`)
   const [phoneLink, setPhoneLink] = useState(`tel:${formatPhoneNumberForLink(DEFAULT_CONTACT_PHONE)}`)
   const [contactAddress, setContactAddress] = useState(DEFAULT_CONTACT_ADDRESS)
   const [mapsLink, setMapsLink] = useState(DEFAULT_CONTACT_GOOGLE_MAPS_URL)
   const [displayPhone, setDisplayPhone] = useState(DEFAULT_CONTACT_PHONE)
+
+  useEffect(() => {
+    void fetchThemeSupportPages().then((pages) => setContent(pages.contact))
+  }, [])
 
   useEffect(() => {
     const loadSettings = async () => {
