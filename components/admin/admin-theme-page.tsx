@@ -146,14 +146,14 @@ export function AdminThemePage() {
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null)
   const [messages, setMessages] = useState<Partial<Record<SectionKey, MessageState>>>({})
   const [activePanel, setActivePanel] = useState<SectionKey | null>(null)
-  const categorySlugs = useMemo(
-    () => categoryOptions.map((category) => category.slug).filter(Boolean),
-    [categoryOptions]
-  )
-  const homeCategoryWarnings = useMemo(
-    () => validateThemeHomeCategoryCards(categories.cards as Array<Record<string, unknown>>, categorySlugs),
-    [categories.cards, categorySlugs]
-  )
+ const categoryIds = useMemo(
+  () => categoryOptions.map((category) => category.id),
+  [categoryOptions]
+)
+const homeCategoryWarnings = useMemo(
+  () => validateThemeHomeCategoryCards(categories.cards as Array<Record<string, unknown>>, categoryIds),
+  [categories.cards, categoryIds]
+)
 
   useEffect(() => {
     const load = async () => {
@@ -1063,11 +1063,15 @@ function HomeCategoriesForm({
       cards: prev.cards.map((card, index) => (index === cardIndex ? { ...card, imageUrl: url } : card)),
     }))
 
-  const updateCategorySlug = (cardIndex: number) => (e: ChangeEvent<HTMLSelectElement>) =>
-    setData((prev) => ({
-      ...prev,
-      cards: prev.cards.map((card, index) => (index === cardIndex ? { ...card, categorySlug: e.target.value } : card)),
-    }))
+ const updateCategoryId = (cardIndex: number) => (e: ChangeEvent<HTMLSelectElement>) =>
+  setData((prev) => ({
+    ...prev,
+    cards: prev.cards.map((card, index) =>
+      index === cardIndex
+        ? { ...card, categoryId: e.target.value ? Number(e.target.value) : null }
+        : card
+    ),
+  }))
 
   const warningsByIndex = new Map<number, string[]>()
   for (const warning of warnings) {
@@ -1089,7 +1093,7 @@ function HomeCategoriesForm({
 
         {data.cards.map((card, index) => {
           const cardWarnings = warningsByIndex.get(index) ?? []
-          const isInvalidSlug = Boolean(card.categorySlug) && !categoryOptions.some((category) => category.slug === card.categorySlug)
+          const isInvalidCategory = card.categoryId !== null && !categoryOptions.some((category) => category.id === card.categoryId)
           const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
             ? card.imageUrl
             : THEME_HOME_CATEGORY_FALLBACK_IMAGE
@@ -1110,21 +1114,25 @@ function HomeCategoriesForm({
                   </div>
                 </div>
                 <label className="block space-y-1.5">
-                  <span className="text-xs font-medium text-slate-600">Catégorie liée</span>
-                  <select value={card.categorySlug} onChange={updateCategorySlug(index)} className="admin-input">
-                    <option value="">Sélectionner une catégorie</option>
-                    {categoryOptions.map((category) => (
-                      <option key={category.id} value={category.slug}>
-                        {category.name} ({category.slug})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {isInvalidSlug ? (
-                  <p className="text-xs font-medium text-amber-700">
-                    Ce slug n'existe plus dans product_categories. Corrigez-le avant de publier.
-                  </p>
-                ) : null}
+  <span className="text-xs font-medium text-slate-600">Catégorie liée</span>
+  <select
+    value={card.categoryId ?? ""}
+    onChange={updateCategoryId(index)}
+    className="admin-input"
+  >
+    <option value="">Sélectionner une catégorie</option>
+    {categoryOptions.map((category) => (
+      <option key={category.id} value={category.id}>
+        {category.name}
+      </option>
+    ))}
+  </select>
+</label>
+{isInvalidCategory ? (
+  <p className="text-xs font-medium text-amber-700">
+    Cette catégorie n'existe plus dans product_categories. Corrigez-la avant de publier.
+  </p>
+) : null}
                 {cardWarnings.length ? (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                     {cardWarnings.map((warning) => (
@@ -1493,18 +1501,18 @@ function SaveBar({
 function enrichHomeCategories(data: ThemeHomeCategoriesData, categoryOptions: CatalogCategoryRow[]) {
   return {
     ...data,
-    cards: data.cards.map((card, index) => {
-      const matchedCategory = card.categorySlug || inferCategorySlug(card.title, categoryOptions)
+    cards: data.cards.map((card) => {
+      const matchedCategoryId = card.categoryId ?? inferCategoryId(card.title, categoryOptions)
       return {
         ...card,
-        categorySlug: matchedCategory,
+        categoryId: matchedCategoryId,
         imageUrl: card.imageUrl || THEME_HOME_CATEGORY_FALLBACK_IMAGE,
       }
     }),
   }
 }
 
-function inferCategorySlug(title: Record<LocaleKey, string>, categories: CatalogCategoryRow[]) {
+function inferCategoryId(title: Record<LocaleKey, string>, categories: CatalogCategoryRow[]) {
   const titles = Object.values(title).map((value) => normalizeText(value))
   const matched = categories.find((category) => {
     const name = normalizeText(category.name)
@@ -1512,7 +1520,7 @@ function inferCategorySlug(title: Record<LocaleKey, string>, categories: Catalog
     return titles.some((value) => value && (value === name || value === slug))
   })
 
-  return matched?.slug ?? ""
+  return matched?.id ?? null
 }
 
 function normalizeText(value: string) {

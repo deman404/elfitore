@@ -4,7 +4,7 @@ export type ThemeHomeCategoryCard = {
   title: Record<Locale, string>
   description: Record<Locale, string>
   imageUrl: string
-  categorySlug: string
+  categoryId: number | null
 }
 
 export type ThemeHomeCategoriesData = {
@@ -41,7 +41,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "زيوت زيتون طازجة واختيارات زيتون للاستخدام اليومي.",
       },
       imageUrl: "/product.png",
-      categorySlug: "",
+      categoryId: null,
     },
     {
       title: {
@@ -55,7 +55,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "معصور على البارد وغني بالنكهة.",
       },
       imageUrl: "/product2.png",
-      categorySlug: "",
+      categoryId: null,
     },
     {
       title: {
@@ -69,7 +69,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "مختارة للطعم والقوام والجودة.",
       },
       imageUrl: "/product3.png",
-      categorySlug: "",
+      categoryId: null,
     },
     {
       title: {
@@ -83,7 +83,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
         ar: "مجموعات جميلة جاهزة للمشاركة.",
       },
       imageUrl: "/product4.png",
-      categorySlug: "",
+      categoryId: null,
     },
   ],
 }
@@ -116,17 +116,20 @@ export function normalizeThemeHomeCategoryCard(value: unknown, index: number): T
     imageUrl: isRenderableThemeHomeCategoryImageUrl(source.imageUrl)
       ? String(source.imageUrl).trim()
       : fallbackCard.imageUrl || THEME_HOME_CATEGORY_FALLBACK_IMAGE,
-    categorySlug: typeof source.categorySlug === "string" && source.categorySlug.trim()
-      ? source.categorySlug.trim()
-      : fallbackCard.categorySlug ?? "",
+    categoryId:
+      typeof source.categoryId === "number"
+        ? source.categoryId
+        : typeof source.categoryId === "string" && source.categoryId.trim() && !Number.isNaN(Number(source.categoryId))
+          ? Number(source.categoryId)
+          : fallbackCard.categoryId ?? null,
   }
 }
 
 export function validateThemeHomeCategoryCards(
   cards: Array<Record<string, unknown>>,
-  categorySlugs: string[]
+  categoryIds: number[]
 ): ThemeHomeCategoryWarning[] {
-  const slugSet = new Set(categorySlugs.map((slug) => slug.trim()).filter(Boolean))
+  const idSet = new Set(categoryIds)
 
   return cards.flatMap((card, index) => {
     const warnings: ThemeHomeCategoryWarning[] = []
@@ -134,15 +137,15 @@ export function validateThemeHomeCategoryCards(
     if (!isRenderableThemeHomeCategoryImageUrl(card.imageUrl)) {
       warnings.push({
         index,
-        message: `Carte ${index + 1} : image manquante ou invalide, fallback visuel appliquÃ©.`,
+        message: `Carte ${index + 1} : image manquante ou invalide, fallback visuel appliqué.`,
       })
     }
 
-    const slug = typeof card.categorySlug === "string" ? card.categorySlug.trim() : ""
-    if (slug && !slugSet.has(slug)) {
+    const categoryId = typeof card.categoryId === "number" ? card.categoryId : null
+    if (categoryId !== null && !idSet.has(categoryId)) {
       warnings.push({
         index,
-        message: `Carte ${index + 1} : le slug "${slug}" n'existe plus dans product_categories.`,
+        message: `Carte ${index + 1} : la catégorie #${categoryId} n'existe plus dans product_categories.`,
       })
     }
 

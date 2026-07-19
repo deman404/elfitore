@@ -29,8 +29,11 @@ export async function PUT(request: Request) {
     }
 
     const admin = getSupabaseAdminClient()
-    const { data: categoryRows } = await (admin.from("product_categories") as any).select("slug")
-    const warnings = validateThemeHomeCategoryCards(incomingCards as Array<Record<string, unknown>>, (categoryRows ?? []).map((row: { slug: string }) => row.slug))
+    const { data: categoryRows } = await (admin.from("product_categories") as any).select("id")
+    const warnings = validateThemeHomeCategoryCards(
+      incomingCards as Array<Record<string, unknown>>,
+      (categoryRows ?? []).map((row: { id: number }) => row.id)
+    )
     const { error } = (await (admin.from("theme_home_categories") as any).upsert(payload, { onConflict: "id" })) as {
       error: { message: string } | null
     }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useLanguage } from "@/components/language-context"
+import { useCategories } from "@/components/category-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import {
   fetchThemeHomeCategories,
@@ -11,7 +12,7 @@ import {
   THEME_HOME_CATEGORY_FALLBACK_IMAGE,
 } from "@/lib/theme-home-categories"
 import type { Locale } from "@/i18n.config"
-import { parseStringArray, type CatalogCategoryRow, type CatalogProductRow } from "@/lib/catalog"
+import { parseStringArray, type CatalogProductRow } from "@/lib/catalog"
 
 type FeaturedCategoryCard = {
   id: number
@@ -50,6 +51,7 @@ function CategoryCard({ card }: { card: FeaturedCategoryCard }) {
 export function HomeCategoriesSection() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const { locale, isRTL } = useLanguage()
+  const { categories, getCategoryById, loading: categoriesLoading } = useCategories()
   const [cards, setCards] = useState<FeaturedCategoryCard[]>([])
   const [loading, setLoading] = useState(true)
   const [isVisible, setIsVisible] = useState(false)
@@ -62,25 +64,19 @@ export function HomeCategoriesSection() {
         : "Discover the products in this category."
 
   useEffect(() => {
+    if (categoriesLoading) return
+
     const load = async () => {
       setLoading(true)
       try {
-        const [themeCategories, categoriesResult, productsResult] = await Promise.all([
+        const [themeCategories, productsResult] = await Promise.all([
           fetchThemeHomeCategories(),
-          supabase
-            .from("product_categories")
-            .select("id, name, slug, description, active, sort_order")
-            .eq("active", true)
-            .order("sort_order", { ascending: true }),
           supabase
             .from("products")
             .select("id, category, image, images")
             .order("id", { ascending: false }),
         ])
 
-        const categories = (categoriesResult.data ?? []) as Array<
-          CatalogCategoryRow & { description: string | null; sort_order?: number | null }
-        >
         const products = (productsResult.data ?? []) as CatalogProductRow[]
         const firstImageByCategory = new Map<string, string>()
 
@@ -92,16 +88,14 @@ export function HomeCategoriesSection() {
           }
         }
 
-        const categoryBySlug = new Map(categories.map((category) => [category.slug, category]))
-
         setCards(
           themeCategories.cards.map((card, index) => {
             const title = getLocalizedCardText(card.title, locale)
             const description = getLocalizedCardText(card.description, locale) || fallbackDescription
-            const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : undefined
+            const matchedCategory = card.categoryId != null ? getCategoryById(card.categoryId) : undefined
             const fallbackCategory = categories[index]
             const resolvedCategory = matchedCategory ?? fallbackCategory
-const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/shop"
+            const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/shop"
             const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
               ? card.imageUrl
               : (resolvedCategory ? firstImageByCategory.get(resolvedCategory.slug) : "") ||
@@ -124,7 +118,7 @@ const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/shop"
     }
 
     void load()
-  }, [fallbackDescription, locale, supabase])
+  }, [categories, categoriesLoading, fallbackDescription, getCategoryById, locale, supabase])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -197,8 +191,8 @@ const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/shop"
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
-            {cards.map((card,index) => (
-             <CategoryCard key={`${card.id}-${index}`} card={card} />
+            {cards.map((card, index) => (
+              <CategoryCard key={`${card.id}-${index}`} card={card} />
             ))}
           </div>
         )}
