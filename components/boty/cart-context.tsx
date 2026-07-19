@@ -63,16 +63,26 @@ function loadCartItems(): CartItem[] {
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => loadCartItems())
+  const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [hasLoaded, setHasLoaded] = useState(false)
+
+  // Load saved cart from localStorage only after mount, so server and client
+  // render the same (empty) initial state — avoids hydration mismatches.
+  useEffect(() => {
+    setItems(loadCartItems())
+    setHasLoaded(true)
+  }, [])
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === "undefined" || !hasLoaded) {
       return
     }
 
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
-  }, [items])
+  }, [items, hasLoaded])
+
+
 
   const addItem = (newItem: Omit<CartItem, "quantity">) => {
     if (newItem.stock <= 0) {

@@ -3,7 +3,7 @@
   import { useEffect, useMemo, useState } from "react"
   import Image from "next/image"
   import Link from "next/link"
-  import { ArrowLeft, Check, LogIn, ShoppingBag, UserPlus } from "lucide-react"
+ import { ArrowLeft, Check, LogIn, ShoppingBag, UserPlus, ChevronDown } from "lucide-react"
   import { useCart } from "@/components/boty/cart-context"
   import { Header } from "@/components/boty/header"
   import { Footer } from "@/components/boty/footer"
@@ -53,7 +53,8 @@
       success: "Order placed successfully! We will contact you shortly.",
       totalItems: "items",
       item: "item",
-      removeNotice: "You can still adjust your cart from the drawer."
+      removeNotice: "You can still adjust your cart from the drawer.",
+      whatsappNotice: "You'll be redirected to WhatsApp — please press Send to confirm your order."
     },
     fr: {
       title: "Paiement",
@@ -85,7 +86,8 @@
       totalItems: "articles",
       item: "article",
       removeNotice: "Vous pouvez encore ajuster votre panier depuis le tiroir.",
-      totalLabel: "Total"
+      totalLabel: "Total",
+      whatsappNotice: "Vous serez redirigé vers WhatsApp — veuillez appuyer sur Envoyer pour confirmer votre commande."
     },
     ar: {
       title: "الدفع",
@@ -117,7 +119,8 @@
       totalItems: "عناصر",
       item: "عنصر",
       removeNotice: "لا يزال بإمكانك تعديل سلتك من الشريط الجانبي.",
-      totalLabel: "الإجمالي"
+      totalLabel: "الإجمالي",
+      whatsappNotice: "سيتم تحويلك إلى واتساب — يرجى الضغط على إرسال لتأكيد طلبك."
     }
   } as const
 
@@ -483,6 +486,9 @@
                       autoComplete="off"
                       className="w-full rounded-2xl border border-border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30"
                     />
+                     <ChevronDown
+      className={`pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground ${isRTL ? "left-3" : "right-3"}`}
+    />
                     <datalist id="delivery-city-suggestions">
                       {deliveryCities.map((rate) => (
                         <option key={rate.city} value={rate.city} />
@@ -498,6 +504,7 @@
                   >
                     {isSubmitting ? t.processing : t.sendViaWhatsApp}
                   </button>
+                  <p className="text-center text-xs text-muted-foreground">{t.whatsappNotice}</p>
                   {errors.submit ? <p className="text-sm text-red-500">{errors.submit}</p> : null}
                 </form>
               </section>
