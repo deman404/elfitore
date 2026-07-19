@@ -295,6 +295,9 @@
         saveBrowserStorefrontOrder(savedOrder)
         setLastOrderReference(savedOrder.reference)
 
+          clearCart()
+        setIsSuccess(true)
+
         if (whatsappNumber) {
           const message = generateWhatsAppMessage(
             {
@@ -317,11 +320,13 @@
           )
 
           const whatsappUrl = getWhatsAppMessageUrl(message, whatsappNumber)
-          window.open(whatsappUrl, "_blank", "noopener,noreferrer")
-        }
 
-        clearCart()
-        setIsSuccess(true)
+          // Show success screen first, then redirect to WhatsApp
+          // (mobile browsers block window.open after an await, so we navigate the same tab)
+          setTimeout(() => {
+            window.location.href = whatsappUrl
+          }, 1200)
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : "Could not save the order."
         setErrors((current) => ({ ...current, submit: message }))
