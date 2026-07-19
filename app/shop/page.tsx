@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ShoppingBag, SlidersHorizontal, X } from "lucide-react"
 import { Header } from "@/components/boty/header"
 import { Footer } from "@/components/boty/footer"
+import { useCart } from "@/components/boty/cart-context"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import {
@@ -307,7 +308,8 @@ function ProductCard({
   isTransitioning: boolean
   locale: Locale
 }) {
-  return (
+  const { addItem } = useCart()
+ return (
     <Link
       href={`/product/${product.id}`}
       className={`group transition-all duration-700 ease-out ${
@@ -326,10 +328,21 @@ function ProductCard({
           />
           <button
             type="button"
-            className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 opacity-0 translate-y-2 backdrop-blur-sm boty-shadow boty-transition group-hover:opacity-100 group-hover:translate-y-0"
+            disabled={product.stock <= 0}
+            className="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 opacity-0 translate-y-2 backdrop-blur-sm boty-shadow boty-transition group-hover:opacity-100 group-hover:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
+              if (product.stock <= 0) return
+              addItem({
+                id: product.id,
+                productId: product.dbId,
+                name: product.name[locale],
+                description: product.description[locale],
+                price: product.price,
+                image: product.image,
+                stock: product.stock,
+              })
             }}
             aria-label={locale === "fr" ? "Ajouter au panier" : locale === "ar" ? "أضف إلى السلة" : "Add to cart"}
           >
