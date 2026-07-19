@@ -28,6 +28,7 @@ export function LanguageSwitcher() {
           className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition text-sm font-medium"
           aria-label={t.change}
         >
+          <span className="uppercase">{locale}</span>
           <Globe className="w-4 h-4" />
         </button>
       </DropdownMenuTrigger>
