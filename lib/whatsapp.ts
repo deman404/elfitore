@@ -43,11 +43,23 @@ export function getWhatsAppChatUrl(number = DEFAULT_WHATSAPP_NUMBER): string {
   return `https://wa.me/${formatWhatsAppNumberForLink(number)}`
 }
 
-export function getWhatsAppMessageUrl(message: string, number = DEFAULT_WHATSAPP_NUMBER): string {
-  const encodedMessage = encodeURIComponent(message)
-  return `https://wa.me/${formatWhatsAppNumberForLink(number)}?text=${encodedMessage}`
-}
+export function getWhatsAppMessageUrl(message: string, rawNumber: string) {
+  // Keep digits only
+  let digits = rawNumber.replace(/\D/g, "")
 
+  // Convert local Moroccan format (0XXXXXXXXX) to international (212XXXXXXXXX)
+  if (digits.startsWith("0")) {
+    digits = "212" + digits.slice(1)
+  }
+
+  // If someone already stored it with a leading 212, leave it as is
+  // If it's missing the country code entirely (e.g. just 674643299), add it
+  if (!digits.startsWith("212") && digits.length === 9) {
+    digits = "212" + digits
+  }
+
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`
+}
 export function openWhatsAppMessage(message: string, number = DEFAULT_WHATSAPP_NUMBER) {
   if (typeof window === "undefined") {
     return null
