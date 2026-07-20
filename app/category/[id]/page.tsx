@@ -10,7 +10,10 @@ import { Footer } from "@/components/boty/footer"
 import { useLanguage } from "@/components/language-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import { normalizeProductRow, type CatalogProductRow, type NormalizedProduct } from "@/lib/catalog"
+import { fetchThemeHomeCategories, isRenderableThemeHomeCategoryImageUrl } from "@/lib/theme-home-categories"
 import type { Locale } from "@/i18n.config"
+
+
 
 type CategoryRecord = {
   id: number
@@ -62,6 +65,7 @@ export default function CategoryPage() {
   const [category, setCategory] = useState<CategoryRecord | null>(null)
   const [products, setProducts] = useState<NormalizedProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const [themeImage, setThemeImage] = useState<string | null>(null)
 
   useEffect(() => {
     const loadCategory = async () => {
@@ -92,6 +96,18 @@ export default function CategoryPage() {
 
         setCategory(categoryResult.data as CategoryRecord)
         setProducts(((productsResult.data ?? []) as CatalogProductRow[]).map(normalizeProductRow))
+
+        const themeCategories = await fetchThemeHomeCategories()
+        const matchingCard = themeCategories.cards.find(
+  (card) =>
+    card.categoryId === categoryResult.data.id ||
+    (card as any).categorySlug === categoryResult.data.slug
+)
+        setThemeImage(
+          matchingCard && isRenderableThemeHomeCategoryImageUrl(matchingCard.imageUrl)
+            ? matchingCard.imageUrl
+            : null
+        )
       } catch {
         setCategory(null)
         setProducts([])
@@ -107,7 +123,7 @@ export default function CategoryPage() {
     window.scrollTo(0, 0)
   }, [categoryParam])
 
-  const heroImage = products[0]?.image || products[0]?.images[0] || "/placeholder.svg"
+ const heroImage = themeImage || products[0]?.image || products[0]?.images[0] || "/placeholder.svg"
 
   return (
     <main className="min-h-screen">

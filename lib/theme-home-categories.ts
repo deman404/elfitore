@@ -5,6 +5,7 @@ export type ThemeHomeCategoryCard = {
   description: Record<Locale, string>
   imageUrl: string
   categoryId: number | null
+  categorySlug: string | null
 }
 
 export type ThemeHomeCategoriesData = {
@@ -42,6 +43,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
       },
       imageUrl: "/product.png",
       categoryId: null,
+      categorySlug: null,
     },
     {
       title: {
@@ -56,6 +58,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
       },
       imageUrl: "/product2.png",
       categoryId: null,
+      categorySlug: null,
     },
     {
       title: {
@@ -70,6 +73,8 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
       },
       imageUrl: "/product3.png",
       categoryId: null,
+      categorySlug: null,
+
     },
     {
       title: {
@@ -84,6 +89,7 @@ export const DEFAULT_THEME_HOME_CATEGORIES: ThemeHomeCategoriesData = {
       },
       imageUrl: "/product4.png",
       categoryId: null,
+      categorySlug: null,
     },
   ],
 }
@@ -122,6 +128,7 @@ export function normalizeThemeHomeCategoryCard(value: unknown, index: number): T
         : typeof source.categoryId === "string" && source.categoryId.trim() && !Number.isNaN(Number(source.categoryId))
           ? Number(source.categoryId)
           : fallbackCard.categoryId ?? null,
+    categorySlug: typeof source.categorySlug === "string" && source.categorySlug.trim() ? source.categorySlug.trim() : null,
   }
 }
 

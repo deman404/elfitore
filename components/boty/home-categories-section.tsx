@@ -92,9 +92,12 @@ export function HomeCategoriesSection() {
           themeCategories.cards.map((card, index) => {
             const title = getLocalizedCardText(card.title, locale)
             const description = getLocalizedCardText(card.description, locale) || fallbackDescription
-            const matchedCategory = card.categoryId != null ? getCategoryById(card.categoryId) : undefined
+            const matchedById = card.categoryId != null ? getCategoryById(card.categoryId) : undefined
+            const matchedBySlug = card.categorySlug
+              ? categories.find((c) => c.slug.toLowerCase() === card.categorySlug?.toLowerCase())
+              : undefined
             const fallbackCategory = categories[index]
-            const resolvedCategory = matchedCategory ?? fallbackCategory
+            const resolvedCategory = matchedById ?? matchedBySlug ?? fallbackCategory
             const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/shop"
             const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
               ? card.imageUrl
