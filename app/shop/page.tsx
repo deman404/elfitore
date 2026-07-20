@@ -85,7 +85,7 @@ export default function ShopPage() {
 
       try {
         const [productsResult, categoriesResult] = await Promise.all([
-          supabase.from("products").select("*").order("id", { ascending: false }),
+         supabase.from("products").select("*").eq("active", true).order("id", { ascending: false }),
           supabase
             .from("product_categories")
             .select("id, name, slug, active")

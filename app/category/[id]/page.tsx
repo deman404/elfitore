@@ -92,6 +92,7 @@ export default function CategoryPage() {
           .from("products")
           .select("*")
           .eq("category", categoryResult.data.slug)
+          .eq("active", true)
           .order("id", { ascending: false })
 
         setCategory(categoryResult.data as CategoryRecord)

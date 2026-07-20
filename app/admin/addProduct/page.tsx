@@ -580,9 +580,23 @@ export default function AddProductPage() {
     }
   }
 
-  const deleteRow = async (id: number) => {
+const deleteRow = async (id: number) => {
+    const confirmed = window.confirm(
+      "Deleting this product will also remove it from any past orders that included it. This cannot be undone. Continue?"
+    )
+    if (!confirmed) return
+
     setSaving(true)
     setStatus("")
+
+    const { error: orderItemsError } = await supabase.from("web_order_items").delete().eq("product_id", id)
+
+    if (orderItemsError) {
+      setStatus(`Could not delete related order items: ${orderItemsError.message}`)
+      setSaving(false)
+      return
+    }
+
     const { error } = await supabase.from("products").delete().eq("id", id)
 
     if (error) {
