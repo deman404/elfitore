@@ -85,7 +85,7 @@ export function Header() {
         .select("id, name, slug, active")
         .eq("active", true)
         .order("sort_order", { ascending: true })
-        .limit(4)
+      
 
       setCategories((data ?? []) as CatalogCategoryRow[])
     }
