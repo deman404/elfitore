@@ -20,6 +20,14 @@ import {
 import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
 
+function toWhatsAppDigits(raw: string) {
+  const digits = raw.replace(/[^\d]/g, "")
+  return digits.startsWith("212") ? digits : `212${digits.replace(/^0/, "")}`
+}
+function formatDisplayNumber(raw: string) {
+  return `+${toWhatsAppDigits(raw)}`
+}
+
 const translations = {
   en: {
     whatsapp: "WhatsApp",
@@ -33,6 +41,7 @@ const translations = {
     send: "Send via WhatsApp",
     support: "Customer support",
     reply: "We usually reply as soon as possible during business hours.",
+    whatsappDesc: "Fast replies for orders and delivery questions",
   },
   fr: {
     whatsapp: "WhatsApp",
@@ -46,6 +55,7 @@ const translations = {
     send: "Envoyer via WhatsApp",
     support: "Support client",
     reply: "Nous répondons généralement dès que possible pendant les heures ouvrables.",
+    whatsappDesc: "Réponses rapides pour vos commandes et livraisons",
   },
   ar: {
     whatsapp: "واتس آب",
@@ -59,6 +69,7 @@ const translations = {
     send: "إرسال عبر واتس آب",
     support: "دعم العملاء",
     reply: "نرد عادة في أسرع وقت ممكن خلال ساعات العمل.",
+    whatsappDesc: "ردود سريعة على الطلبات والتوصيل",
   },
 } as const
 
@@ -77,6 +88,9 @@ export default function ContactPage() {
   const [contactAddress, setContactAddress] = useState(DEFAULT_CONTACT_ADDRESS)
   const [mapsLink, setMapsLink] = useState(DEFAULT_CONTACT_GOOGLE_MAPS_URL)
   const [displayPhone, setDisplayPhone] = useState(DEFAULT_CONTACT_PHONE)
+  const [displayWhatsapp, setDisplayWhatsapp] = useState(
+    formatDisplayNumber(DEFAULT_CONTACT_WHATSAPP_NUMBER)
+  )
 
   useEffect(() => {
     void fetchThemeSupportPages().then((pages) => setContent(pages.contact))
@@ -85,7 +99,7 @@ export default function ContactPage() {
   useEffect(() => {
     const loadSettings = async () => {
       const settings = await fetchSiteSettings()
-      const whatsappDigits = formatWhatsAppNumberForLink(settings.whatsappNumber || DEFAULT_CONTACT_WHATSAPP_NUMBER)
+      const whatsappDigits = toWhatsAppDigits(settings.whatsappNumber || DEFAULT_CONTACT_WHATSAPP_NUMBER)
       const phoneValue = settings.contactPhone || DEFAULT_CONTACT_PHONE
       const addressValue = settings.contactAddress || DEFAULT_CONTACT_ADDRESS
 
@@ -93,6 +107,7 @@ export default function ContactPage() {
       setPhoneLink(`tel:${formatPhoneNumberForLink(phoneValue)}`)
       setContactAddress(addressValue)
       setMapsLink(buildGoogleMapsLink(settings.contactGoogleMapsUrl || DEFAULT_CONTACT_GOOGLE_MAPS_URL, addressValue))
+      setDisplayWhatsapp(formatDisplayNumber(settings.whatsappNumber || DEFAULT_CONTACT_WHATSAPP_NUMBER))
       setDisplayPhone(phoneValue)
     }
 
@@ -116,7 +131,13 @@ export default function ContactPage() {
                 <p className="max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base">{t.intro}</p>
 
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <InfoCard icon={MessageCircle} title={t.whatsapp} description="Fast replies for orders and delivery questions" />
+             <InfoCard
+  icon={MessageCircle}
+  title={t.whatsapp}
+  description={t.whatsappDesc}
+  href={whatsappLink}
+  external
+/>
                   <InfoCard icon={Phone} title={t.callUs} description={displayPhone} href={phoneLink} />
                   <InfoCard icon={MapPin} title={t.visitUs} description={contactAddress} href={mapsLink} />
                 </div>
@@ -172,11 +193,13 @@ function InfoCard({
   title,
   description,
   href,
+  external,
 }: {
   icon: typeof Mail
   title: string
   description: string
   href?: string
+  external?: boolean
 }) {
   const content = (
     <div className="flex items-center gap-3">
@@ -191,7 +214,12 @@ function InfoCard({
   )
 
   return href ? (
-    <a href={href} className="rounded-2xl border border-border/60 bg-background p-4 transition hover:bg-muted/30">
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      className="rounded-2xl border border-border/60 bg-background p-4 transition hover:bg-muted/30"
+    >
       {content}
     </a>
   ) : (
