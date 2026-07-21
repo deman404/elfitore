@@ -24,7 +24,7 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
       try {
         const { data } = await supabase
           .from("product_categories")
-          .select("id, name, slug, active, sort_order")
+          .select("id, name, slug, active, sort_order,description")
           .eq("active", true)
           .order("sort_order", { ascending: true })
 

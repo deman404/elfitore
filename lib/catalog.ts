@@ -21,6 +21,8 @@ export type CatalogCategoryRow = {
   name: string
   slug: string
   active?: boolean
+  sort_order?: number | null
+  description?: string | null
 }
 
 export type NormalizedProduct = {

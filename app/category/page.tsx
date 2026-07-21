@@ -7,13 +7,14 @@ import { ChevronRight } from "lucide-react"
 import { Header } from "@/components/boty/header"
 import { Footer } from "@/components/boty/footer"
 import { useLanguage } from "@/components/language-context"
+import { useCategories } from "@/components/category-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import {
   fetchThemeHomeCategories,
   isRenderableThemeHomeCategoryImageUrl,
   THEME_HOME_CATEGORY_FALLBACK_IMAGE,
 } from "@/lib/theme-home-categories"
-import { parseStringArray, type CatalogCategoryRow, type CatalogProductRow } from "@/lib/catalog"
+import { parseStringArray, type CatalogProductRow } from "@/lib/catalog"
 import type { Locale } from "@/i18n.config"
 
 type FeaturedCategoryCard = {
@@ -24,7 +25,7 @@ type FeaturedCategoryCard = {
   imageUrl: string
 }
 
-const pageText: Record<
+const pageText: Record <
   Locale,
   {
     eyebrow: string
@@ -44,7 +45,7 @@ const pageText: Record<
     empty: "No active categories are available right now.",
   },
   fr: {
-  eyebrow: "Catégories",
+    eyebrow: "Catégories",
     title: "Parcourir toutes les catégories",
     description: "Commencez par l'aperçu des catégories, puis ouvrez une collection pour voir ses produits.",
     browse: "Parcourir les catégories",
@@ -64,64 +65,56 @@ const pageText: Record<
 export default function CategoryIndexPage() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), [])
   const { locale, isRTL } = useLanguage()
+  const { categories, loading: categoriesLoading } = useCategories()
   const t = pageText[locale as Locale]
   const [cards, setCards] = useState<FeaturedCategoryCard[]>([])
   const [heroImage, setHeroImage] = useState("/images/products/oil.jpg")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (categoriesLoading) return
+
     const loadCategories = async () => {
       setLoading(true)
 
       try {
-        const [themeCategories, categoriesResult, productsResult] = await Promise.all([
+        const [themeCategories, productsResult] = await Promise.all([
           fetchThemeHomeCategories(),
           supabase
-            .from("product_categories")
-            .select("id, name, slug, description, active, sort_order")
-            .eq("active", true)
-            .order("sort_order", { ascending: true }),
-          supabase.from("products").select("id, category, image, images").order("id", { ascending: false }),
+            .from("products")
+            .select("id, category, image, images")
+            .order("id", { ascending: false }),
         ])
 
-        const categories = (categoriesResult.data ?? []) as Array<
-          CatalogCategoryRow & { description: string | null; sort_order?: number | null }
-        >
         const products = (productsResult.data ?? []) as CatalogProductRow[]
         const firstImageByCategory = new Map<string, string>()
 
         for (const product of products) {
           if (firstImageByCategory.has(product.category)) continue
-
           const image = product.image || parseStringArray(product.images)[0] || ""
           if (image) {
             firstImageByCategory.set(product.category, image)
           }
         }
 
-        const categoryBySlug = new Map(categories.map((category) => [category.slug, category]))
-
-        const nextCards = themeCategories.cards.map((card, index) => {
-          const title = getLocalizedCardText(card.title, locale)
-          const description = getLocalizedCardText(card.description, locale) || t.description
-          const matchedCategory = card.categorySlug ? categoryBySlug.get(card.categorySlug) : undefined
-          const fallbackCategory = categories[index]
-          const resolvedCategory = matchedCategory ?? fallbackCategory
-
-          const href = resolvedCategory ? `/category/${resolvedCategory.slug}` : "/category"
-          const imageUrl = isRenderableThemeHomeCategoryImageUrl(card.imageUrl)
-            ? card.imageUrl
-            : (resolvedCategory ? firstImageByCategory.get(resolvedCategory.slug) : "") ||
-              THEME_HOME_CATEGORY_FALLBACK_IMAGE
-
-          return {
-            id: resolvedCategory?.id ?? index + 1,
-            href,
-            title,
-            description,
-            imageUrl,
+        // Curated images from the theme config, keyed by category slug
+        const themeImageBySlug = new Map<string, string>()
+        for (const card of themeCategories.cards) {
+          if (card.categorySlug && isRenderableThemeHomeCategoryImageUrl(card.imageUrl)) {
+            themeImageBySlug.set(card.categorySlug.toLowerCase(), card.imageUrl)
           }
-        })
+        }
+
+        const nextCards = categories.map((category) => ({
+          id: category.id,
+          href: `/category/${category.slug}`,
+          title: category.name,
+          description: category.description || t.description,
+          imageUrl:
+            themeImageBySlug.get(category.slug.toLowerCase()) ||
+            firstImageByCategory.get(category.slug) ||
+            THEME_HOME_CATEGORY_FALLBACK_IMAGE,
+        }))
 
         setCards(nextCards)
         setHeroImage(nextCards[0]?.imageUrl || "/images/products/oil.jpg")
@@ -134,7 +127,7 @@ export default function CategoryIndexPage() {
     }
 
     void loadCategories()
-  }, [locale, supabase, t.description])
+  }, [categories, categoriesLoading, supabase, t.description])
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -210,8 +203,4 @@ export default function CategoryIndexPage() {
       <Footer />
     </main>
   )
-}
-
-function getLocalizedCardText(text: Record<Locale, string>, locale: Locale) {
-  return text[locale] || text.en || ""
 }
