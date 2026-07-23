@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useCategories, getCategoryName, getCategoryDescription } from "@/components/category-context"
 import Image from "next/image"
 import Link from "next/link"
 import { useLanguage } from "@/components/language-context"
-import { useCategories } from "@/components/category-context"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import {
   fetchThemeHomeCategories,
@@ -12,6 +12,7 @@ import {
   THEME_HOME_CATEGORY_FALLBACK_IMAGE,
 } from "@/lib/theme-home-categories"
 import { parseStringArray, type CatalogProductRow } from "@/lib/catalog"
+import type { Locale } from "@/i18n.config"
 
 type FeaturedCategoryCard = {
   id: number
@@ -85,27 +86,44 @@ export function HomeCategoriesSection() {
           }
         }
 
-        // Map curated theme images by category slug, so we can look them up
-        // without relying on card order/index matching.
+        // Curated theme data keyed by category slug — image AND localized text
         const themeImageBySlug = new Map<string, string>()
+        const themeTitleBySlug = new Map<string, Record<Locale, string>>()
+        const themeDescriptionBySlug = new Map<string, Record<Locale, string>>()
+
         for (const card of themeCategories.cards) {
-          if (card.categorySlug && isRenderableThemeHomeCategoryImageUrl(card.imageUrl)) {
-            themeImageBySlug.set(card.categorySlug.toLowerCase(), card.imageUrl)
+          if (!card.categorySlug) continue
+          const slugKey = card.categorySlug.toLowerCase()
+
+          if (isRenderableThemeHomeCategoryImageUrl(card.imageUrl)) {
+            themeImageBySlug.set(slugKey, card.imageUrl)
           }
+          if (card.title) themeTitleBySlug.set(slugKey, card.title)
+          if (card.description) themeDescriptionBySlug.set(slugKey, card.description)
         }
 
         setCards(
-          categories.map((category) => ({
-            id: category.id,
-            href: `/category/${category.slug}`,
-            title: category.name,
-            description: category.description || fallbackDescription,
-            imageUrl:
-              themeImageBySlug.get(category.slug.toLowerCase()) ||
-              firstImageByCategory.get(category.slug) ||
-              THEME_HOME_CATEGORY_FALLBACK_IMAGE,
-          }))
-        )
+  categories.map((category) => {
+    const slugKey = category.slug.toLowerCase()
+    const localizedTitle = themeTitleBySlug.get(slugKey)
+    const localizedDescription = themeDescriptionBySlug.get(slugKey)
+
+    return {
+      id: category.id,
+      href: `/category/${category.slug}`,
+      title: getCategoryName(category, locale) || (localizedTitle?.[locale] || localizedTitle?.en) || category.name,
+      description:
+        getCategoryDescription(category, locale) ||
+        (localizedDescription?.[locale] || localizedDescription?.en) ||
+        category.description ||
+        fallbackDescription,
+      imageUrl:
+        themeImageBySlug.get(slugKey) ||
+        firstImageByCategory.get(category.slug) ||
+        THEME_HOME_CATEGORY_FALLBACK_IMAGE,
+    }
+  })
+)
       } catch {
         setCards([])
       } finally {
@@ -114,7 +132,7 @@ export function HomeCategoriesSection() {
     }
 
     void load()
-  }, [categories, categoriesLoading, fallbackDescription, supabase])
+  }, [categories, categoriesLoading, fallbackDescription, locale, supabase])
 
   useEffect(() => {
     const observer = new IntersectionObserver(

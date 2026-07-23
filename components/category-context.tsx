@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { getSupabaseBrowserClient } from "@/lib/supabase"
 import type { CatalogCategoryRow } from "@/lib/catalog"
+import type { Locale } from "@/i18n.config"
 
 type CategoryContextValue = {
   categories: CatalogCategoryRow[]
@@ -23,10 +24,12 @@ export function CategoryProvider({ children }: { children: ReactNode }) {
       setLoading(true)
       try {
         const { data } = await supabase
-          .from("product_categories")
-          .select("id, name, slug, active, sort_order,description")
-          .eq("active", true)
-          .order("sort_order", { ascending: true })
+  .from("product_categories")
+  .select(
+    "id, name, slug, active, sort_order, description, name_en, name_fr, name_ar, description_en, description_fr, description_ar"
+  )
+  .eq("active", true)
+  .order("sort_order", { ascending: true })
 
         setCategories((data ?? []) as CatalogCategoryRow[])
       } finally {
@@ -61,4 +64,14 @@ export function useCategories() {
     throw new Error("useCategories must be used within a CategoryProvider")
   }
   return context
+}
+
+export function getCategoryName(category: CatalogCategoryRow, locale: Locale) {
+  const localized = category[`name_${locale}` as keyof CatalogCategoryRow] as string | null | undefined
+  return localized || category.name_fr || category.name || ""
+}
+
+export function getCategoryDescription(category: CatalogCategoryRow, locale: Locale) {
+  const localized = category[`description_${locale}` as keyof CatalogCategoryRow] as string | null | undefined
+  return localized || category.description_fr || category.description || ""
 }

@@ -23,6 +23,12 @@ export type CatalogCategoryRow = {
   active?: boolean
   sort_order?: number | null
   description?: string | null
+  name_en?: string | null
+  name_fr?: string | null
+  name_ar?: string | null
+  description_en?: string | null
+  description_fr?: string | null
+  description_ar?: string | null
 }
 
 export type NormalizedProduct = {
