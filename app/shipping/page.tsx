@@ -4,9 +4,11 @@ import { useEffect, useState } from "react"
 import { Footer } from "@/components/boty/footer"
 import { Header } from "@/components/boty/header"
 import { useLanguage } from "@/components/language-context"
-import { CheckCircle2, Package, Truck } from "lucide-react"
+import { CheckCircle2, Package, Truck, MapPin, Wallet } from "lucide-react"
 import { DEFAULT_THEME_SUPPORT_PAGES, fetchThemeSupportPages } from "@/lib/theme-support-pages"
 import type { Locale } from "@/i18n.config"
+
+const ICONS = [Truck, Package, CheckCircle2, MapPin, Wallet]
 
 export default function ShippingPage() {
   const { locale, isRTL } = useLanguage()
@@ -19,7 +21,10 @@ export default function ShippingPage() {
   const t = {
     title: data.title[locale as Locale],
     subtitle: data.subtitle[locale as Locale],
-    bullets: data.bullets.map((bullet) => bullet[locale as Locale]),
+    bullets: data.bullets.map((bullet) => ({
+      title: bullet.title[locale as Locale],
+      body: bullet.body[locale as Locale],
+    })),
   }
 
   return (
@@ -34,22 +39,10 @@ export default function ShippingPage() {
               <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">{t.subtitle}</p>
             </div>
 
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              <Pill icon={Truck} title="Delivery pricing" text={t.bullets[0]} />
-              <Pill icon={Package} title="Checkout" text={t.bullets[1]} />
-              <Pill icon={CheckCircle2} title="Admin tracking" text={t.bullets[3]} />
-            </div>
-
-            <div className="mt-8 rounded-[1.75rem] border border-border/60 bg-background p-5 sm:p-6">
-              <h2 className="text-xl font-semibold text-foreground">How it works</h2>
-              <ul className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
-                {t.bullets.map((bullet) => (
-                  <li key={bullet} className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {t.bullets.map((bullet, index) => (
+                <Pill key={bullet.title} icon={ICONS[index % ICONS.length]} title={bullet.title} text={bullet.body} />
+              ))}
             </div>
           </section>
         </div>

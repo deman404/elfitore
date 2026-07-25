@@ -4,6 +4,7 @@ import {
   DEFAULT_THEME_SUPPORT_PAGES,
   type LocalizedText,
   type ThemeSupportPagesData,
+  type ThemeShippingBullet,
 } from "@/lib/theme-support-pages"
 
 export const dynamic = "force-dynamic"
@@ -30,7 +31,7 @@ function normalize(row: Record<string, unknown>): ThemeSupportPagesData {
   return {
     contact: normalizeSimple(row.contact, DEFAULT_THEME_SUPPORT_PAGES.contact, ["intro"]),
     faq: normalizeFaq(row.faq),
-    shipping: normalizeList(row.shipping, DEFAULT_THEME_SUPPORT_PAGES.shipping, DEFAULT_THEME_SUPPORT_PAGES.shipping.bullets, "bullets") as ThemeSupportPagesData["shipping"],
+    shipping: normalizeShipping(row.shipping),
     returns: normalizeList(row.returns, DEFAULT_THEME_SUPPORT_PAGES.returns, DEFAULT_THEME_SUPPORT_PAGES.returns.points, "points") as ThemeSupportPagesData["returns"],
     privacyPolicy: normalizeLegal(row.privacy_policy, DEFAULT_THEME_SUPPORT_PAGES.privacyPolicy),
     termsOfService: normalizeLegal(row.terms_of_service, DEFAULT_THEME_SUPPORT_PAGES.termsOfService),
@@ -63,6 +64,26 @@ function normalizeFaq(value: unknown) {
             a: localized(isObject(item) ? item.a : undefined, fallback.items[index]?.a ?? fallback.items[0].a),
           }))
         : fallback.items,
+  }
+}
+
+function normalizeShipping(value: unknown): ThemeSupportPagesData["shipping"] {
+  const fallback = DEFAULT_THEME_SUPPORT_PAGES.shipping
+  const data = isObject(value) ? value : {}
+  const rawBullets = data.bullets
+
+  const bullets: ThemeShippingBullet[] =
+    Array.isArray(rawBullets) && rawBullets.length > 0 && rawBullets.every((item) => isObject(item) && "title" in item && "body" in item)
+      ? rawBullets.map((item: unknown, index: number) => ({
+          title: localized(isObject(item) ? item.title : undefined, fallback.bullets[index]?.title ?? fallback.bullets[0].title),
+          body: localized(isObject(item) ? item.body : undefined, fallback.bullets[index]?.body ?? fallback.bullets[0].body),
+        }))
+      : fallback.bullets
+
+  return {
+    title: localized(data.title, fallback.title),
+    subtitle: localized(data.subtitle, fallback.subtitle),
+    bullets,
   }
 }
 

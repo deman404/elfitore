@@ -12,6 +12,11 @@ export type ThemeSupportFaqItem = {
   a: LocalizedText
 }
 
+export type ThemeShippingBullet = {
+  title: LocalizedText
+  body: LocalizedText
+}
+
 export type ThemeContactPageData = {
   title: LocalizedText
   subtitle: LocalizedText
@@ -27,7 +32,7 @@ export type ThemeFaqPageData = {
 export type ThemeShippingPageData = {
   title: LocalizedText
   subtitle: LocalizedText
-  bullets: LocalizedText[]
+  bullets: ThemeShippingBullet[]
 }
 
 export type ThemeReturnsPageData = {
@@ -78,11 +83,7 @@ export const DEFAULT_THEME_SUPPORT_PAGES: ThemeSupportPagesData = {
     ),
     items: [
       {
-        q: text(
-          "Are your products 100% natural?",
-          "Vos produits sont-ils 100 % naturels ?",
-          "هل منتجاتكم طبيعية 100%؟"
-        ),
+        q: text("Are your products 100% natural?", "Vos produits sont-ils 100 % naturels ?", "هل منتجاتكم طبيعية 100%؟"),
         a: text(
           "Yes, all our products are prepared using only salt and healthy, natural, traditional methods without soda, preservatives, or chemical additives.",
           "Oui, tous nos produits sont préparés uniquement avec du sel et selon des méthodes traditionnelles, naturelles et saines, sans soude, sans conservateurs ni additifs chimiques.",
@@ -102,11 +103,7 @@ export const DEFAULT_THEME_SUPPORT_PAGES: ThemeSupportPagesData = {
         ),
       },
       {
-        q: text(
-          "How long does shipping and delivery take?",
-          "Combien de temps prennent l'expédition et la livraison ?",
-          "كم يستغرق الشحن والوصول؟"
-        ),
+        q: text("How long does shipping and delivery take?", "Combien de temps prennent l'expédition et la livraison ?", "كم يستغرق الشحن والوصول؟"),
         a: text(
           "Orders within major cities are delivered within 24 to 48 hours, and to the rest of Moroccan cities within 2 to 4 business days.",
           "Les commandes sont livrées dans les grandes villes sous 24 à 48 heures, et dans le reste des villes marocaines sous 2 à 4 jours ouvrables.",
@@ -114,11 +111,7 @@ export const DEFAULT_THEME_SUPPORT_PAGES: ThemeSupportPagesData = {
         ),
       },
       {
-        q: text(
-          "Do you offer free shipping?",
-          "Proposez-vous la livraison gratuite ?",
-          "هل يوجد شحن مجاني؟"
-        ),
+        q: text("Do you offer free shipping?", "Proposez-vous la livraison gratuite ?", "هل يوجد شحن مجاني؟"),
         a: text(
           "Yes! We regularly offer free shipping deals and special discounts. Available options and offers will appear automatically during checkout.",
           "Oui ! Nous proposons régulièrement des offres de livraison gratuite et des promotions spéciales. Les options et offres disponibles s'affichent automatiquement lors de la validation de votre commande.",
@@ -135,31 +128,46 @@ export const DEFAULT_THEME_SUPPORT_PAGES: ThemeSupportPagesData = {
       "مدة التوصيل والتغليف والتتبع ومصاريف الشحن."
     ),
     bullets: [
-      text(
-        "Delivery Time: We take great care in preparing and packaging your orders professionally. Delivery usually takes between 1 to 3 business days depending on the city and region.",
-        "Délai de livraison : Nous veillons à préparer et emballer vos commandes avec le plus grand soin. La livraison prend généralement entre 1 et 3 jours ouvrables selon la ville et la région.",
-        "مدة التوصيل: نحرص على تجهيز طلباتكم وتغليفها بكل عناية واحترافية. يستغرق التوصيل عادة بين 1 إلى 3 أيام عمل حسب المدينة والمنطقة."
-      ),
-      text(
-        "Safe & Protected Packaging: All natural and glass products are packed with special shock-resistant wrapping to guarantee they arrive safely and in perfect condition.",
-        "Emballage sécurisé et protégé : Tous les produits naturels et en verre sont emballés avec des protections spéciales contre les chocs, afin de garantir leur arrivée en toute sécurité et avec leur qualité habituelle.",
-        "تغليف آمن ومحمي: تُغلف جميع المنتجات الطبيعية والزجاجية بأغطية وحماية خاصة ضد الصدمات، لضمان وصولها إليكم بنفس جودتها المعهودة وبأمان تام."
-      ),
-      text(
-        "Order Tracking: Once your order is dispatched with the delivery company, the courier will contact you by phone to arrange the most convenient time and location to receive your shipment.",
-        "Suivi de la commande : Dès l'expédition de votre commande avec la société de livraison, le livreur vous contacte par téléphone pour convenir de l'heure et du lieu qui vous conviennent pour réceptionner le colis.",
-        "تتبع الطلبية: فور إرسال طلبيتك مع شركة التوصيل، يتواصل معكم الموزع هاتفياً لتحديد الوقت والمكان الأنسب لكم لتسلم الشحنة."
-      ),
-      text(
-        "Covered Cities & Regions: We ship our products to most Moroccan cities and regions via approved delivery partners. At checkout, you will find a list of available cities to select yours easily. If you do not find your city on the list, feel free to contact us via WhatsApp to check delivery availability or arrange a suitable solution.",
-        "Villes et zones desservies : Nous livrons dans la plupart des villes et régions du Maroc via des sociétés de livraison agréées. Lors de la validation de votre commande, vous trouverez la liste des villes disponibles pour sélectionner facilement la vôtre. (Si vous ne trouvez pas votre ville dans la liste, vous pouvez nous contacter via WhatsApp pour vérifier la possibilité de livraison ou trouver une solution adaptée).",
-        "المدن والمناطق المشمولة: نشحن منتجاتنا لمعظم المدن والجهات المغربية عبر شركات التوصيل المعتمدة. عند إتمام طلبكم، ستجدون قائمة المدن المتاحة للتوصيل لتعيين مدينتكم بسهولة. (في حال لم تجدوا مدينتكم ضمن القائمة، يمكنكم التواصل معنا عبر الواتساب للتحقق من إمكانية التوصيل أو ترتيب حل مناسب)."
-      ),
-      text(
-        "Shipping Costs: Shipping fees are calculated at checkout based on the city. Free shipping promotions apply periodically according to active store offers at the time of order.",
-        "Frais de livraison : Les frais de livraison sont calculés sur la page de paiement (Checkout) en fonction de la ville, et les offres de livraison gratuite s'appliquent périodiquement selon les promotions disponibles sur la boutique au moment de la commande.",
-        "مصاريف الشحن: يتم احتساب مصاريف الشحن عند صفحة الإتمام (Checkout) بحسب المدينة، وتطبق عروض الشحن المجاني دورياً بحسب العروض المتاحة على المتجر وقت الطلب."
-      ),
+      {
+        title: text("Delivery Time", "Délai de livraison", "مدة التوصيل"),
+        body: text(
+          "We take great care in preparing and packaging your orders professionally. Delivery usually takes between 1 to 3 business days depending on the city and region.",
+          "Nous veillons à préparer et emballer vos commandes avec le plus grand soin. La livraison prend généralement entre 1 et 3 jours ouvrables selon la ville et la région.",
+          "نحرص على تجهيز طلباتكم وتغليفها بكل عناية واحترافية. يستغرق التوصيل عادة بين 1 إلى 3 أيام عمل حسب المدينة والمنطقة."
+        ),
+      },
+      {
+        title: text("Safe & Protected Packaging", "Emballage sécurisé et protégé", "تغليف آمن ومحمي"),
+        body: text(
+          "All natural and glass products are packed with special shock-resistant wrapping to guarantee they arrive safely and in perfect condition.",
+          "Tous les produits naturels et en verre sont emballés avec des protections spéciales contre les chocs, afin de garantir leur arrivée en toute sécurité et avec leur qualité habituelle.",
+          "تُغلف جميع المنتجات الطبيعية والزجاجية بأغطية وحماية خاصة ضد الصدمات، لضمان وصولها إليكم بنفس جودتها المعهودة وبأمان تام."
+        ),
+      },
+      {
+        title: text("Order Tracking", "Suivi de la commande", "تتبع الطلبية"),
+        body: text(
+          "Once your order is dispatched with the delivery company, the courier will contact you by phone to arrange the most convenient time and location to receive your shipment.",
+          "Dès l'expédition de votre commande avec la société de livraison, le livreur vous contacte par téléphone pour convenir de l'heure et du lieu qui vous conviennent pour réceptionner le colis.",
+          "فور إرسال طلبيتك مع شركة التوصيل، يتواصل معكم الموزع هاتفياً لتحديد الوقت والمكان الأنسب لكم لتسلم الشحنة."
+        ),
+      },
+      {
+        title: text("Covered Cities & Regions", "Villes et zones desservies", "المدن والمناطق المشمولة"),
+        body: text(
+          "We ship our products to most Moroccan cities and regions via approved delivery partners. At checkout, you will find a list of available cities to select yours easily. If you do not find your city on the list, feel free to contact us via WhatsApp to check delivery availability or arrange a suitable solution.",
+          "Nous livrons dans la plupart des villes et régions du Maroc via des sociétés de livraison agréées. Lors de la validation de votre commande, vous trouverez la liste des villes disponibles pour sélectionner facilement la vôtre. Si vous ne trouvez pas votre ville dans la liste, vous pouvez nous contacter via WhatsApp pour vérifier la possibilité de livraison ou trouver une solution adaptée.",
+          "نشحن منتجاتنا لمعظم المدن والجهات المغربية عبر شركات التوصيل المعتمدة. عند إتمام طلبكم، ستجدون قائمة المدن المتاحة للتوصيل لتعيين مدينتكم بسهولة. في حال لم تجدوا مدينتكم ضمن القائمة، يمكنكم التواصل معنا عبر الواتساب للتحقق من إمكانية التوصيل أو ترتيب حل مناسب."
+        ),
+      },
+      {
+        title: text("Shipping Costs", "Frais de livraison", "مصاريف الشحن"),
+        body: text(
+          "Shipping fees are calculated at checkout based on the city. Free shipping promotions apply periodically according to active store offers at the time of order.",
+          "Les frais de livraison sont calculés sur la page de paiement (Checkout) en fonction de la ville, et les offres de livraison gratuite s'appliquent périodiquement selon les promotions disponibles sur la boutique au moment de la commande.",
+          "يتم احتساب مصاريف الشحن عند صفحة الإتمام (Checkout) بحسب المدينة، وتطبق عروض الشحن المجاني دورياً بحسب العروض المتاحة على المتجر وقت الطلب."
+        ),
+      },
     ],
   },
   returns: {
