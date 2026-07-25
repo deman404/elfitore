@@ -70,199 +70,192 @@ export const DEFAULT_THEME_SUPPORT_PAGES: ThemeSupportPagesData = {
     ),
   },
   faq: {
-    title: text("FAQ", "FAQ", "الأسئلة الشائعة"),
+    title: text("Frequently Asked Questions (FAQ)", "Foire Aux Questions (FAQ)", "الاسئلة الشائعة"),
     subtitle: text(
-      "Quick answers to the most common questions about orders, payment, and delivery.",
-      "Réponses rapides aux questions les plus fréquentes sur les commandes, le paiement et la livraison.",
-      "إجابات سريعة على أكثر الأسئلة شيوعًا حول الطلبات والدفع والتوصيل."
+      "Quick answers to the most common questions about our products, delivery, and shipping.",
+      "Réponses rapides aux questions les plus fréquentes sur nos produits, la livraison et l'expédition.",
+      "إجابات سريعة على أكثر الأسئلة شيوعاً حول منتجاتنا والتوصيل والشحن."
     ),
     items: [
       {
-        q: text("How do I place an order?", "Comment passer une commande ?", "كيف أقدم طلبًا؟"),
-        a: text(
-          "Add products to your cart, choose checkout or WhatsApp, then complete your contact details and delivery choice.",
-          "Ajoutez les produits au panier, choisissez le paiement ou WhatsApp, puis complétez vos coordonnées et la livraison.",
-          "أضف المنتجات إلى السلة، ثم اختر الدفع أو واتس آب وأكمل بياناتك وخيار التوصيل."
+        q: text(
+          "Are your products 100% natural?",
+          "Vos produits sont-ils 100 % naturels ?",
+          "هل منتجاتكم طبيعية 100%؟"
         ),
-      },
-      {
-        q: text("Can I pay on delivery?", "Puis-je payer à la livraison ?", "هل يمكنني الدفع عند الاستلام؟"),
         a: text(
-          "Yes. Cash on delivery is available for supported delivery areas.",
-          "Oui. Le paiement à la livraison est disponible pour les zones compatibles.",
-          "نعم، الدفع عند الاستلام متاح للمناطق المدعومة."
-        ),
-      },
-      {
-        q: text("Do you ship across Morocco?", "Livrez-vous partout au Maroc ?", "هل تشحنون داخل المغرب؟"),
-        a: text(
-          "We ship to the Moroccan cities and zones listed in the delivery settings, and admins can add more destinations anytime.",
-          "Nous livrons dans les villes et zones définies dans les paramètres de livraison, et l’admin peut en ajouter d’autres à tout moment.",
-          "نحن نشحن إلى المدن والمناطق المحددة في إعدادات التوصيل، ويمكن للمشرف إضافة وجهات جديدة في أي وقت."
-        ),
-      },
-      {
-        q: text("How long does delivery take?", "Combien de temps prend la livraison ?", "كم يستغرق التوصيل؟"),
-        a: text(
-          "Delivery time depends on the city and carrier. Your order will show the shipping price during checkout.",
-          "Le délai dépend de la ville et du transporteur. Le prix de livraison apparaît au paiement.",
-          "يعتمد الوقت على المدينة وشركة الشحن. يظهر سعر الشحن عند إتمام الطلب."
+          "Yes, all our products are prepared using only salt and healthy, natural, traditional methods without soda, preservatives, or chemical additives.",
+          "Oui, tous nos produits sont préparés uniquement avec du sel et selon des méthodes traditionnelles, naturelles et saines, sans soude, sans conservateurs ni additifs chimiques.",
+          "نعم، جميع منتجاتنا محضرة فقط بالملح و بطرق تقليدية وطبيعية صحية بدون صودا او أي مواد حافظة أو مضافات كيميائية."
         ),
       },
       {
         q: text(
-          "Can I change my order after placing it?",
-          "Puis-je modifier ma commande après l’avoir passée ?",
-          "هل يمكنني تعديل الطلب بعد إرساله؟"
+          "How is product quality maintained during delivery?",
+          "Comment la qualité des produits est-elle préservée pendant la livraison ?",
+          "كيف يتم الحفاظ على جودة المنتجات أثناء التوصيل؟"
         ),
         a: text(
-          "Contact us as soon as possible on WhatsApp so we can help update the order before it is processed.",
-          "Contactez-nous au plus vite sur WhatsApp afin que nous puissions vous aider avant le traitement.",
-          "تواصل معنا بسرعة عبر واتس آب وسنحاول تحديث الطلب قبل معالجته."
+          "We place great importance on packaging our products securely and safely to ensure they reach you with the same high quality as when they were made, wherever you are in Morocco.",
+          "Nous accordons une grande importance à l'emballage de nos produits, garantissant qu'ils soient scellés et sécurisés pour vous parvenir avec la même qualité qu'à leur fabrication, où que vous soyez au Maroc.",
+          "نولي أهمية كبيرة لتغليف منتجاتنا بطريقة محكمة وآمنة تضمن وصولها إليكم بنفس الجودة التي صُنعت بها، أينما كنتم في المغرب."
+        ),
+      },
+      {
+        q: text(
+          "How long does shipping and delivery take?",
+          "Combien de temps prennent l'expédition et la livraison ?",
+          "كم يستغرق الشحن والوصول؟"
+        ),
+        a: text(
+          "Orders within major cities are delivered within 24 to 48 hours, and to the rest of Moroccan cities within 2 to 4 business days.",
+          "Les commandes sont livrées dans les grandes villes sous 24 à 48 heures, et dans le reste des villes marocaines sous 2 à 4 jours ouvrables.",
+          "يتم توصيل الطلبيات داخل المدن الرئيسية خلال 24 إلى 48 ساعة، وباقي المدن المغربية خلال 2 إلى 4 أيام عمل."
+        ),
+      },
+      {
+        q: text(
+          "Do you offer free shipping?",
+          "Proposez-vous la livraison gratuite ?",
+          "هل يوجد شحن مجاني؟"
+        ),
+        a: text(
+          "Yes! We regularly offer free shipping deals and special discounts. Available options and offers will appear automatically during checkout.",
+          "Oui ! Nous proposons régulièrement des offres de livraison gratuite et des promotions spéciales. Les options et offres disponibles s'affichent automatiquement lors de la validation de votre commande.",
+          "نعم! نقدم عروض شحن مجاني وتخفيضات مميزة بشكل دوري، وتظهر لك الخيارات والعروض المتاحة تلقائياً أثناء إتمام طلبك."
         ),
       },
     ],
   },
   shipping: {
-    title: text("Shipping", "Livraison", "التوصيل"),
+    title: text("Shipping & Delivery Policy", "Politique d'Expédition et de Livraison", "سياسة الشحن و التوصيل"),
     subtitle: text(
-      "Delivery pricing, areas, and how shipping works on El Fitore.",
-      "Prix de livraison, zones desservies et fonctionnement de la livraison sur El Fitore.",
-      "أسعار التوصيل والمناطق وكيفية عمل الشحن في El Fitore."
+      "Delivery times, packaging, tracking, and shipping costs.",
+      "Délais de livraison, emballage, suivi et frais de livraison.",
+      "مدة التوصيل والتغليف والتتبع ومصاريف الشحن."
     ),
     bullets: [
       text(
-        "Shipping rates are set by city and delivery company in the admin panel.",
-        "Les tarifs sont définis par ville et par transporteur dans le panneau d’administration.",
-        "يتم تحديد أسعار الشحن حسب المدينة وشركة التوصيل من لوحة الإدارة."
+        "Delivery Time: We take great care in preparing and packaging your orders professionally. Delivery usually takes between 1 to 3 business days depending on the city and region.",
+        "Délai de livraison : Nous veillons à préparer et emballer vos commandes avec le plus grand soin. La livraison prend généralement entre 1 et 3 jours ouvrables selon la ville et la région.",
+        "مدة التوصيل: نحرص على تجهيز طلباتكم وتغليفها بكل عناية واحترافية. يستغرق التوصيل عادة بين 1 إلى 3 أيام عمل حسب المدينة والمنطقة."
       ),
       text(
-        "Checkout shows the shipping price before you place the order.",
-        "Le paiement affiche le prix de livraison avant validation de la commande.",
-        "يعرض الدفع سعر الشحن قبل إتمام الطلب."
+        "Safe & Protected Packaging: All natural and glass products are packed with special shock-resistant wrapping to guarantee they arrive safely and in perfect condition.",
+        "Emballage sécurisé et protégé : Tous les produits naturels et en verre sont emballés avec des protections spéciales contre les chocs, afin de garantir leur arrivée en toute sécurité et avec leur qualité habituelle.",
+        "تغليف آمن ومحمي: تُغلف جميع المنتجات الطبيعية والزجاجية بأغطية وحماية خاصة ضد الصدمات، لضمان وصولها إليكم بنفس جودتها المعهودة وبأمان تام."
       ),
       text(
-        "Admins can add or update delivery methods and city prices anytime.",
-        "Les admins peuvent ajouter ou modifier les méthodes de livraison et les prix à tout moment.",
-        "يمكن للمشرف إضافة أو تعديل طرق التوصيل وأسعار المدن في أي وقت."
+        "Order Tracking: Once your order is dispatched with the delivery company, the courier will contact you by phone to arrange the most convenient time and location to receive your shipment.",
+        "Suivi de la commande : Dès l'expédition de votre commande avec la société de livraison, le livreur vous contacte par téléphone pour convenir de l'heure et du lieu qui vous conviennent pour réceptionner le colis.",
+        "تتبع الطلبية: فور إرسال طلبيتك مع شركة التوصيل، يتواصل معكم الموزع هاتفياً لتحديد الوقت والمكان الأنسب لكم لتسلم الشحنة."
       ),
       text(
-        "Orders placed by WhatsApp or COD are still saved in the admin orders list.",
-        "Les commandes passées par WhatsApp ou contre remboursement sont aussi enregistrées dans l’administration.",
-        "الطلبات عبر واتس آب أو الدفع عند الاستلام تُحفظ أيضًا في لوحة الإدارة."
+        "Covered Cities & Regions: We ship our products to most Moroccan cities and regions via approved delivery partners. At checkout, you will find a list of available cities to select yours easily. If you do not find your city on the list, feel free to contact us via WhatsApp to check delivery availability or arrange a suitable solution.",
+        "Villes et zones desservies : Nous livrons dans la plupart des villes et régions du Maroc via des sociétés de livraison agréées. Lors de la validation de votre commande, vous trouverez la liste des villes disponibles pour sélectionner facilement la vôtre. (Si vous ne trouvez pas votre ville dans la liste, vous pouvez nous contacter via WhatsApp pour vérifier la possibilité de livraison ou trouver une solution adaptée).",
+        "المدن والمناطق المشمولة: نشحن منتجاتنا لمعظم المدن والجهات المغربية عبر شركات التوصيل المعتمدة. عند إتمام طلبكم، ستجدون قائمة المدن المتاحة للتوصيل لتعيين مدينتكم بسهولة. (في حال لم تجدوا مدينتكم ضمن القائمة، يمكنكم التواصل معنا عبر الواتساب للتحقق من إمكانية التوصيل أو ترتيب حل مناسب)."
+      ),
+      text(
+        "Shipping Costs: Shipping fees are calculated at checkout based on the city. Free shipping promotions apply periodically according to active store offers at the time of order.",
+        "Frais de livraison : Les frais de livraison sont calculés sur la page de paiement (Checkout) en fonction de la ville, et les offres de livraison gratuite s'appliquent périodiquement selon les promotions disponibles sur la boutique au moment de la commande.",
+        "مصاريف الشحن: يتم احتساب مصاريف الشحن عند صفحة الإتمام (Checkout) بحسب المدينة، وتطبق عروض الشحن المجاني دورياً بحسب العروض المتاحة على المتجر وقت الطلب."
       ),
     ],
   },
   returns: {
-    title: text("Returns", "Retours", "المرتجعات"),
+    title: text("Return & Exchange Policy", "Politique de Retour et de Remboursement", "سياسة الإرجاع و الاستبدال"),
     subtitle: text(
-      "How returns and issue handling work for online orders.",
-      "Comment fonctionnent les retours et la gestion des problèmes pour les commandes en ligne.",
-      "كيفية التعامل مع المرتجعات والمشاكل في الطلبات عبر الإنترنت."
+      "We are committed to delivering high-quality natural products. Returns and exchanges are subject to the following conditions.",
+      "Nous nous engageons à fournir des produits naturels de haute qualité. Le retour et l'échange sont soumis aux conditions suivantes.",
+      "نحن نلتزم بتقديم منتجات طبيعية عالية الجودة. تخضع عملية الإرجاع والاستبدال للشروط التالية."
     ),
     points: [
       text(
-        "Contact us quickly if a product arrives damaged or incorrect.",
-        "Contactez-nous rapidement si un produit arrive endommagé ou incorrect.",
-        "تواصل معنا بسرعة إذا وصل المنتج تالفًا أو غير صحيح."
+        "Eligible for return or exchange: if you receive a damaged product (broken or with a clear defect), or an incorrect product completely different from what you ordered.",
+        "Cas acceptés pour le retour ou l'échange : si vous recevez un produit endommagé (cassé ou présentant un défaut évident), ou un produit incorrect ou totalement différent de celui commandé.",
+        "الحالات المقبولة للإرجاع أو الاستبدال: إذا وصلك منتج متضرر (مكسور أو فيه عيب واضح)، أو إذا وصلك منتج خاطئ أو مغاير تماماً للمنتج الذي قمت بطلبه."
       ),
       text(
-        "We will review the issue and guide you through the next step.",
-        "Nous examinerons le problème et vous guiderons pour la suite.",
-        "سنراجع المشكلة ونرشدك إلى الخطوة التالية."
+        "Required conditions: you must contact us immediately upon receiving the order and provide clear photos and video showing the damage or error. The product must be in its original packaging and unused.",
+        "Conditions requises : vous devez nous contacter dès la réception de la commande et nous fournir des photos et une vidéo claires montrant le dommage ou l'erreur. Le produit doit être dans son emballage d'origine et ne pas avoir été utilisé.",
+        "الشروط الواجب توفرها: يجب التواصل معنا فور استلام الطلب وتزويدنا بصور وفيديو واضحين يظهران الضرر أو الخطأ الحاصل في المنتج، ويجب أن يكون المنتج في غلافه الأصلي ولم يتم استخدامه."
       ),
       text(
-        "Returns are handled case by case depending on the product and condition.",
-        "Les retours sont traités au cas par cas selon le produit et son état.",
-        "تُعالج المرتجعات حالةً بحالة حسب المنتج والحالة."
+        "Ineligible cases: returns or exchanges are not accepted simply due to a change of mind after receiving a correct product in good condition.",
+        "Cas non acceptés : le retour ou l'échange n'est pas accepté simplement en cas de changement d'avis après réception d'un produit conforme et en bon état.",
+        "الحالات غير المقبولة: لا يُقبل الإرجاع أو الاستبدال لمجرد تغيير الرأي بعد استلام المنتج وهو في حالة سليمة ومطابق للطلب."
       ),
       text(
-        "Please keep the original packaging when possible so we can review it properly.",
-        "Conservez si possible l’emballage d’origine pour que nous puissions l’examiner correctement.",
-        "يرجى الاحتفاظ بالتغليف الأصلي قدر الإمكان لنتمكن من مراجعته بشكل صحيح."
+        "Compensation method: after verifying the photos and confirming the damage, we commit to resending a new replacement product or refunding you directly, covering all additional shipping costs.",
+        "Mode de compensation : après vérification des photos et confirmation du dommage, nous nous engageons à vous renvoyer un produit neuf de remplacement ou à vous rembourser directement, en prenant en charge tous les frais d'expédition supplémentaires.",
+        "طريقة التعويض: بعد التحقق من الصور وإثبات الضرر، نلتزم بإعادة إرسال منتج جديد بديل لك أو تعويضك مباشرة، وتحمل كافة مصاريف الشحن الإضافية."
       ),
     ],
   },
   privacyPolicy: {
-    title: text("Privacy Policy", "Politique de confidentialité", "سياسة الخصوصية"),
+    title: text("Privacy Policy", "Politique de Confidentialité", "سياسة الخصوصية"),
     subtitle: text(
-      "How we collect, use, and protect your information.",
-      "Comment nous collectons, utilisons et protégeons vos informations.",
-      "كيف نجمع معلوماتك ونستخدمها ونحميها."
+      "We place the highest priority on protecting your privacy and personal data.",
+      "Nous accordons une importance capitale à la protection de votre vie privée et de vos données personnelles.",
+      "نحن نولي أهمية قصوى لحماية خصوصيتك وبياناتك الشخصية."
     ),
     sections: [
       {
-        title: text("Information we collect", "Informations collectées", "المعلومات التي نجمعها"),
+        title: text("Data We Collect", "Données collectées", "البيانات التي نجمعها"),
         body: text(
-          "We may collect details you submit through checkout, WhatsApp orders, contact forms, and admin-managed delivery settings.",
-          "Nous pouvons collecter les informations que vous soumettez via le paiement, les commandes WhatsApp, les formulaires de contact et les paramètres de livraison gérés par l’admin.",
-          "قد نجمع التفاصيل التي ترسلها عبر الدفع وطلبات واتس آب ونماذج التواصل وإعدادات التوصيل التي يديرها المشرف."
+          "We only collect information necessary to process and deliver your order (such as: full name, phone number, and delivery address).",
+          "Nous ne collectons que les informations nécessaires au traitement et à la livraison de votre commande (telles que : nom complet, numéro de téléphone et adresse de livraison).",
+          "نجمع فقط المعلومات الضرورية لمعالجة طلبك وتوصيله (مثل: الاسم الكامل، رقم الهاتف، وعنوان التوصيل)."
         ),
       },
       {
-        title: text("How we use information", "Utilisation des informations", "كيف نستخدم المعلومات"),
+        title: text("How We Use Your Information", "Utilisation de vos informations", "كيف نستخدم معلوماتك؟"),
         body: text(
-          "We use your information to process orders, contact you about delivery, improve the storefront experience, and maintain admin records.",
-          "Nous utilisons vos informations pour traiter les commandes, vous contacter au sujet de la livraison, améliorer la boutique et conserver les enregistrements administratifs.",
-          "نستخدم معلوماتك لمعالجة الطلبات والتواصل معك بخصوص التوصيل وتحسين تجربة المتجر والحفاظ على السجلات الإدارية."
+          "We use your data solely for shipping orders, communicating regarding your purchase, or providing customer support.",
+          "Nous utilisons vos données uniquement pour l'expédition des commandes, la communication concernant votre achat ou le service client.",
+          "نستخدم بياناتك فقط لأغراض شحن الطلبيات، التواصل معك بخصوص طلبيتك، أو تقديم دعم العملاء."
         ),
       },
       {
-        title: text("Sharing and security", "Partage et sécurité", "المشاركة والأمان"),
+        title: text("Data Protection", "Protection des données", "حماية البيانات"),
         body: text(
-          "We do not sell personal data. Access is limited to authorized staff, and we take reasonable steps to protect stored information.",
-          "Nous ne vendons pas les données personnelles. L’accès est limité au personnel autorisé et nous prenons des mesures raisonnables pour protéger les informations stockées.",
-          "نحن لا نبيع البيانات الشخصية. يقتصر الوصول على الموظفين المخولين، ونتخذ خطوات معقولة لحماية المعلومات المخزنة."
-        ),
-      },
-      {
-        title: text("Your choices", "Vos choix", "خياراتك"),
-        body: text(
-          "You can contact us to review or update order details where applicable, and you may choose not to submit optional information.",
-          "Vous pouvez nous contacter pour consulter ou mettre à jour les détails de commande lorsque cela est possible, et vous pouvez choisir de ne pas fournir les informations facultatives.",
-          "يمكنك التواصل معنا لمراجعة أو تحديث تفاصيل الطلب حيثما ينطبق ذلك، ويمكنك اختيار عدم إرسال المعلومات الاختيارية."
+          "We commit never to share, sell, or leak your personal data to any external third party under any circumstances.",
+          "Nous nous engageons à ne pas partager, vendre ou divulguer vos données personnelles à des tiers externes, sous aucun prétexte.",
+          "نلتزم بعدم مشاركة، بيع، أو تسريب بياناتك الشخصية لأي طرف ثالث خارجي تحت أي ظرف."
         ),
       },
     ],
   },
   termsOfService: {
-    title: text("Terms of Service", "Conditions d’utilisation", "شروط الخدمة"),
+    title: text("Terms & Conditions", "Conditions Générales d'Utilisation", "الشروط و الاحكام"),
     subtitle: text(
-      "The basic rules for using our site and placing orders.",
-      "Les règles de base pour utiliser notre site et passer commande.",
-      "القواعد الأساسية لاستخدام الموقع وإرسال الطلبات."
+      "Welcome to our store. By using this website or purchasing from it, you agree to comply with the following terms and conditions.",
+      "Bienvenue sur notre boutique. En utilisant ce site ou en y effectuant un achat, vous acceptez de vous conformer aux conditions suivantes.",
+      "مرحباً بكم في متجرنا. باستخدامك لهذا الموقع أو الشراء منه، فإنك توافق على الالتزام بالشروط والأحكام التالية."
     ),
     sections: [
       {
-        title: text("Using the site", "Utilisation du site", "استخدام الموقع"),
+        title: text("Orders & Pricing", "Commandes et prix", "الطلبات والأسعار"),
         body: text(
-          "Please use the website lawfully and do not attempt to disrupt, scrape, or misuse the service or its content.",
-          "Veuillez utiliser le site de manière légale et ne pas tenter de perturber, copier ou détourner le service ou son contenu.",
-          "يرجى استخدام الموقع بشكل قانوني وعدم محاولة تعطيل الخدمة أو نسخها أو إساءة استخدامها أو إساءة استخدام محتواها."
+          "All prices shown on the website are in Moroccan Dirhams (MAD). We reserve the right to modify prices or offers at any time without prior notice.",
+          "Tous les prix indiqués sur le site sont en dirhams marocains (MAD). Nous nous réservons le droit de modifier les prix ou les offres à tout moment et sans préavis.",
+          "جميع الأسعار الموضحة على الموقع بالدرهم المغربي (MAD). نحتفظ بالحق في تعديل الأسعار أو العروض في أي وقت دون إشعار مسبق."
         ),
       },
       {
-        title: text("Orders and availability", "Commandes et disponibilité", "الطلبات والتوفر"),
+        title: text("Order Confirmation", "Confirmation de la commande", "تأكيد الطلب"),
         body: text(
-          "Orders are accepted subject to product availability, delivery area coverage, and confirmation of order details.",
-          "Les commandes sont acceptées sous réserve de disponibilité des produits, de la zone de livraison et de la confirmation des détails.",
-          "تُقبل الطلبات حسب توفر المنتجات وتغطية منطقة التوصيل وتأكيد تفاصيل الطلب."
+          "An order is considered confirmed after our team contacts you via phone or WhatsApp.",
+          "La commande est considérée comme confirmée après la prise de contact de notre équipe avec vous par téléphone ou via WhatsApp.",
+          "يعتبر الطلب مؤكداً بعد تواصل فريقنا معك عبر الهاتف أو الواتساب."
         ),
       },
       {
-        title: text("Pricing and delivery", "Prix et livraison", "الأسعار والتوصيل"),
+        title: text("Intellectual Property", "Propriété intellectuelle", "الملكية الفكرية"),
         body: text(
-          "Prices, shipping rates, and delivery options may change. The checkout page shows the current total before you submit an order.",
-          "Les prix, tarifs de livraison et options peuvent changer. La page de paiement affiche le total actuel avant validation.",
-          "قد تتغير الأسعار ورسوم الشحن وخيارات التوصيل. تعرض صفحة الدفع الإجمالي الحالي قبل إرسال الطلب."
-        ),
-      },
-      {
-        title: text("Limitations and contact", "Limites et contact", "القيود والتواصل"),
-        body: text(
-          "We do our best to provide accurate information, but errors can happen. Contact us if you need help resolving an issue.",
-          "Nous faisons de notre mieux pour fournir des informations exactes, mais des erreurs peuvent survenir. Contactez-nous en cas de besoin.",
-          "نبذل قصارى جهدنا لتقديم معلومات دقيقة، لكن قد تحدث أخطاء. تواصل معنا إذا كنت بحاجة إلى المساعدة."
+          "All images, texts, and logos on the website are the exclusive property of our brand and may not be copied or used without prior written permission.",
+          "Toutes les images, textes et logos présents sur le site sont la propriété exclusive de notre marque et ne peuvent être copiés ou utilisés sans autorisation écrite préalable.",
+          "جميع الصور، النصوص، والشعارات الموجودة على الموقع هي ملك حصري لعلامتنا التجارية ولا يجوز نسخها أو استخدامها بدون إذن كتابي."
         ),
       },
     ],
