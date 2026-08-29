@@ -15,6 +15,7 @@ import {
 import { useCart } from "./cart-context"
 import { useLanguage } from "@/components/language-context"
 import type { Locale } from "@/i18n.config"
+import { DEFAULT_FREE_SHIPPING_THRESHOLD } from "@/lib/site-settings"
 
 const translations = {
   en: {
@@ -27,7 +28,9 @@ const translations = {
     shipping: 'Shipping',
     total: 'Total',
     free: 'Calculated at checkout',
-    checkout: 'Checkout'
+    checkout: 'Checkout',
+    freeShippingGoal: 'You got free shipping!',
+    freeShippingRemaining: (amount: string) => `Add ${amount} DH more for free shipping`
   },
   fr: {
     cart: 'Panier',
@@ -39,7 +42,9 @@ const translations = {
     shipping: 'Livraison',
     total: 'Total',
     free: 'Calculé au paiement',
-    checkout: 'Paiement'
+    checkout: 'Paiement',
+    freeShippingGoal: 'Livraison gratuite offerte !',
+    freeShippingRemaining: (amount: string) => `Encore ${amount} DH pour la livraison gratuite`
   },
   ar: {
     cart: 'سلة',
@@ -51,26 +56,16 @@ const translations = {
     shipping: 'التوصيل',
     total: 'الإجمالي',
     free: 'يُحسب عند الدفع',
-    checkout: 'الدفع'
+    checkout: 'الدفع',
+    freeShippingGoal: 'لقد حصلت على شحن مجاني!',
+    freeShippingRemaining: (amount: string) => `بقي لك ${amount} DH للشحن المجاني`
   }
 }
 
 const ariaLabels = {
-  en: {
-    decrease: 'Decrease quantity',
-    increase: 'Increase quantity',
-    remove: 'Remove item'
-  },
-  fr: {
-    decrease: 'Diminuer la quantité',
-    increase: 'Augmenter la quantité',
-    remove: 'Supprimer l’article'
-  },
-  ar: {
-    decrease: 'تقليل الكمية',
-    increase: 'زيادة الكمية',
-    remove: 'إزالة العنصر'
-  }
+  en: { decrease: 'Decrease quantity', increase: 'Increase quantity', remove: 'Remove item' },
+  fr: { decrease: 'Diminuer la quantité', increase: 'Augmenter la quantité', remove: 'Supprimer l’article' },
+  ar: { decrease: 'تقليل الكمية', increase: 'زيادة الكمية', remove: 'إزالة العنصر' }
 }
 
 export function CartDrawer() {
@@ -78,6 +73,12 @@ export function CartDrawer() {
   const { locale } = useLanguage()
   const t = translations[locale as Locale]
   const labels = ariaLabels[locale as Locale]
+
+  // Logic dyal 500 DH
+  const threshold = DEFAULT_FREE_SHIPPING_THRESHOLD
+  const isFreeShipping = subtotal >= threshold
+  const remaining = threshold - subtotal
+  const progress = Math.min((subtotal / threshold) * 100, 100)
 
   const shipping = 0
   const total = subtotal + shipping
@@ -100,6 +101,26 @@ export function CartDrawer() {
             <DrawerDescription className="text-center sm:text-left">{itemCount} {itemCount === 1 ? t.item : t.items}</DrawerDescription>
           </DrawerHeader>
 
+          {/* Progress Bar dyal Free Shipping */}
+          {items.length > 0 && (
+            <div className="px-6 py-4 border-b border-border/50 bg-muted/30">
+              <div className="flex justify-between text-sm mb-2 font-medium">
+                <span>
+                  {isFreeShipping 
+                    ? t.freeShippingGoal 
+                    : t.freeShippingRemaining(remaining.toFixed(0))}
+                </span>
+                <span>{progress.toFixed(0)}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-500 ease-out" 
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-6">
             {items.length === 0 ? (
@@ -119,7 +140,6 @@ export function CartDrawer() {
               <div className="space-y-6">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-4">
-                    {/* Product Image */}
                     <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                       <Image
                         src={item.image || "/placeholder.svg"}
@@ -130,7 +150,6 @@ export function CartDrawer() {
                       />
                     </div>
 
-                    {/* Product Details */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-serif text-base text-foreground mb-1 font-semibold">{item.name}</h3>
                       <p
@@ -145,7 +164,6 @@ export function CartDrawer() {
                         {item.description}
                       </p>
                       
-                      {/* Quantity Controls */}
                       <div className="flex items-center gap-3">
                         <div className="flex items-center border border-border rounded-full">
                           <button
@@ -179,7 +197,6 @@ export function CartDrawer() {
                       </div>
                     </div>
 
-                    {/* Price */}
                     <div className="text-right">
                       <p className="font-medium text-foreground">DH {item.price * item.quantity}</p>
                     </div>
@@ -191,7 +208,6 @@ export function CartDrawer() {
 
           {items.length > 0 && (
             <DrawerFooter className="border-t border-border/50 p-6 gap-4">
-              {/* Summary */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t.subtotal}</span>
@@ -199,7 +215,9 @@ export function CartDrawer() {
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>{t.shipping}</span>
-                  <span>{t.free}</span>
+                  <span className={isFreeShipping ? "text-green-600 font-bold" : ""}>
+                    {isFreeShipping ? (locale === 'ar' ? 'مجاني' : 'Gratuit') : t.free}
+                  </span>
                 </div>
                 <div className="flex justify-between text-base font-medium text-foreground pt-2 border-t border-border/50">
                   <span>{t.total}</span>
@@ -207,7 +225,6 @@ export function CartDrawer() {
                 </div>
               </div>
 
-              {/* Checkout Button */}
               <Link
                 href="/checkout"
                 onClick={() => setIsOpen(false)}
@@ -228,7 +245,6 @@ export function CartDrawer() {
           )}
         </DrawerContent>
       </Drawer>
-
     </>
   )
 }
