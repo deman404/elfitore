@@ -22,7 +22,7 @@ export type ThemeFooterData = {
 }
 
 export const DEFAULT_THEME_FOOTER: ThemeFooterData = {
-  brandName: "El Fitore",
+  brandName: "ELFITORE",
   description: {
     en: "Premium Moroccan olive oils and olives, bringing authentic flavors and quality to your table.",
     fr: "Huiles d'olive et olives marocaines premium, apportant des saveurs authentiques et une qualité à votre table.",

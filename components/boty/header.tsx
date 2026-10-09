@@ -176,7 +176,7 @@ export function Header() {
               <span className="relative block h-10 w-32 sm:h-12 sm:w-40">
                 <img
                   src="/logo.png"
-                  alt="El Fitore"
+                  alt="ELFITORE"
                   className="h-full w-full object-contain"
                 />
               </span>

@@ -18,21 +18,21 @@ const STORAGE_KEY = "elfitor-auth-dismissed"
 
 const copy = {
   en: {
-    title: "Welcome to El Fitore",
+    title: "Welcome to ELFITORE",
     description: "Sign in to save your favorites, track orders, and enjoy a personalized experience.",
     google: "Continue with Google",
     guest: "Continue as Guest",
     subtitle: "Premium Moroccan Olive Oil",
   },
   fr: {
-    title: "Bienvenue chez El Fitore",
+    title: "Bienvenue chez ELFITORE",
     description: "Connectez-vous pour enregistrer vos favoris, suivre vos commandes et profiter d'une expérience personnalisée.",
     google: "Continuer avec Google",
     guest: "Continuer en tant qu'invité",
     subtitle: "Huile d'Olive Marocaine Premium",
   },
   ar: {
-    title: "مرحباً بك في El Fitore",
+    title: "مرحباً بك في ELFITORE",
     description: "قم بتسجيل الدخول لحفظ المفضلات وتتبع الطلبات والاستمتاع بتجربة مخصصة.",
     google: "المتابعة مع Google",
     guest: "المتابعة كضيف",
@@ -86,7 +86,7 @@ export function AuthDialog() {
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-[#f6f7f7]">
-            <img src="/logo.png" alt="El Fitore" className="h-12 w-12 object-contain" />
+            <img src="/logo.png" alt="ELFITORE" className="h-12 w-12 object-contain" />
           </div>
           <DialogTitle className="text-xl font-semibold">{text.title}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">

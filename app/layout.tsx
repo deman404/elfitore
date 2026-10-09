@@ -28,7 +28,7 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: 'El Fitore — Premium Moroccan Olive Oil',
+  title: 'ELFITORE — Premium Moroccan Olive Oil',
   description: 'Premium Moroccan olive oils and olives. Direct from Morocco with authenticity and tradition.',
   generator: 'v0.app',
   keywords: ['olive oil', 'moroccan', 'olives', 'premium', 'organic', 'natural'],

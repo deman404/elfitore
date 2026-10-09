@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "El Fitore",
+    "name": "ELFITORE",
     "tagline": "Huile d'olive et olives marocaines premium",
     "description": "Huiles d'olive marocaines authentiques et olives premium, élaborées avec tradition et soin"
   },
@@ -56,7 +56,7 @@
     "required": "Ce champ est obligatoire"
   },
   "footer": {
-    "about": "À propos d'El Fitore",
+    "about": "À propos d'ELFITORE",
     "aboutText": "Nous vous apportons les meilleures huiles d'olive et olives marocaines, en préservant la tradition et la qualité.",
     "links": "Liens rapides",
     "legal": "Légal",

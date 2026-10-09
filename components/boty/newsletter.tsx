@@ -11,7 +11,7 @@ const text: Record<Locale, { title: string; description: string; subscribed: str
   en: {
     title: "Join the ritual",
     description: "Subscribe for exclusive offers, olive oil stories, and early access to new products.",
-    subscribed: "Welcome to the El Fitore family!",
+    subscribed: "Welcome to the ELFITORE family!",
     placeholder: "Enter your email",
     button: "Subscribe",
     footer: "Unsubscribe anytime. We respect your inbox."
@@ -19,7 +19,7 @@ const text: Record<Locale, { title: string; description: string; subscribed: str
   fr: {
     title: "Rejoignez le rituel",
     description: "Abonnez-vous pour recevoir des offres exclusives, des histoires autour de l’huile d’olive et un accès anticipé aux nouveautés.",
-    subscribed: "Bienvenue dans la famille El Fitore !",
+    subscribed: "Bienvenue dans la famille ELFITORE !",
     placeholder: "Entrez votre e-mail",
     button: "S’abonner",
     footer: "Désabonnez-vous à tout moment. Nous respectons votre boîte mail."

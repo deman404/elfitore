@@ -61,14 +61,14 @@ export const DEFAULT_THEME_MARKETING_PAGES: ThemeMarketingPagesData = {
       ar: "زيت زيتون مغربي يصل إليك بعناية.",
     },
     content: {
-      en: "El Fitore is built around simple values: honest sourcing, thoughtful quality, and products that feel at home on everyday tables.\n\nWe work with trusted Moroccan partners to offer olive oil and olives that reflect the region’s natural character.\n\nOur mission is to make premium Moroccan olive products easy to discover, easy to order, and enjoyable to share.",
-      fr: "El Fitore repose sur des valeurs simples : un sourcing honnête, une qualité soignée et des produits qui trouvent leur place au quotidien.\n\nNous travaillons avec des partenaires marocains de confiance pour proposer des huiles d’olive et des olives qui reflètent le caractère naturel de la région.\n\nNotre mission est de rendre les produits d’olive marocains premium faciles à découvrir, à commander et à partager.",
+      en: "ELFITORE is built around simple values: honest sourcing, thoughtful quality, and products that feel at home on everyday tables.\n\nWe work with trusted Moroccan partners to offer olive oil and olives that reflect the region’s natural character.\n\nOur mission is to make premium Moroccan olive products easy to discover, easy to order, and enjoyable to share.",
+      fr: "ELFITORE repose sur des valeurs simples : un sourcing honnête, une qualité soignée et des produits qui trouvent leur place au quotidien.\n\nNous travaillons avec des partenaires marocains de confiance pour proposer des huiles d’olive et des olives qui reflètent le caractère naturel de la région.\n\nNotre mission est de rendre les produits d’olive marocains premium faciles à découvrir, à commander et à partager.",
       ar: "إلفيتوري مبني على قيم بسيطة: مصادر صادقة، جودة مدروسة، ومنتجات تشعر بأنها في مكانها الطبيعي على الموائد اليومية.\n\nنعمل مع شركاء مغاربة موثوقين لنقدم زيت الزيتون والزيتون الذي يعكس الطابع الطبيعي للمنطقة.\n\nمهمتنا هي جعل منتجات الزيتون المغربية الفاخرة سهلة الاكتشاف والطلب والمشاركة.",
     },
     heroImage: "/images/products/oil.jpg",
     subtitle: {
-      en: "El Fitore is built around simple values: honest sourcing, thoughtful quality, and products that feel at home on everyday tables.",
-      fr: "El Fitore repose sur des valeurs simples : un sourcing honnête, une qualité soignée et des produits qui trouvent leur place au quotidien.",
+      en: "ELFITORE is built around simple values: honest sourcing, thoughtful quality, and products that feel at home on everyday tables.",
+      fr: "ELFITORE repose sur des valeurs simples : un sourcing honnête, une qualité soignée et des produits qui trouvent leur place au quotidien.",
       ar: "إلفيتوري مبني على قيم بسيطة: مصادر صادقة، جودة مدروسة، ومنتجات تشعر بأنها في مكانها الطبيعي على الموائد اليومية.",
     },
     intro: {

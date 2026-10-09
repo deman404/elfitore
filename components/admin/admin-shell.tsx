@@ -428,11 +428,11 @@ function Sidebar({
       {/* Logo area */}
       <div className="flex h-14 items-center gap-3 border-b border-slate-200 px-4">
         <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
-          <img src="/logo.png" alt="El Fitore" className="h-full w-full object-contain" />
+          <img src="/logo.png" alt="ELFITORE" className="h-full w-full object-contain" />
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900">El Fitore</p>
+            <p className="truncate text-sm font-semibold text-slate-900">ELFITORE</p>
             <p className="text-[10px] uppercase tracking-wider text-slate-500">Administration</p>
           </div>
         )}

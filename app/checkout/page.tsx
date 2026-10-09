@@ -16,7 +16,7 @@
     DialogHeader,
     DialogTitle,
   } from "@/components/ui/dialog"
-  import { fetchSiteSettings } from "@/lib/site-settings"
+  import { DEFAULT_FREE_SHIPPING_THRESHOLD, fetchSiteSettings } from "@/lib/site-settings"
   import { generateWhatsAppMessage, getWhatsAppMessageUrl } from "@/lib/whatsapp"
   import { saveBrowserStorefrontOrder, type StorefrontOrderRecord } from "@/lib/storefront-orders"
   import { YouMayLikeSection } from "@/components/boty/you-may-like-section"
@@ -136,6 +136,7 @@
     const [accountPromptMode, setAccountPromptMode] = useState<"existing" | "new" | null>(null)
     const [errors, setErrors] = useState<Record<string, string>>({})
     const [whatsappNumber, setWhatsappNumber] = useState("")
+    const [freeShippingThreshold, setFreeShippingThreshold] = useState(DEFAULT_FREE_SHIPPING_THRESHOLD)
     const [lastOrderReference, setLastOrderReference] = useState("")
     const [deliveryCities, setDeliveryCities] = useState<Array<{ city: string; price: number }>>([])
     const [formData, setFormData] = useState({
@@ -148,7 +149,7 @@
       () => deliveryCities.find((rate) => rate.city.trim().toLowerCase() === formData.city.trim().toLowerCase()) ?? null,
       [deliveryCities, formData.city]
     )
-    const shipping = selectedDeliveryRate ? selectedDeliveryRate.price : null
+    const shipping = subtotal >= freeShippingThreshold ? 0 : selectedDeliveryRate ? selectedDeliveryRate.price : null
     const total = subtotal + (shipping ?? 0)
     const paymentMethod = "whatsapp" as const
 
@@ -160,6 +161,7 @@
       const loadSettings = async () => {
         const settings = await fetchSiteSettings()
         setWhatsappNumber(settings.whatsappNumber ?? "")
+        setFreeShippingThreshold(settings.freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD)
         const activeDeliveryMethod = settings.deliveryMethods?.find((method) => method.active) ?? null
         setDeliveryCities(activeDeliveryMethod?.rates ?? [])
       }
@@ -311,13 +313,13 @@
               country: "",
               deliveryMethod: "WhatsApp",
               deliveryCity: selectedDeliveryRate?.city,
-              shipping: shipping ?? undefined,
+              shipping: savedOrder.shipping,
               items: orderItems.map((item) => ({
                 name: item.productName,
                 quantity: item.quantity,
                 price: item.unitPrice ?? 0,
               })),
-              total,
+              total: savedOrder.total,
             },
             locale as Locale
           )
