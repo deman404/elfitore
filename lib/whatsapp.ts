@@ -29,7 +29,7 @@ export function generateWhatsAppMessage(order: OrderDetails, locale: 'en' | 'fr'
     
     fr: `Bonjour! Je voudrais passer une commande chez ELFITORE:\n\n*Détails du client:*\nNom: ${order.fullName}${emailLine}\nTéléphone: ${order.phone}\nAdresse: ${order.address}, ${order.city}, ${order.country}${deliverySection}\n\n*Articles de la commande:*\n${order.items.map(item => `• ${item.name} x${item.quantity} = DH ${(item.price * item.quantity).toFixed(2)}`).join('\n')}\n\n*Total de la commande: DH ${order.total.toFixed(2)}*\n\nVeuillez confirmer cette commande. Merci!`,
     
-    ar: `مرحبا! أود تقديم طلب لدى الفيتوري:\n\n*تفاصيل العميل:*\nالاسم: ${order.fullName}${emailLine}\nالهاتف: ${order.phone}\nالعنوان: ${order.address}, ${order.city}, ${order.country}${deliverySection}\n\n*عناصر الطلب:*\n${order.items.map(item => `• ${item.name} x${item.quantity} = DH ${(item.price * item.quantity).toFixed(2)}`).join('\n')}\n\n*إجمالي الطلب: DH ${order.total.toFixed(2)}*\n\nيرجى تأكيد هذا الطلب. شكرا لك!`
+    ar: `مرحبا! أود تقديم طلب لدى الفيتور:\n\n*تفاصيل العميل:*\nالاسم: ${order.fullName}${emailLine}\nالهاتف: ${order.phone}\nالعنوان: ${order.address}, ${order.city}, ${order.country}${deliverySection}\n\n*عناصر الطلب:*\n${order.items.map(item => `• ${item.name} x${item.quantity} = DH ${(item.price * item.quantity).toFixed(2)}`).join('\n')}\n\n*إجمالي الطلب: DH ${order.total.toFixed(2)}*\n\nيرجى تأكيد هذا الطلب. شكرا لك!`
   }
 
   return messages[locale]
