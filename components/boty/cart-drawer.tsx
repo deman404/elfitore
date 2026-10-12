@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { Minus, Plus, Trash2, ShoppingBag, X } from "lucide-react"
 import Image from "next/image"
 import {
@@ -15,7 +16,7 @@ import {
 import { useCart } from "./cart-context"
 import { useLanguage } from "@/components/language-context"
 import type { Locale } from "@/i18n.config"
-import { DEFAULT_FREE_SHIPPING_THRESHOLD } from "@/lib/site-settings"
+import { DEFAULT_FREE_SHIPPING_THRESHOLD, fetchSiteSettings } from "@/lib/site-settings"
 
 const translations = {
   en: {
@@ -74,11 +75,23 @@ export function CartDrawer() {
   const t = translations[locale as Locale]
   const labels = ariaLabels[locale as Locale]
 
-  // Logic dyal 500 DH
-  const threshold = DEFAULT_FREE_SHIPPING_THRESHOLD
+  const [threshold, setThreshold] = useState(DEFAULT_FREE_SHIPPING_THRESHOLD)
+
+  useEffect(() => {
+    let cancelled = false
+
+    void fetchSiteSettings().then((settings) => {
+      if (!cancelled) {
+        setThreshold(settings.freeShippingThreshold ?? DEFAULT_FREE_SHIPPING_THRESHOLD)
+      }
+    })
+
+    return () => { cancelled = true }
+  }, [isOpen])
+
   const isFreeShipping = subtotal >= threshold
-  const remaining = threshold - subtotal
-  const progress = Math.min((subtotal / threshold) * 100, 100)
+  const remaining = Math.max(threshold - subtotal, 0)
+  const progress = threshold > 0 ? Math.min((subtotal / threshold) * 100, 100) : 100
 
   const shipping = 0
   const total = subtotal + shipping

@@ -32,20 +32,6 @@ export async function GET() {
       siteSettings.select("value").eq("key", SITE_SETTING_FREE_SHIPPING_THRESHOLD_KEY).maybeSingle(),
     ])
 
-    if (whatsappResult.error || phoneResult.error || addressResult.error || mapsResult.error || deliveryResult.error || shippingResult.error) {
-      return NextResponse.json(
-        {
-          whatsappNumber: DEFAULT_CONTACT_WHATSAPP_NUMBER,
-          contactPhone: DEFAULT_CONTACT_PHONE,
-          contactAddress: DEFAULT_CONTACT_ADDRESS,
-          contactGoogleMapsUrl: DEFAULT_CONTACT_GOOGLE_MAPS_URL,
-          deliveryMethods: DEFAULT_DELIVERY_METHODS,
-          freeShippingThreshold: DEFAULT_FREE_SHIPPING_THRESHOLD,
-        },
-        { status: 200 }
-      )
-    }
-
     let parsedDeliveryMethods = DEFAULT_DELIVERY_METHODS
     if (typeof deliveryResult.data?.value === "string") {
       try {
