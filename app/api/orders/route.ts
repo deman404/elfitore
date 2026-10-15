@@ -81,11 +81,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Order was created, but no receipt data was returned." }, { status: 500 })
     }
 
+    // Older create_web_order functions return the subtotal without delivery.
+    // Persist the same final total that checkout and WhatsApp display.
+    const subtotal = Number(order.subtotal)
+    const total = Math.round((subtotal + shipping) * 100) / 100
+    if (Number(order.total) !== total) {
+      const { error: totalError } = await admin
+        .from("web_orders")
+        .update({ total })
+        .eq("id", order.order_id)
+
+      if (totalError) {
+        return NextResponse.json({ error: "Order was created, but its delivery total could not be saved." }, { status: 500 })
+      }
+    }
+
     return NextResponse.json({
       orderId: order.order_id,
       reference: order.reference,
-      subtotal: Number(order.subtotal),
-      total: Number(order.total),
+      subtotal,
+      total,
       createdAt: order.created_at,
       status: "pending",
       channel,
